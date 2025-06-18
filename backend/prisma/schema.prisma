@@ -1,0 +1,27 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+// next auth built in prisma schema
+model User{
+  id Int @id @default(autoincrement())
+  email String @unique
+  name String?
+  avatar String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// now tell prisma that the schema has changed with migration "npx prisma migrate dev --name init"
+// prisma type defs are in node modules, but those are in gitignore so add it as part of build
