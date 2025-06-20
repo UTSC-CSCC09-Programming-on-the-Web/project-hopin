@@ -11,9 +11,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "body-parse": "^0.1.0",
+    "@prisma/client": "^6.10.1",
+    "bcrypt": "^6.0.0",
+    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "multer": "^2.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",
