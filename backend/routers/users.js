@@ -1,7 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import multer from 'multer';
-import path from 'path';
 import { prisma } from '../lib/prisma.js';
 
 export const usersRouter = express.Router();
@@ -27,7 +26,7 @@ const requireAuth = (req, res, next) => {
 };
 
 usersRouter.post('/signup', async (req, res) => {
-  try {
+  try {    
     const { username, email, password } = req.body; 
     
     // Field validations
@@ -55,19 +54,24 @@ usersRouter.post('/signup', async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, salt);
 
     // Create a new user
-    const newUser = await prisma.user.create({
-      data: {
-        username,
-        email,
-        password: hashedPassword
-      }
-    });
+    try {
+      const newUser = await prisma.user.create({
+        data: {
+          username,
+          email,
+          password: hashedPassword
+        }
+      });
+      
+      // Session-cookie 
+      req.session.userId = newUser.id;
+      req.session.username = newUser.username;
 
-    // Session-cookie 
-    req.session.userId = newUser.id;
-    req.session.username = newUser.username;
-
-    return res.status(201).json({ message: `Signup successful with ${newUser.email}` });
+      return res.status(201).json({ message: `Signup successful with ${newUser.email}` });
+    } catch (dbError) {
+      console.error('Database error during user creation:', dbError);
+      return res.status(500).json({ error: 'Database error during user creation', details: dbError.message });
+    }
 
   } catch (error) {
     console.error('Error during signup:', error);
@@ -118,7 +122,10 @@ usersRouter.get('/signout', (req, res) => {
 
 // Check authentication status
 usersRouter.get('/auth-status', (req, res) => {
-  return res.json({ authenticated: req.session.userId ? true : false });
+  return res.json({ 
+    authenticated: req.session.userId ? true : false,
+    sessionId: req.sessionID,    
+  });
 });
 
 usersRouter.get("/me", requireAuth, async (req, res) => {
@@ -132,7 +139,9 @@ usersRouter.get("/me", requireAuth, async (req, res) => {
       return res.status(401).json({ error: "User not found" });
     }
     
-    return res.json(`User ${user.username}`);
+    // Exclude sensitive fields
+    const { password, ...userWithoutPassword } = user;
+    return res.json(userWithoutPassword);
   } catch (error) {
     console.error('Error fetching current user:', error);
     res.status(500).json({ error: 'Failed to fetch user data' });

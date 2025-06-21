@@ -29,3 +29,5 @@ cookies.txt
 # Logs
 logs
 *.log
+
+/bruno-hopin/*

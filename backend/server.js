@@ -17,7 +17,12 @@ app.use(cors({
 app.use(session({
   secret: process.env.SECRET_KEY || 'hopinc09',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: false, 
+    sameSite: 'lax',
+  }
 }));
 app.use(express.static("static"));
 
