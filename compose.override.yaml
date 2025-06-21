@@ -10,10 +10,10 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./client
+          path: ./frontend
           target: /app
         - action: rebuild
-          path: ./client/package.json
+          path: ./frontend/package.json
     command: "npm run dev"
 
   backend:
