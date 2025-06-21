@@ -1,0 +1,12 @@
+services:
+  frontend:
+    depends_on:
+      - backend
+
+  backend:
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:latest
+    restart: always
