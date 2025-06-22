@@ -70,6 +70,9 @@ export const userApi = {
         throw new Error('Failed to update user with avatar');
       }
       return res.json();
+    }).then(data => {
+      console.log('Update user response:', data);
+      return data;
     });
   },
 

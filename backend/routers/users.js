@@ -1,21 +1,43 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { prisma } from '../lib/prisma.js';
 
+// Make sure the uploads directory exists
+const avatarDir = 'uploads/avatars';
+if (!fs.existsSync(avatarDir)) {
+  fs.mkdirSync(avatarDir, { recursive: true });
+}
+
 export const usersRouter = express.Router();
+
+// Configure multer with a storage strategy
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, avatarDir);
+  },
+  filename: function(req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
 const upload = multer({
-  dest: 'uploads/avatars/',
-  limits: { filesize: 5 * 1024 * 1024 }, // 5MB limit
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startswith('image/')) {
+    if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
       cb(new Error('Only image files are allowed!'), false);
     }
   }
 });
-usersRouter.use('/avatars', express.static('uploads/avatars'));
+
+// Serve avatar files from the uploads directory
+usersRouter.use('/avatars', express.static(avatarDir));
 
 // Authentication middleware
 const requireAuth = (req, res, next) => {
@@ -179,11 +201,18 @@ usersRouter.get('/:id', async (req, res) => {
 // Update a user with optional avatar upload
 usersRouter.patch('/:id', requireAuth, upload.single('avatar'), async (req, res) => {
   try {
+  
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+    
     const user = await prisma.user.findUnique({
-        where: { id: req.session.userId }
+        where: { id: userId }
     });
 
     if (user) {
+        // Ensure the user can only update their own profile
         if (user.id !== req.session.userId) {
             return res.status(403).json({ error: 'You can only update your own profile' });
         }
@@ -196,17 +225,45 @@ usersRouter.patch('/:id', requireAuth, upload.single('avatar'), async (req, res)
             updateData.password = bcrypt.hashSync(password, salt);
         }
         if (homeAddr) updateData.homeAddr = homeAddr;
+
+        // Copilot (line 230-240)
+        // Prompt: "When isEditing=true (on frontend/src/app/profile/page.tsx), I want the image area to be clickable to upload a new file"
         if (req.file) {
-            updateData.avatar = `/api/users/avatars/${req.file.filename}`;
+            const avatarUrl = `http://localhost:8080/api/users/avatars/${req.file.filename}`;
+            updateData.avatar = avatarUrl;
+        } else if (avatar && typeof avatar === 'string') {
+            console.log('Using avatar URL from form:', avatar);
+            // Only update if it's a valid URL or path
+            if (avatar.startsWith('/') || avatar.startsWith('http')) {
+                updateData.avatar = avatar;
+            }
         }
+        
         if (Object.keys(updateData).length > 0) {
             const updatedUser = await prisma.user.update({
                 where: { id: user.id },
-                data: updateData
+                data: updateData,
+                select: {
+                    id: true,
+                    username: true,
+                    email: true,
+                    avatar: true,
+                    homeAddr: true
+                }
             });
-        }        
-
-        return res.json({ message: 'User profile updated successfully' });
+            
+            return res.json(updatedUser);
+        } else {
+            // If no updates were made, return the current user data
+            const currentUser = {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                homeAddr: user.homeAddr
+            };
+            return res.json(currentUser);
+        }
     } else {
         return res.status(404).json({ error: 'User not found' });
     }
