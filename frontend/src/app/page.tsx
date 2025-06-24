@@ -2,8 +2,24 @@
 "use client";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+
 export default function SignIn() {
   // const user = await getUserSession();
+  const handleSignIn = async (formData: FormData) => {
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    try {
+      await signIn("credentials", {
+        email: email,
+        password: password,
+        redirect: true,
+        callbackUrl: "/home",
+      });
+    } catch (error) {
+      throw new Error(err.error || "Failed to sign up");
+    }
+  };
+
   return (
     <main>
       <div className="flex flex-row gap-8 p-20">
@@ -11,10 +27,17 @@ export default function SignIn() {
         <h1 className="font-bold text-5xl">HopIn</h1>
       </div>
 
-      <div className="flex gap-20 justify-center content-center m-18">
-        <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-1/4">
+      <div className="flex flex-wrap gap-20 justify-center items-center m-18">
+        <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md">
           <p className="text-center text-xl font-bold pb-8">Sign In</p>
-          <form action="" method="" className="flex flex-col gap-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              handleSignIn(formData);
+            }}
+            className="flex flex-col gap-4"
+          >
             <input
               type="text"
               id="email"
@@ -24,9 +47,9 @@ export default function SignIn() {
               required
             />
             <input
-              type="text"
-              id="pswd"
-              name="pswd"
+              type="password"
+              id="password"
+              name="password"
               placeholder="Password"
               className="border-b-1 border-gray-400 p-2"
               required
@@ -61,7 +84,7 @@ export default function SignIn() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center flex-col gap-12">
+        <div className="flex items-center justify-center flex-col gap-12 w-full max-w-md">
           <p className="text-3xl font-bold">Welcome Back!</p>
           <img
             className="w-2/3"
