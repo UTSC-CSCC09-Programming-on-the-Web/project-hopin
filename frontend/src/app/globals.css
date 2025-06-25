@@ -1,17 +1,8 @@
 /* Headings font */
-@import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
 /* Body font */
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
 @import "tailwindcss";
-
-:root {
-  --button-orange-gradient: linear-gradient(
-    180deg,
-    #f39458 8%,
-    #e76616 43%,
-    #be510e 98.56%
-  );
-}
 
 @theme {
   /* FONTS */
@@ -61,6 +52,15 @@
   --shadow-xl: 0px 20px 40px 0px rgba(0, 0, 0, 0.2);
 }
 
+:root {
+  --button-orange-gradient: linear-gradient(
+    180deg,
+    #f39458 8%,
+    #e76616 43%,
+    #be510e 98.56%
+  );
+}
+
 html,
 body {
   height: 100%;
@@ -86,10 +86,6 @@ body {
     @apply font-heading;
   }
 
-  body {
-    @apply font-body;
-  }
-
   h1 {
     @apply text-7xl font-medium leading-tight tracking-tighter;
   }
@@ -112,6 +108,10 @@ body {
 
   h6 {
     @apply text-2xl font-normal tracking-tight;
+  }
+
+  main {
+    @apply px-[10%] py-8;
   }
 }
 

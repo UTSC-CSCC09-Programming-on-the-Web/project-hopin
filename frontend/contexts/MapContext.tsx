@@ -3,18 +3,21 @@ import { createContext, useContext, useEffect, useState, useRef } from "react";
 import toast from "react-hot-toast";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
-import { fetchMapboxDirections } from "../lib/mapboxAxios";
-
-export type Location = Record<"latitude" | "longitude", number>;
+import { fetchMapboxDirections } from "../lib/directionsAPI";
+import { Coordinates } from "../types/location";
 
 type MapContextType = {
-  map?: React.RefObject<mapboxgl.Map | null>;
-  mapContainer?: React.RefObject<HTMLDivElement | null>;
-  setRoute: (start: Location, end: Location) => void;
+  location: Coordinates | undefined;
+  map: React.RefObject<mapboxgl.Map | null>;
+  mapContainer: React.RefObject<HTMLDivElement | null>;
+  drawRoute: (start: Coordinates, end: Coordinates) => void;
 };
 
 const MapContext = createContext<MapContextType>({
-  setRoute: () => {
+  location: undefined,
+  map: { current: null },
+  mapContainer: { current: null },
+  drawRoute: () => {
     console.warn("setRoute function is not implemented");
   },
 });
@@ -22,7 +25,7 @@ const MapContext = createContext<MapContextType>({
 export const MapProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const [location, setLocation] = useState<Location | undefined>(undefined);
+  const [location, setLocation] = useState<Coordinates | undefined>(undefined);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
 
@@ -88,17 +91,17 @@ export const MapProvider: React.FC<{
     map.current.setCenter([location.longitude, location.latitude]);
   }, [location]);
 
-  const setRoute = (start: Location, end: Location) => {
+  const drawRoute = (start: Coordinates, end: Coordinates) => {
     if (!map.current) {
       console.warn("Map is not initialized");
       return;
     }
 
-    setRoute__helper(map.current, start, end);
+    drawRouteHelper(map.current, start, end);
   };
 
   return (
-    <MapContext.Provider value={{ map, mapContainer, setRoute }}>
+    <MapContext.Provider value={{ location, map, mapContainer, drawRoute }}>
       {children}
     </MapContext.Provider>
   );
@@ -114,19 +117,20 @@ export const useMapContext = () => {
   return context;
 };
 
-async function setRoute__helper(
+const drawRouteHelper = (
   map: mapboxgl.Map,
-  start: Location,
-  end: Location
-) {
+  start: Coordinates,
+  end: Coordinates
+) => {
   fetchMapboxDirections(start, end)
     .then((route: any) => {
       const geojson = {
         type: "Feature" as const,
         properties: {},
-        geometry: route,
+        geometry: route.geometry,
       };
 
+      // Redraw the route on the map
       if (map.getSource("route")) {
         (map.getSource("route") as mapboxgl.GeoJSONSource).setData(geojson);
       } else {
@@ -149,9 +153,14 @@ async function setRoute__helper(
             "line-opacity": 0.75,
           },
         });
+
+        // Add a marker at the end point
+        new mapboxgl.Marker()
+          .setLngLat([end.longitude, end.latitude])
+          .addTo(map);
       }
     })
     .catch((error: any) => {
       console.error("Error fetching route:", error);
     });
-}
+};

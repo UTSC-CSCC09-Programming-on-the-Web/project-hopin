@@ -4,7 +4,7 @@ import Map from "@/components/Map";
 
 function page() {
   return (
-    <main className="flex flex-col items-center h-screen px-12 py-8 gap-8">
+    <div className="flex flex-col items-center h-screen gap-8">
       <div className="relative w-full aspect-video">
         <Map />
       </div>
@@ -14,7 +14,7 @@ function page() {
         <div className="text-lg">OR</div>
         <Button text="Join Group" variant="outline" />
       </div>
-    </main>
+    </div>
   );
 }
 
