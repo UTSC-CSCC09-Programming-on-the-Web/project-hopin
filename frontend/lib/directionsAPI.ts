@@ -1,9 +1,9 @@
-import { Coordinates } from "../types/location";
+import { Coordinates, Route } from "../types/location";
 
 export const fetchMapboxDirections = async (
   start: Coordinates,
   end: Coordinates
-): Promise<{ geometry: GeoJSON.LineString }> => {
+): Promise<Route> => {
   const res = await fetch(
     `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?steps=true&geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
   );

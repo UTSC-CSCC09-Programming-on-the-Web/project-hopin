@@ -4,27 +4,36 @@ import toast from "react-hot-toast";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { fetchMapboxDirections } from "../lib/directionsAPI";
-import { Coordinates } from "../types/location";
+import { Coordinates, Route } from "../types/location";
+import {
+  drawRoute,
+  findClosestIndex,
+  showUserLocation,
+  updateRoute,
+} from "./MapContextService";
 
 type MapContextType = {
   location: Coordinates | undefined;
   map: React.RefObject<mapboxgl.Map | null>;
   mapContainer: React.RefObject<HTMLDivElement | null>;
-  drawRoute: (start: Coordinates, end: Coordinates) => void;
+  createRoute: (start: Coordinates, end: Coordinates) => void;
 };
 
 const MapContext = createContext<MapContextType>({
   location: undefined,
   map: { current: null },
   mapContainer: { current: null },
-  drawRoute: () => {
-    console.warn("setRoute function is not implemented");
+  createRoute: () => {
+    console.error("createRoute function is not implemented");
   },
 });
 
 export const MapProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
+  const [originalRoute, setOriginalRoute] = useState<Route | null>(null);
+  const [route, setRoute] = useState<Route | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [location, setLocation] = useState<Coordinates | undefined>(undefined);
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -64,44 +73,43 @@ export const MapProvider: React.FC<{
     return () => navigator.geolocation.clearWatch(id);
   }, []);
 
-  // Show user's location on the map
   useEffect(() => {
-    if (!map.current || !location) return;
-
-    // Clear old markers
-    document.querySelectorAll(".user-marker").forEach((m) => m.remove());
-
-    // Create marker element
-    const el = document.createElement("div");
-    el.className =
-      "user-marker flex flex-col items-center justify-center gap-1";
-
-    // TODO: Replace with user's profile picture when available
-    el.innerHTML = `
-    <div class="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg">
-    <img src="https://www.operationkindness.org/wp-content/uploads/blog-kitten-nursery-operation-kindness.jpg" class="w-full h-full object-cover" />
-    </div>
-    <span class="label-sm bg-white text-gray-900 px-1 shadow-xs rounded">You</span>
-  `;
-
-    new mapboxgl.Marker(el)
-      .setLngLat([location.longitude, location.latitude])
-      .addTo(map.current);
-
-    map.current.setCenter([location.longitude, location.latitude]);
+    showUserLocation(map, location);
+    setRoute(updateRoute(originalRoute, location));
   }, [location]);
 
-  const drawRoute = (start: Coordinates, end: Coordinates) => {
+  // Draw route on the map when route state changes
+  useEffect(() => {
+    if (!route || !map.current) return;
+
+    drawRoute(route, map.current, route.end_location);
+  }, [route]);
+
+  const createRoute = (start: Coordinates, end: Coordinates) => {
     if (!map.current) {
       console.warn("Map is not initialized");
       return;
     }
 
-    drawRouteHelper(map.current, start, end);
+    fetchMapboxDirections(start, end)
+      .then((route: Route) => {
+        const createdRoute = {
+          ...route,
+          start_location: start,
+          end_location: end,
+        };
+        setOriginalRoute(createdRoute);
+        setRoute(createdRoute);
+      })
+      // TODO: save route to database
+      .catch((error: any) => {
+        console.error("Error fetching route:", error);
+        toast.error("Failed to fetch route. Please try again.");
+      });
   };
 
   return (
-    <MapContext.Provider value={{ location, map, mapContainer, drawRoute }}>
+    <MapContext.Provider value={{ location, map, mapContainer, createRoute }}>
       {children}
     </MapContext.Provider>
   );
@@ -115,52 +123,4 @@ export const useMapContext = () => {
     );
   }
   return context;
-};
-
-const drawRouteHelper = (
-  map: mapboxgl.Map,
-  start: Coordinates,
-  end: Coordinates
-) => {
-  fetchMapboxDirections(start, end)
-    .then((route: any) => {
-      const geojson = {
-        type: "Feature" as const,
-        properties: {},
-        geometry: route.geometry,
-      };
-
-      // Redraw the route on the map
-      if (map.getSource("route")) {
-        (map.getSource("route") as mapboxgl.GeoJSONSource).setData(geojson);
-      } else {
-        map.addSource("route", {
-          type: "geojson",
-          data: geojson,
-        });
-
-        map.addLayer({
-          id: "route",
-          type: "line",
-          source: "route",
-          layout: {
-            "line-join": "round",
-            "line-cap": "round",
-          },
-          paint: {
-            "line-color": "#3887be",
-            "line-width": 5,
-            "line-opacity": 0.75,
-          },
-        });
-
-        // Add a marker at the end point
-        new mapboxgl.Marker()
-          .setLngLat([end.longitude, end.latitude])
-          .addTo(map);
-      }
-    })
-    .catch((error: any) => {
-      console.error("Error fetching route:", error);
-    });
 };

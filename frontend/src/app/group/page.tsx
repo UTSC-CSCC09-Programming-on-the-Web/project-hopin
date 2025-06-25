@@ -8,7 +8,7 @@ import { Flag as StartIcon, MapPin as EndIcon } from "lucide-react";
 import { useMapContext } from "../../../contexts/MapContext";
 
 export default function GroupPage() {
-  const { location, drawRoute } = useMapContext();
+  const { location, createRoute: drawRoute } = useMapContext();
   const [startLocation, setStartLocation] = useState<Coordinates | null>(null);
   const [endLocation, setEndLocation] = useState<Coordinates | null>(null);
 
