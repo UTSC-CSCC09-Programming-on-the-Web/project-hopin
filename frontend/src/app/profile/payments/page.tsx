@@ -1,3 +1,3 @@
 export default function Payments() {
-    return <p>Payments</p>
+  return <p>Payments</p>;
 }

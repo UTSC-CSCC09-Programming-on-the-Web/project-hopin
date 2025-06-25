@@ -31,3 +31,5 @@ logs
 *.log
 
 /bruno-hopin/*
+node_modules
+/generated/prisma
