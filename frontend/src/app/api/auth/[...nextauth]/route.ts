@@ -31,7 +31,7 @@ const authOption: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const res = await fetch("http://localhost:8080/api/auth/signin", {
+          const res = await fetch("http://backend:8080/api/auth/signin", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -68,7 +68,7 @@ const authOption: NextAuthOptions = {
         // now check if in our database
         // if not, update into our database
         try {
-          const res = await fetch("http://localhost:8080/api/auth/google", {
+          const res = await fetch("http://backend:8080/api/auth/google", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: profile.email, name: profile.name }),
@@ -91,7 +91,7 @@ const authOption: NextAuthOptions = {
       }
       if (profile?.email && !token.id) {
         const res = await fetch(
-          `http://localhost:8080/api/auth/by-email?email=${profile.email}`
+          `http://backend:8080/api/auth/by-email?email=${profile.email}`
         );
         const user = await res.json();
         console.log("setting session");
@@ -103,7 +103,7 @@ const authOption: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         console.log("setting session");
-        session.user.id = token.id;
+        session.user.id = token.id as string;
       }
       return session;
     },
