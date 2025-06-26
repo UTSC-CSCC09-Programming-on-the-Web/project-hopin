@@ -1,26 +1,160 @@
+/* Headings font */
+@import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
+/* Body font */
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
 @import "tailwindcss";
 
-/* :root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* FONTS */
+  --font-heading: "Raleway", sans-serif;
+  --font-body: "Source Sans 3", sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* COLORS */
+  --color-orange-100: #ffefe5;
+  --color-orange-200: #fdd0b4;
+  --color-orange-300: #faab7a;
+  --color-orange-400: #f39458;
+  --color-orange-500: #e76616;
+  --color-orange-600: #be510e;
+  --color-orange-700: #903c09;
+  --color-orange-800: #622804;
+  --color-orange-900: #4b1e02;
+
+  --color-gray-100: hsla(220, 16%, 96%, 1);
+  --color-gray-200: hsla(220, 16%, 80%, 1);
+  --color-gray-300: hsla(220, 14%, 70%, 1);
+  --color-gray-400: hsla(220, 12%, 60%, 1);
+  --color-gray-500: hsla(220, 12%, 45%, 1);
+  --color-gray-600: hsla(220, 15%, 30%, 1);
+  --color-gray-700: hsla(220, 17%, 23%, 1);
+  --color-gray-800: hsla(220, 20%, 15%, 1);
+  --color-gray-900: hsla(220, 22%, 10%, 1);
+
+  /* SHADOWS */
+  --inset-shadow-xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.24) inset;
+  --inset-shadow-sm: 0px 2px 4px 0px rgba(0, 0, 0, 0.15) inset;
+  --inset-shadow-md: 0px 3px 6px 0px rgba(0, 0, 0, 0.1) inset,
+    0px 10px 20px 0px rgba(0, 0, 0, 0.15) inset;
+  --inset-shadow-lg: 0px 5px 10px 0px rgba(0, 0, 0, 0.05) inset,
+    0px 15px 25px 0px rgba(0, 0, 0, 0.15) inset;
+  --inset-shadow-xl: 0px 20px 40px 0px rgba(0, 0, 0, 0.2) inset;
+
+  --shadow-xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.24),
+    0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0px 2px 4px 0px rgba(0, 0, 0, 0.15),
+    0px 3px 6px 0px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0px 3px 6px 0px rgba(0, 0, 0, 0.1),
+    0px 10px 20px 0px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0px 5px 10px 0px rgba(0, 0, 0, 0.05),
+    0px 15px 25px 0px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0px 20px 40px 0px rgba(0, 0, 0, 0.2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
+:root {
+  --button-orange-gradient: linear-gradient(
+    180deg,
+    #f39458 8%,
+    #e76616 43%,
+    #be510e 98.56%
+  );
+}
 
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
+  }
+
+  h1 {
+    @apply text-7xl font-medium leading-tight tracking-tighter;
+  }
+
+  h2 {
+    @apply text-6xl font-medium leading-tight tracking-tighter;
+  }
+
+  h3 {
+    @apply text-5xl font-normal leading-tight tracking-tighter;
+  }
+
+  h4 {
+    @apply text-4xl font-normal leading-tight tracking-tight;
+  }
+
+  h5 {
+    @apply text-3xl font-normal leading-tight tracking-tight;
+  }
+
+  h6 {
+    @apply text-2xl font-normal tracking-tight;
+  }
+
+  main {
+    @apply px-[10%] py-8;
+  }
+}
+
+@layer components {
+  /* Class used to give button-like elements interactive feel */
+  .btn-interaction {
+    @apply cursor-pointer hover:brightness-110 hover:shadow-md hover:scale-105 transition-all duration-200 ease-in-out active:scale-100 active:shadow-none active:inset-shadow-md;
+  }
+
+  .btn {
+    @apply inline-flex gap-2 text-lg shadow-xs items-center justify-center px-8 py-3 rounded-lg text-white border-none cursor-pointer hover:brightness-110 hover:shadow-sm transition-all duration-200 ease-in-out active:scale-100 active:shadow-none active:inset-shadow-md;
+  }
+
+  .img-border {
+    @apply outline outline-gray-200;
+  }
+
+  .text-xl {
+    @apply font-body text-xl;
+  }
+
+  .text-lg {
+    @apply font-body text-lg;
+  }
+
+  .text-base {
+    @apply font-body text-base text-gray-800;
+  }
+
+  .label {
+    @apply font-body text-sm text-gray-700;
+  }
+
+  .label-sm {
+    @apply font-body text-xs text-gray-700;
+  }
 }
