@@ -1,10 +1,19 @@
 "use client";
-
 import { useEffect, useRef } from "react";
 import "./Map.css";
 import { useMapContext } from "../../contexts/MapContext";
 
-export default function Map() {
-  const { mapContainer } = useMapContext();
-  return <div ref={mapContainer} id="map-container" />;
+type MapProps = {
+  className?: string;
+};
+
+export default function Map({ className }: MapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { attachToContainer } = useMapContext();
+
+  useEffect(() => {
+    attachToContainer(containerRef.current);
+  }, [attachToContainer]);
+
+  return <div ref={containerRef} id="map-container" className={className} />;
 }

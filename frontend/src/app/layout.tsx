@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { MapProvider } from "../../contexts/MapContext";
+import { MapDomainProvider } from "../../contexts/MapContext";
 import { Toaster } from "react-hot-toast";
+import { UserProvider } from "../../contexts/UserContext";
+import { GroupProvider } from "../../contexts/GroupContext";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,7 +19,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Toaster />
-        <MapProvider>{children}</MapProvider>
+        <UserProvider>
+          <GroupProvider>
+            <MapDomainProvider>{children}</MapDomainProvider>
+          </GroupProvider>
+        </UserProvider>
       </body>
     </html>
   );

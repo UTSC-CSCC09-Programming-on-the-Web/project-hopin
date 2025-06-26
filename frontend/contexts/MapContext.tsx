@@ -1,92 +1,74 @@
 "use client";
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { fetchMapboxDirections } from "../lib/directionsAPI";
 import { Coordinates, Route } from "../types/location";
-import {
-  drawRoute,
-  findClosestIndex,
-  showUserLocation,
-  updateRoute,
-} from "./MapContextService";
+import { drawRoute, updateRoute } from "./MapContextService";
+import useUsersOnMap from "../lib/hooks/useUsersOnMap";
 
 type MapContextType = {
-  location: Coordinates | undefined;
-  map: React.RefObject<mapboxgl.Map | null>;
-  mapContainer: React.RefObject<HTMLDivElement | null>;
+  map: mapboxgl.Map | null;
+  attachToContainer: (el: HTMLDivElement | null) => void;
+  centerOnLocation: (location: Coordinates) => void;
   createRoute: (start: Coordinates, end: Coordinates) => void;
 };
 
-const MapContext = createContext<MapContextType>({
-  location: undefined,
-  map: { current: null },
-  mapContainer: { current: null },
-  createRoute: () => {
-    console.error("createRoute function is not implemented");
-  },
-});
+const MapContext = createContext<MapContextType | undefined>(undefined);
 
-export const MapProvider: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
-  const [originalRoute, setOriginalRoute] = useState<Route | null>(null);
+export const MapDomainProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  // const [originalRoute, setOriginalRoute] = useState<Route | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
   const [route, setRoute] = useState<Route | null>(null);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [location, setLocation] = useState<Coordinates | undefined>(undefined);
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
 
-  // Initialize Mapbox map
-  useEffect(() => {
-    if (map.current || !mapContainer.current) return;
+  const attachToContainer = (el: HTMLDivElement | null) => {
+    if (!el) return;
 
-    map.current = new mapboxgl.Map({
-      accessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
-      style: "mapbox://styles/mapbox/streets-v12",
-      container: mapContainer.current,
-      center: [-79.3832, 43.6532],
-      zoom: 12,
+    // First-time mount
+    if (!mapRef.current) {
+      mapRef.current = new mapboxgl.Map({
+        accessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN!,
+        container: el,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [-79.3832, 43.6532],
+        zoom: 12,
+      });
+    } else {
+      const currentContainer = mapRef.current.getContainer();
+      if (el.contains(currentContainer)) return;
+
+      el.innerHTML = "";
+      el.appendChild(currentContainer);
+      mapRef.current.resize();
+    }
+  };
+
+  const centerOnLocation = (location: Coordinates) => {
+    if (!mapRef.current) {
+      console.warn("Map is not initialized");
+      return;
+    }
+    mapRef.current.flyTo({
+      center: [location.longitude, location.latitude],
+      zoom: 14,
+      essential: true, // This ensures the animation is not interrupted
     });
+  };
 
-    return () => map.current?.remove();
-  }, []);
+  // Hook to manage user markers on the map
+  useUsersOnMap(mapRef.current);
 
-  // Subscribe to location updates
+  // Redraw route when updated
   useEffect(() => {
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setLocation({ latitude, longitude });
-      },
-      (err) => {
-        toast.error(`Error getting location: ${err.message}`);
-        return navigator.geolocation.clearWatch(id);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 1000, // cache position for 1 second
-        timeout: 5000, // revalidate position after 5 seconds
-      }
-    );
-    return () => navigator.geolocation.clearWatch(id);
-  }, []);
-
-  useEffect(() => {
-    showUserLocation(map, location);
-    setRoute(updateRoute(originalRoute, location));
-  }, [location]);
-
-  // Draw route on the map when route state changes
-  useEffect(() => {
-    if (!route || !map.current) return;
-
-    drawRoute(route, map.current, route.end_location);
+    if (!route || !mapRef.current) return;
+    drawRoute(route, mapRef.current, route.end_location);
   }, [route]);
 
   const createRoute = (start: Coordinates, end: Coordinates) => {
-    if (!map.current) {
+    if (!mapRef.current) {
       console.warn("Map is not initialized");
       return;
     }
@@ -98,10 +80,9 @@ export const MapProvider: React.FC<{
           start_location: start,
           end_location: end,
         };
-        setOriginalRoute(createdRoute);
+        // setOriginalRoute(createdRoute);
         setRoute(createdRoute);
       })
-      // TODO: save route to database
       .catch((error: any) => {
         console.error("Error fetching route:", error);
         toast.error("Failed to fetch route. Please try again.");
@@ -109,7 +90,14 @@ export const MapProvider: React.FC<{
   };
 
   return (
-    <MapContext.Provider value={{ location, map, mapContainer, createRoute }}>
+    <MapContext.Provider
+      value={{
+        map: mapRef.current,
+        attachToContainer,
+        centerOnLocation,
+        createRoute,
+      }}
+    >
       {children}
     </MapContext.Provider>
   );
@@ -118,9 +106,7 @@ export const MapProvider: React.FC<{
 export const useMapContext = () => {
   const context = useContext(MapContext);
   if (!context) {
-    throw new Error(
-      "useLocationContext must be used within a LocationProvider"
-    );
+    throw new Error("useMapContext must be used within a MapDomainProvider");
   }
   return context;
 };

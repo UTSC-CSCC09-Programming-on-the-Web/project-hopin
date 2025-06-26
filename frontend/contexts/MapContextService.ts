@@ -2,34 +2,6 @@ import { Coordinates, Route } from "../types/location";
 import mapboxgl from "mapbox-gl";
 import { Position } from "geojson";
 
-export const showUserLocation = (
-  map: React.RefObject<mapboxgl.Map | null>,
-  location: Coordinates | undefined
-) => {
-  if (!map.current || !location) return;
-
-  // Clear old markers
-  document.querySelectorAll(".user-marker").forEach((m) => m.remove());
-
-  // Create marker element
-  const el = document.createElement("div");
-  el.className = "user-marker flex flex-col items-center justify-center gap-1";
-
-  // TODO: Replace with user's profile picture when available
-  el.innerHTML = `
-      <div class="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg">
-      <img src="https://www.operationkindness.org/wp-content/uploads/blog-kitten-nursery-operation-kindness.jpg" class="w-full h-full object-cover" />
-      </div>
-      <span class="label-sm bg-white text-gray-900 px-1 shadow-xs rounded">You</span>
-    `;
-
-  new mapboxgl.Marker(el)
-    .setLngLat([location.longitude, location.latitude])
-    .addTo(map.current);
-
-  map.current.setCenter([location.longitude, location.latitude]);
-};
-
 export const drawRoute = (
   route: Route,
   map: mapboxgl.Map,

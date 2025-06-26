@@ -61,6 +61,15 @@
   );
 }
 
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 html,
 body {
   height: 100%;
