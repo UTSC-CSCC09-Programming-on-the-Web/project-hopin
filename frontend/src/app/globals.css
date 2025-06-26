@@ -158,3 +158,9 @@ body {
     @apply font-body text-xs text-gray-700;
   }
 }
+button {
+  cursor: pointer;
+}
+button::hover {
+  cursor: pointer;
+}
