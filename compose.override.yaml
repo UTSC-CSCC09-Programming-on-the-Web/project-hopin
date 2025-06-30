@@ -4,7 +4,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     env_file:
-      - ./frontend/.env.local
+      - ./frontend/.env
     ports:
       - "3000:3000"
     develop:
@@ -31,7 +31,7 @@ services:
           target: /app
         - action: rebuild
           path: ./backend/package.json
-    command: sh -c "npx prisma generate && npx prisma migrate reset --force && npm run dev"
+    command: sh -c "npx prisma migrate deploy && npm run dev"
 
   postgres:
     environment:
