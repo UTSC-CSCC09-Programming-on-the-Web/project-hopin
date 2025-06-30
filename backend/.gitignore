@@ -1,8 +1,9 @@
 # Dependencies
-/node_modules/*
+node_modules/
 npm-debug.log
 yarn-debug.log
 yarn-error.log
+.pnpm-debug.log
 
 # Environment variables
 .env
@@ -11,25 +12,47 @@ yarn-error.log
 .env.test.local
 .env.production.local
 
+# Build output
+dist/
+build/
+out/
+
+# Logs
+logs/
+*.log
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Temp files
+.tmp/
+.temp/
+
+# Debug
+.node-debug/
+
 # Uploads directory - keep directory structure but ignore contents
 /uploads/*
 !/uploads/.gitkeep
 !/uploads/avatars
 /uploads/avatars/*
 !/uploads/avatars/.gitkeep
-
-# Testing files
-/coverage
-cookies.txt
-
-# Build files
-/dist
-/build
-
-# Logs
-logs
-*.log
-
-bruno-hopin/*
 
 /generated/prisma

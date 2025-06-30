@@ -1,5 +1,6 @@
 // import { getUserSession } from "@/lib/session";
 "use client";
+
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import HopinLogo from "./ui/hopin-logo";
@@ -16,8 +17,8 @@ export default function SignIn() {
         redirect: true,
         callbackUrl: "/home",
       });
-    } catch (error) {
-      throw new Error((error as any)?.error || "Failed to sign in");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to sign in");
     }
   };
 
