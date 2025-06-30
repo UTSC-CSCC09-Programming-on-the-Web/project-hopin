@@ -1,5 +1,5 @@
 # Dependencies
-/node_modules
+/node_modules/*
 npm-debug.log
 yarn-debug.log
 yarn-error.log
@@ -30,6 +30,6 @@ cookies.txt
 logs
 *.log
 
-/bruno-hopin/*
-node_modules
+bruno-hopin/*
+
 /generated/prisma
