@@ -8,13 +8,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Coordinates {
+  id              Int     @id @default(autoincrement())
+  name            String?
+  latitude        Float
+  longitude       Float
+
+  userLocation    User[]  @relation("userLocation")
+  userDestination User[]  @relation("userDestination")
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  password  String?
-  homeAddr  String?
+  id            String        @id @default(uuid())
+  email         String        @unique
+  password      String
+  name          String
+  avatar        String?
+
+  locationId    Int
+  destinationId Int
+  location      Coordinates?  @relation("userLocation", fields: [locationId], references: [id], onDelete: Cascade)
+  destination   Coordinates?  @relation("userDestination", fields: [destinationId], references: [id], onDelete: Cascade)
+
+  isReady       Boolean
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
