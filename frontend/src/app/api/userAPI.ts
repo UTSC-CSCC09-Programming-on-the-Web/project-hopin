@@ -1,3 +1,5 @@
+import { Coordinates } from "../../../types/location";
+
 const AUTH_API_URL = "http://localhost:8080/api/auth";
 const USER_API_URL = "http://localhost:8080/api/users";
 
@@ -19,7 +21,7 @@ const decodeJWT = (token: string): { id: number; email: string } | null => {
 };
 
 // Helper function to validate if a user exists in the database
-const validateUserExists = async (userId: number): Promise<boolean> => {
+const validateUserExists = async (userId: string): Promise<boolean> => {
   try {
     const response = await fetch(`${USER_API_URL}/${userId}`);
     return response.ok;
@@ -89,55 +91,91 @@ const getOrRefreshToken = async (userEmail: string): Promise<string | null> => {
   }
 };
 
+const getAuthenticatedUserId = async(userEmail: string) => {
+  const token = await getOrRefreshToken(userEmail);
+  if (!token) {
+    throw new Error(
+      "Authentication token not available. Please sign in again.",
+    );
+  }
+  let userId;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    userId = payload.id;
+    console.log("Decoded user ID from token:", userId);
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    throw new Error("Invalid authentication token. Please sign in again.");
+  }
+  return [token, userId]
+}
+
 // Auth-related API functions
+let nextCursor: null = null;
 export const userApi = {
-  checkAuthStatus: async (userEmail?: string) => {
-    let headers: Record<string, string> = {};
 
-    // If userEmail is provided, try to get/refresh token
-    if (userEmail) {
-      const token = await getOrRefreshToken(userEmail);
-      if (token) {
-        headers = { Authorization: `Bearer ${token}` };
-      }
-    } else {
-      // Fallback to existing token in localStorage
-      headers = getAuthHeader();
+  // Cursor-based pagination
+  getAllUsers: async(take: number = 10, groupId?: string) => {
+    let url = `${USER_API_URL}?limit=${take}`;
+    if (nextCursor) {
+      url += `&cursor=${nextCursor}`;
     }
+    if (groupId) {
+      url += `&cursor=${groupId}`;
+    }
+    return fetch(url, { 
+        method: "GET",
+        credentials: "include", 
+      }).then((res) => {
+        if (!res.ok) {
+          console.error("Failed to fetch users");
+          throw new Error("Unknown error fetching users");
+        }
+        return res.json()
+      }).then((data) => {
+        nextCursor = data.nextCursor;
+        const users = data.users || [];
+        console.log(users);
+        return {
+          success: true,
+          users: users,
+          nextCursor: data.nextCursor,
+        };
+      })
+      .catch((error) => {
+        console.error("Error fetching users:", error);
+        return {
+          success: false,
+          message: error.message || "Error loading users.",
+          users: [],
+          nextCursor: null,
+          total: 0,
+        };
+      });
+  },
 
-    return fetch(`${AUTH_API_URL}/auth-status`, {
+  getUserById: async(userId: string) => {
+    return fetch(`${USER_API_URL}/${userId}`, {
       method: "GET",
-      headers: headers,
     })
       .then((res) => {
-        if (res.status === 401) {
-          return {
-            authenticated: false,
-            userData: null,
-            status: 401,
-            message: "Not authenticated",
-          };
+        if (!res.ok) {
+          console.error("Failed to get user:", res.status, res.statusText);
+          return res.text().then((text) => {
+            console.error("Response body:", text);
+            let errorMessage = `Failed to get user: ${res.status} ${res.statusText} - ${text}`;
+            throw new Error(errorMessage);
+          });
         }
-
-        if (!res.ok) throw new Error("Auth status check failed");
         return res.json();
       })
       .then((data) => {
-        return {
-          authenticated: data.authenticated || false,
-          userData: data.userId ? { id: data.userId } : null,
-          status: 200,
-          message: "Request successful",
-        };
+        console.log("Get user by id response:", data);
+        return data;
       })
       .catch((error: Error) => {
-        console.error("Auth check error:", error);
-        return {
-          authenticated: false,
-          userData: null,
-          status: 500,
-          message: error.message || "Authentication check failed",
-        };
+        console.error("Get user by id error:", error);
+        throw error;
       });
   },
 
@@ -179,70 +217,96 @@ export const userApi = {
       });
   },
 
-  updateUser: async (userData: FormData, userEmail: string) => {
-    const token = await getOrRefreshToken(userEmail);
-    if (!token) {
-      throw new Error(
-        "Authentication token not available. Please sign in again.",
-      );
-    }
+  updateProfile: async (userEmail: string, userData: FormData) => {
+    return getAuthenticatedUserId(userEmail)
+      .then(([token, userId]) => {
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+        return fetch(`${USER_API_URL}/${userId}`, {
+            method: "PATCH",
+            headers: headers,
+            body: userData,
+          })
+          .then((res) => {
+            if (!res.ok) {
+              console.error("Failed to update user:", res.status, res.statusText);
+              // Try to get error message from response body
+              return res.text().then((text) => {
+                console.error("Response body:", text);
+                let errorMessage = `Failed to update user: ${res.status} ${res.statusText}`;
 
-    // Decode the token to get the actual user ID
-    let userId;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      userId = payload.id;
-      console.log("Decoded user ID from token:", userId);
-    } catch (error) {
-      console.error("Error decoding token:", error);
-      throw new Error("Invalid authentication token. Please sign in again.");
-    }
+                if (res.status === 404) {
+                  errorMessage =
+                    "User not found. This may be due to a stale authentication session. Please sign out and sign in again.";
+                } else if (res.status === 403) {
+                  errorMessage =
+                    "You are not authorized to update this profile. Please make sure you are signed in as the correct user.";
+                } else if (text) {
+                  errorMessage += ` - ${text}`;
+                }
 
-    const headers = {
-      Authorization: `Bearer ${token}`,
-    };
-
-    return fetch(`${USER_API_URL}/${userId}`, {
-      method: "PATCH",
-      headers: headers,
-      body: userData,
-    })
-      .then((res) => {
-        if (!res.ok) {
-          console.error("Failed to update user:", res.status, res.statusText);
-          // Try to get error message from response body
-          return res.text().then((text) => {
-            console.error("Response body:", text);
-            let errorMessage = `Failed to update user: ${res.status} ${res.statusText}`;
-
-            if (res.status === 404) {
-              errorMessage =
-                "User not found. This may be due to a stale authentication session. Please sign out and sign in again.";
-            } else if (res.status === 403) {
-              errorMessage =
-                "You are not authorized to update this profile. Please make sure you are signed in as the correct user.";
-            } else if (text) {
-              errorMessage += ` - ${text}`;
+                throw new Error(errorMessage);
+              });
             }
-
-            throw new Error(errorMessage);
+            return res.json();
+          })
+          .then((data) => {
+            console.log("Update user response:", data);
+            return data;
+          })
+          .catch((error: Error) => {
+            console.error("Update user error:", error);
+            throw error;
           });
-        }
+      }) 
+  },
+
+  updateLocationOrDestination: async (
+    userId: string, 
+    field: "location" | "destination", 
+    coordinates: Coordinates
+  ) => {
+    return fetch(`${USER_API_URL}/${userId}/position?field=${field}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(coordinates),
+    }).then((res) => {
+      if (!res.ok) {
+        console.error("Failed to update user:", res.status, res.statusText);
         return res.json();
-      })
-      .then((data) => {
-        console.log("Update user response:", data);
-        return data;
-      })
-      .catch((error: Error) => {
-        console.error("Update user error:", error);
-        throw error;
-      });
+      }
+      return res.json();
+    }).then(data => {
+      console.log(`Updated user ${field}:`, data[field]);
+      return data;
+    })
+  },
+
+  updateReadyStatus: async (userId: string, isReady: boolean) => {
+    return fetch(`${USER_API_URL}/${userId}/isReady`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ isReady }),
+    }).then((res) => {
+      if (!res.ok) {
+        console.error("Failed to update user:", res.status, res.statusText);
+        return res.json();
+      }
+      return res.json();
+    }).then(data => {
+      console.log("Updated user ready status: ", data.isReady);
+      return data;
+    })
   },
 
   signOut: async () => {
     try {
-      // Call backend signout endpoint
+      // Call localhost signout endpoint
       const res = await fetch(`${AUTH_API_URL}/signout`, {
         method: "POST",
         headers: {
@@ -253,11 +317,11 @@ export const userApi = {
 
       if (!res.ok) {
         console.warn(
-          "Backend signout failed, but continuing with client cleanup",
+          "localhost signout failed, but continuing with client cleanup",
         );
       }
     } catch (error) {
-      console.warn("Backend signout error:", error);
+      console.warn("localhost signout error:", error);
     }
 
     // Client-side cleanup - Clear ALL authentication tokens and sessions
@@ -284,7 +348,7 @@ export const userApi = {
     return { message: "Signed out successfully" };
   },
 
-  deleteUser: async (userId: number, userEmail: string) => {
+  deleteUser: async (userId: string, userEmail: string) => {
     const token = await getOrRefreshToken(userEmail);
     if (!token) {
       throw new Error(

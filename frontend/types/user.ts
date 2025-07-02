@@ -5,11 +5,11 @@ export type User = {
   id: string;
   email?: string;
   // Exclude password for security reasons
-  name: string;
+  name?: string;
   avatar?: string;
   location?: Coordinates;
   destination?: Coordinates; // Where the user is going (if known)
-  isReady: boolean;
+  isReady?: boolean;
   createdAt?: Date,
   updatedAt?: Date
 };

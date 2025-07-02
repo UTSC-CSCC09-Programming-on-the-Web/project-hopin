@@ -1,29 +1,15 @@
 import "dotenv/config";
 import express from "express";
-import bodyParser from "body-parser";
 import cors from "cors";
 import session from "express-session";
 import { authRouter } from "./routes/auth-router.js";
 import { userRouter } from "./routes/user-router.js";
 import corsOptions from "./utils/corsOptions.js";
-// import { prisma } from "./lib/prisma.js";
-// import bcrypt from "bcrypt";
-// import session from "express-session";
-// import { authRouter } from "./routes/user-router.js";
 
 const PORT = 8080;
 export const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(cors(corsOptions));
-
-// Middleware
-// app.use(bodyParser.json());
-// app.use(
-//   cors({
-//     origin: "http://localhost:3000",
-//     credentials: true,
-//   }),
-// );
 app.use(
   session({
     secret: process.env.SECRET_KEY || "hopinc09",
@@ -32,6 +18,11 @@ app.use(
   }),
 );
 app.use(express.static("static"));
+
+app.use((req, res, next) => {
+  console.log(`[Express] ${req.method} ${req.url}`);
+  next();
+});
 
 // app.use("/api/here", router);
 app.use("/api/auth", authRouter);

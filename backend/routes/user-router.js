@@ -4,7 +4,7 @@ import { authenticateToken } from "../middleware/auth.js";
 import bcrypt from "bcrypt";
 import multer from "multer";
 import fs from "fs";
-import path from "path";
+import path, { parse } from "path";
 import express from "express";
 
 export const userRouter = Router();
@@ -45,10 +45,50 @@ const upload = multer({
 userRouter.use("/avatars", express.static(avatarDir));
 
 // Get all users
-userRouter.get("/", authenticateToken, async (req, res) => {
+userRouter.get("/", async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
-    res.json(users);
+    const { take = 10, cursor, groupId } = req.query;
+    const parsedTake = parseInt(take);
+    if (isNaN(parsedTake) || parsedTake < 1 || parsedTake > 100) {
+      return res.status(400).json({ error: "Invalid pagination parameters" });
+    }
+
+    let query = {
+      take: take,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    }
+
+    if (cursor) {
+      query = {
+        ...query,
+        skip: 1,
+        cursor: {
+          id: cursor,
+        },
+      };
+    }
+
+    if (groupId) {
+      query = {
+        ...query, 
+        relationLoadStrategy: 'join',
+        include: {
+          galleryId: true,
+        }
+      }
+    }
+    const users = await prisma.user.findMany(query);
+    console.log(users);
+    let nextCursor = null;
+    if (users.length > take) {
+      nextCursor = users[take-1].id;
+    }
+    res.status(200).json({
+      users, 
+      nextCursor
+    });
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Failed to fetch users" });
@@ -83,7 +123,7 @@ userRouter.get("/by-email", authenticateToken, async (req, res) => {
 userRouter.get("/:id", async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(req.params.id) },
+      where: { id: req.params.id },
     });
 
     if (!user) {
@@ -102,9 +142,11 @@ userRouter.patch(
   authenticateToken,
   upload.single("avatar"),
   async (req, res) => {
+    console.log("Hi");
     try {
-      const userId = parseInt(req.params.id);
-      if (isNaN(userId)) {
+      const userId = req.params.id;
+      console.log(userId);
+      if (!userId) {
         return res.status(400).json({ error: "Invalid user ID format" });
       }
 
@@ -120,16 +162,15 @@ userRouter.patch(
             .json({ error: "You can only update your own profile" });
         }
 
-        const { name, password, avatar, homeAddr } = req.body;
+        const { name, password, avatar } = req.body;
         const updateData = {};
         if (name) updateData.name = name;
         if (password) {
           const salt = bcrypt.genSaltSync(10);
           updateData.password = bcrypt.hashSync(password, salt);
         }
-        if (homeAddr) updateData.homeAddr = homeAddr;
 
-        // Copilot (line 230-240)
+        // Copilot (line 136-145)
         // Prompt: "When isEditing=true (on frontend/src/app/profile/page.tsx), I want the image area to be clickable to upload a new file"
         if (req.file) {
           const avatarUrl = `http://localhost:8080/api/users/avatars/${req.file.filename}`;
@@ -146,12 +187,8 @@ userRouter.patch(
           const updatedUser = await prisma.user.update({
             where: { id: user.id },
             data: updateData,
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true,
-              homeAddr: true,
+            omit: {
+              password: true,
             },
           });
 
@@ -163,7 +200,11 @@ userRouter.patch(
             name: user.name,
             email: user.email,
             avatar: user.avatar,
-            homeAddr: user.homeAddr,
+            location: user.location,
+            destination: user.destination,
+            isReady: user.isReady,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
           };
           return res.json(currentUser);
         }
@@ -177,11 +218,50 @@ userRouter.patch(
   },
 );
 
+// Update user location or destination
+userRouter.patch("/:id/position", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const field = req.query.field;
+
+    if (!userId || (field !== "location" && field !== "destination")) {
+      return res.status(400).json({ error: "Invalid userId or field"});
+    }
+
+    const { latitude, longitude } = req.body;
+    if (!latitude || !longitude ) {
+      return res.status(400).json({ error: "Latitude and longitude are required" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { 
+        [field]: {
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+        } 
+      }
+    })
+   
+    const { password, ...safeUser } = updatedUser;
+    return res.status(200).json(safeUser);
+  } catch (error) {
+    console.error("Error updating location: ", error);
+    res.status(500).json({ error: "Failed to update location" });
+  }
+})
+
+
 // Delete a user
 userRouter.delete("/:id", authenticateToken, async (req, res) => {
   try {
     const deleteUser = await prisma.user.findUnique({
-      where: { id: parseInt(req.params.id) },
+      where: { id: req.params.id },
     });
 
     if (deleteUser) {

@@ -75,7 +75,7 @@ const updateUserMarkers = (
       <div class="relative rounded-full overflow-hidden border-2 border-white ${
         isCurrentUser ? "w-12 h-12 shadow-lg" : "w-10 h-10 shadow-md"
       }">
-      <img src="https://www.operationkindness.org/wp-content/uploads/blog-kitten-nursery-operation-kindness.jpg" class="w-full h-full object-cover" />
+      <img src="${user.avatar}" />
       </div>
       <span class="label-sm bg-white text-gray-900 px-1 shadow-xs rounded">${
         isCurrentUser ? "You" : user.name

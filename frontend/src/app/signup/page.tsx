@@ -2,7 +2,7 @@
 "use client";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { signup } from "@/lib/api/auth";
+import { signup } from "../api/authAPI";
 export default function SignUp() {
   const handleSignUp = async (formData: FormData) => {
     const name = formData.get("name") as string;

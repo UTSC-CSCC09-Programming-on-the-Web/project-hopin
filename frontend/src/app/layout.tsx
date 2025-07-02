@@ -20,13 +20,18 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Toaster />
-        <UserProvider>
+        <SessionWrapper>
+          <UserProvider>
           <GroupProvider>
             <MapDomainProvider>
-              <SessionWrapper>{children}</SessionWrapper>
+              {/* <SessionWrapper> */}
+                {children}
+              {/* </SessionWrapper> */}
             </MapDomainProvider>
           </GroupProvider>
         </UserProvider>
+        </SessionWrapper>
+        
       </body>
     </html>
   );

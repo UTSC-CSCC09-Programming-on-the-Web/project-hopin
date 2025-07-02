@@ -91,7 +91,7 @@ const authOption: NextAuthOptions = {
       }
       if (profile?.email && !token.id) {
         const res = await fetch(
-          `http://backend:8080/api/auth/by-email?email=${profile.email}`
+          `http://backend:8080/api/users/by-email?email=${profile.email}`
         );
         const user = await res.json();
         console.log("setting session");
@@ -104,6 +104,10 @@ const authOption: NextAuthOptions = {
       if (token) {
         console.log("setting session");
         session.user.id = token.id as string;
+      }
+      if (session.user) {
+        session.user.avatar = session.user.image;
+        delete session.user.image;
       }
       return session;
     },

@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
-import { Group } from "../types/user";
+import { createContext, useContext, useState, useEffect } from "react";
+import { User, Group } from "../types/user";
 import { useUserContext } from "./UserContext";
+import { userApi } from "@/app/api/userAPI";
 
 type GroupContextType = {
   group: Group | null;
@@ -18,6 +19,23 @@ export const GroupProvider: React.FC<{
 }> = ({ children }) => {
   const { currentUser } = useUserContext();
   const [group, setGroup] = useState<Group | null>(null);
+  const [members, setMembers] = useState<User[]>([]);
+
+  // Fetch members of the group when component mounts
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        userApi.getAllUsers()
+          .then((res) => {
+            return res.users.filter(user => { user.id !== currentUser?.id });
+          }).then((members) => { setMembers(members) })
+      } catch (error) {
+        console.error("Failed to fetch members.");
+      }
+    }
+
+    if (currentUser) fetchMembers();
+  }, [currentUser]);
 
   const createGroup = () => {
     if (!currentUser) {
@@ -43,7 +61,10 @@ export const GroupProvider: React.FC<{
         isReady: true,
       },
       members: [
-        currentUser,
+        {
+          ...currentUser,
+          isReady: true,
+        },
         // TODO: Sample members, replace with actual API call to fetch members
         {
           id: "1",

@@ -3,15 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { userApi } from "../api/users";
-
-type User = {
-  id: number;
-  name?: string;
-  email: string;
-  avatar?: string;
-  homeAddr?: string;
-};
+import { User } from "../../../types/user";
+import { userApi } from "../api/userAPI";
 
 function SignOut() {
   return Promise.all([
@@ -37,7 +30,7 @@ function SignOut() {
     });
 }
 
-function DeleteAccount(userId: number, userEmail: string) {
+function DeleteAccount(userId: string, userEmail: string) {
   if (
     confirm(
       "Are you sure you want to delete your account? This action cannot be undone.",
@@ -68,7 +61,6 @@ function UserProfile() {
     name: "",
     email: "",
     avatar: null as File | string | null,
-    homeAddr: "",
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -95,11 +87,10 @@ function UserProfile() {
 
       // Use session data directly
       const sessionUser = {
-        id: parseInt(session.user.id as string),
+        id: session.user.id as string,
         name: session.user.name || "",
         email: session.user.email || "",
         avatar: "", // Will be loaded separately if needed
-        homeAddr: "", // Will be loaded separately if needed
       };
 
       setUser(sessionUser);
@@ -107,7 +98,6 @@ function UserProfile() {
         name: sessionUser.name,
         email: sessionUser.email,
         avatar: sessionUser.avatar,
-        homeAddr: sessionUser.homeAddr,
       });
       setError("");
       setLoading(false);
@@ -148,7 +138,7 @@ function UserProfile() {
     }
 
     userApi
-      .updateUser(data, userEmail)
+      .updateProfile(userEmail, data)
       .then((updatedUser) => {
         setUser(updatedUser);
         // Reset form data to the updated user data (map backend fields to frontend fields)
@@ -156,7 +146,6 @@ function UserProfile() {
           name: updatedUser.name || "",
           email: updatedUser.email || "",
           avatar: updatedUser.avatar || "",
-          homeAddr: updatedUser.homeAddr || "",
         });
         // Clear image preview
         setImagePreview(null);
@@ -185,7 +174,6 @@ function UserProfile() {
         name: user.name || "",
         email: user.email || "",
         avatar: user.avatar || "",
-        homeAddr: user.homeAddr || "",
       });
       // Clear any image preview
       setImagePreview(null);
@@ -349,20 +337,6 @@ function UserProfile() {
                     disabled
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Home Address
-                  </label>
-                  <input
-                    type="text"
-                    name="homeAddr"
-                    value={formData.homeAddr}
-                    onChange={(e) =>
-                      setFormData({ ...formData, homeAddr: e.target.value })
-                    }
-                    className="w-full p-2 border rounded"
-                  />
-                </div>
                 {/* Copilot (lines 323-330)
                   Prompt: "When isEditing=true, I want the image area to be clickable to upload a new file" */}
                 {/* If we have an existing avatar URL and no new file is selected, include it as a hidden field */}
@@ -399,10 +373,6 @@ function UserProfile() {
             <h2 className="text-2xl font-bold">{user ? user.name : ""}</h2>
             <p>
               <strong>Email:</strong> {user ? user.email : ""}
-            </p>
-            <p>
-              <strong>Home Address:</strong>{" "}
-              {user && user.homeAddr ? user.homeAddr : "Not provided"}
             </p>
             <div className="mt-6 space-x-4">
               <button
