@@ -135,7 +135,6 @@ export const userApi = {
       }).then((data) => {
         nextCursor = data.nextCursor;
         const users = data.users || [];
-        console.log(users);
         return {
           success: true,
           users: users,

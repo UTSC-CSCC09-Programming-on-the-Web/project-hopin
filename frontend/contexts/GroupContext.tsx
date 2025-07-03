@@ -27,8 +27,15 @@ export const GroupProvider: React.FC<{
       try {
         userApi.getAllUsers()
           .then((res) => {
-            return res.users.filter(user => { user.id !== currentUser?.id });
-          }).then((members) => { setMembers(members) })
+            return res.users;
+          }).then((members) => { 
+            // For testing purposes
+            members.forEach((member) => {
+              userApi.updateReadyStatus(member.id, true);
+            });
+            setMembers(members); 
+            console.log(members);
+          })
       } catch (error) {
         console.error("Failed to fetch members.");
       }
@@ -36,6 +43,8 @@ export const GroupProvider: React.FC<{
 
     if (currentUser) fetchMembers();
   }, [currentUser]);
+
+  
 
   const createGroup = () => {
     if (!currentUser) {
@@ -60,25 +69,26 @@ export const GroupProvider: React.FC<{
         location: { longitude: -79.3822, latitude: 43.6532 },
         isReady: true,
       },
-      members: [
-        {
-          ...currentUser,
-          isReady: true,
-        },
-        // TODO: Sample members, replace with actual API call to fetch members
-        {
-          id: "1",
-          name: "John Doe",
-          location: { longitude: -79.3822, latitude: 43.6532 },
-          isReady: true,
-        },
-        {
-          id: "2",
-          name: "Jessica Smith",
-          location: { longitude: -118.2437, latitude: 34.0522 },
-          isReady: true,
-        },
-      ],
+      members: members,
+      // members: [
+      //   {
+      //     ...currentUser,
+      //     isReady: true,
+      //   },
+      //   // TODO: Sample members, replace with actual API call to fetch members
+      //   {
+      //     id: "1",
+      //     name: "John Doe",
+      //     location: { longitude: -79.3822, latitude: 43.6532 },
+      //     isReady: true,
+      //   },
+      //   {
+      //     id: "2",
+      //     name: "Jessica Smith",
+      //     location: { longitude: -118.2437, latitude: 34.0522 },
+      //     isReady: true,
+      //   },
+      // ],
     });
   };
 

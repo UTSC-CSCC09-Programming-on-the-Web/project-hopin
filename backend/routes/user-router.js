@@ -256,6 +256,37 @@ userRouter.patch("/:id/position", async (req, res) => {
   }
 })
 
+// Update user ready status
+userRouter.patch("/:id/isReady", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { isReady } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "Invalid userId"});
+    }
+
+    if (isReady === null ) {
+      return res.status(400).json({ error: "isReady takes either true or false" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isReady },
+    })
+   
+    const { password, ...safeUser } = updatedUser;
+    return res.status(200).json(safeUser);
+  } catch (error) {
+    console.error("Error updating location: ", error);
+    res.status(500).json({ error: "Failed to update location" });
+  }
+})
 
 // Delete a user
 userRouter.delete("/:id", authenticateToken, async (req, res) => {
