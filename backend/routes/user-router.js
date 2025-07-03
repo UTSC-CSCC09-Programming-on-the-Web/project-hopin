@@ -10,7 +10,7 @@ import express from "express";
 export const userRouter = Router();
 
 // Make sure the uploads directory exists
-const avatarDir = "uploads/avatars";
+const avatarDir = "api/users/avatars";
 if (!fs.existsSync(avatarDir)) {
   fs.mkdirSync(avatarDir, { recursive: true });
 }
@@ -142,7 +142,6 @@ userRouter.patch(
   authenticateToken,
   upload.single("avatar"),
   async (req, res) => {
-    console.log("Hi");
     try {
       const userId = req.params.id;
       console.log(userId);
@@ -162,51 +161,42 @@ userRouter.patch(
             .json({ error: "You can only update your own profile" });
         }
 
-        const { name, password, avatar } = req.body;
+        const { name, password } = req.body;
         const updateData = {};
         if (name) updateData.name = name;
         if (password) {
           const salt = bcrypt.genSaltSync(10);
           updateData.password = bcrypt.hashSync(password, salt);
         }
-
-        // Copilot (line 136-145)
-        // Prompt: "When isEditing=true (on frontend/src/app/profile/page.tsx), I want the image area to be clickable to upload a new file"
+        let avatar = null;
         if (req.file) {
-          const avatarUrl = `http://localhost:8080/api/users/avatars/${req.file.filename}`;
-          updateData.avatar = avatarUrl;
-        } else if (avatar && typeof avatar === "string" && avatar.trim()) {
-          console.log("Using avatar URL from form:", avatar);
-          // Only update if it's a valid URL or path
-          if (avatar.startsWith("/") || avatar.startsWith("http")) {
-            updateData.avatar = avatar;
-          }
+          avatar = `http://localhost:8080/${req.file.path}`;
+          updateData.avatar = avatar;
         }
 
         if (Object.keys(updateData).length > 0) {
           const updatedUser = await prisma.user.update({
             where: { id: user.id },
             data: updateData,
-            omit: {
-              password: true,
-            },
           });
-
-          return res.json(updatedUser);
+          console.log(updatedUser);
+          const { password, ...safeUser } = updatedUser;
+          return res.json(safeUser);
         } else {
           // If no updates were made, return the current user data
-          const currentUser = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            avatar: user.avatar,
-            location: user.location,
-            destination: user.destination,
-            isReady: user.isReady,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-          };
-          return res.json(currentUser);
+          // const currentUser = {
+          //   id: user.id,
+          //   name: user.name,
+          //   email: user.email,
+          //   avatar: user.avatar,
+          //   location: user.location,
+          //   destination: user.destination,
+          //   isReady: user.isReady,
+          //   createdAt: user.createdAt,
+          //   updatedAt: user.updatedAt,
+          // };
+          const { password, ...safeUser } = user;
+          return res.json(safeUser);
         }
       } else {
         return res.status(404).json({ error: "User not found" });

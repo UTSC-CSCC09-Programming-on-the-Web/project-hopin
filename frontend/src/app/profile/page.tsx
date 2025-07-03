@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { User } from "../../../types/user";
 import { userApi } from "../api/userAPI";
+import { UserCircle2 } from "lucide-react";
 
 function SignOut() {
   return Promise.all([
@@ -63,6 +64,7 @@ function UserProfile() {
     avatar: null as File | string | null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -83,14 +85,14 @@ function UserProfile() {
     // User is authenticated via NextAuth
     if (status === "authenticated" && session) {
       setIsAuth(true);
-      console.log("User is authenticated via NextAuth, using session data...");
+      console.log("User is authenticated via NextAuth, fetching latest user data...");
 
-      // Use session data directly
+      // First set initial data from session
       const sessionUser = {
-        id: session.user.id as string,
-        name: session.user.name || "",
-        email: session.user.email || "",
-        avatar: "", // Will be loaded separately if needed
+        id: session.user?.id || "",
+        name: session.user?.name || "",
+        email: session.user?.email || "",
+        avatar: session.user?.image || session.user?.avatar || "", // Prefer image, fallback to avatar
       };
 
       setUser(sessionUser);
@@ -101,6 +103,36 @@ function UserProfile() {
       });
       setError("");
       setLoading(false);
+
+      // Then fetch the latest user data from backend to get updated avatar
+      if (sessionUser.email) {
+        userApi
+          .getCurrentUser(sessionUser.email)
+          .then((backendUser) => {
+            console.log("Backend user data:", backendUser);
+            // Merge session data with backend data, preferring backend avatar
+            const mergedUser = {
+              ...sessionUser,
+              ...backendUser,
+              // Keep session data for fields that might not be in backend response
+              id: backendUser.id || sessionUser.id,
+              name: backendUser.name || sessionUser.name,
+              email: backendUser.email || sessionUser.email,
+              avatar: backendUser.avatar || sessionUser.avatar, // Prefer backend avatar
+            };
+            
+            setUser(mergedUser);
+            setFormData({
+              name: mergedUser.name || "",
+              email: mergedUser.email || "",
+              avatar: mergedUser.avatar || "",
+            });
+          })
+          .catch((error) => {
+            console.error("Failed to fetch user data from backend:", error);
+            // Continue using session data if backend fetch fails
+          });
+      }
     }
   }, [session, status]);
 
@@ -141,14 +173,15 @@ function UserProfile() {
       .updateProfile(userEmail, data)
       .then((updatedUser) => {
         setUser(updatedUser);
-        // Reset form data to the updated user data (map backend fields to frontend fields)
+        // Reset form data to the updated user data (map localhost fields to frontend fields)
         setFormData({
           name: updatedUser.name || "",
           email: updatedUser.email || "",
           avatar: updatedUser.avatar || "",
         });
-        // Clear image preview
+        // Clear image preview and reset image load error
         setImagePreview(null);
+        setImageLoadError(false);
         // Reset file input
         const fileInput = document.getElementById(
           "avatar-upload",
@@ -175,8 +208,9 @@ function UserProfile() {
         email: user.email || "",
         avatar: user.avatar || "",
       });
-      // Clear any image preview
+      // Clear any image preview and reset image load error
       setImagePreview(null);
+      setImageLoadError(false);
 
       // Also reset the file input if it exists
       const fileInput = document.getElementById(
@@ -230,16 +264,15 @@ function UserProfile() {
                   alt="Avatar preview"
                   className="w-full h-full object-cover"
                 />
-              ) : user && user.avatar ? (
+              ) : user?.avatar && !imageLoadError ? (
                 <img
                   src={user.avatar}
                   alt={`${user.name || "User"}'s avatar`}
                   className="w-full h-full object-cover opacity-70"
+                  onError={() => setImageLoadError(true)}
                 />
               ) : (
-                <span className="text-2xl font-bold opacity-70">
-                  {user && user.name ? user.name!.charAt(0).toUpperCase() : ""}
-                </span>
+                <UserCircle2 className="size-full text-gray-500" strokeWidth={1} />
               )}
               <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center text-white text-xs opacity-0 hover:opacity-100 transition-opacity">
                 <svg
@@ -273,29 +306,18 @@ function UserProfile() {
                 onChange={handleFileChange}
               />
             </div>
-          ) : user && user.avatar ? (
-            <>
-              <img
-                src={user.avatar}
-                alt={`${user.name}'s avatar`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.error("Error loading avatar image:", e);
-                  // Fallback to initials if image fails to load
-                  e.currentTarget.style.display = "none";
-                  document
-                    .getElementById("avatar-fallback")
-                    ?.classList.remove("hidden");
-                }}
-              />
-              <span id="avatar-fallback" className="text-2xl font-bold hidden">
-                {user && user.name ? user.name!.charAt(0).toUpperCase() : ""}
-              </span>
-            </>
+          ) : user?.avatar && !imageLoadError ? (
+            <img
+              src={user.avatar}
+              alt={`${user.name || "User"}'s avatar`}
+              className="w-full h-full object-cover"
+              onError={() => {
+                console.error("Error loading avatar image");
+                setImageLoadError(true);
+              }}
+            />
           ) : (
-            <span className="text-2xl font-bold">
-              {user && user.name ? user.name!.charAt(0).toUpperCase() : ""}
-            </span>
+            <UserCircle2 className="size-full text-gray-500" strokeWidth={1} />
           )}
         </div>
 
@@ -305,8 +327,10 @@ function UserProfile() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (user) {
+                if (user?.email) {
                   handleProfileUpdate(user.email, e.currentTarget);
+                } else {
+                  alert("User email is required to update profile.");
                 }
               }}
             >
@@ -370,9 +394,9 @@ function UserProfile() {
           </div>
         ) : (
           <div className="space-y-2 mt-4 md:mt-0">
-            <h2 className="text-2xl font-bold">{user ? user.name : ""}</h2>
+            <h2 className="text-2xl font-bold">{user?.name || "User"}</h2>
             <p>
-              <strong>Email:</strong> {user ? user.email : ""}
+              <strong>Email:</strong> {user?.email || "Not available"}
             </p>
             <div className="mt-6 space-x-4">
               <button
@@ -393,10 +417,10 @@ function UserProfile() {
               <button
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                 onClick={() => {
-                  if (user && user.name) {
+                  if (user?.id && user?.email) {
                     DeleteAccount(user.id, user.email);
                   } else {
-                    alert("User ID unavailable.");
+                    alert("User ID and email are required to delete account.");
                   }
                 }}
               >

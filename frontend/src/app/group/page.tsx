@@ -207,7 +207,15 @@ const UserInfo = ({ user }: { user: User }) => {
     <div className="flex justify-between items-center">
       <div className="flex gap-3 items-center">
         {/* TODO: replace with user profile picture */}
-        <UserCircle2 className="w-8 h-8 text-gray-500" />
+        {user.avatar ? (
+          <img
+            src={user.avatar}
+            alt={`${user.name || "User"}'s avatar`}
+            className="w-8 h-8 object-cover opacity-70"
+          />
+        ) : (
+          <UserCircle2 className="w-8 h-8 text-gray-500" />
+        )}
         <div className="text-base text-gray-800">{name}</div>
       </div>
       <div
