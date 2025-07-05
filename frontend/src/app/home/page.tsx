@@ -40,7 +40,7 @@ import Map from "@/components/Map";
 import { useGroupContext } from "../../../contexts/GroupContext";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { userApi } from "../api/userAPI";
+import { userApi } from "../../../lib/axios/userAPI";
 import HopinLogo from "../ui/hopin-logo";
 
 export const handleSignOut = async () => {
@@ -102,6 +102,5 @@ export default function HomePage() {
         </div>
       </div>
     </>
-      
   );
 }

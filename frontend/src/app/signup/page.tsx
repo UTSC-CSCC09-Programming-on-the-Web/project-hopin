@@ -2,7 +2,7 @@
 "use client";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { signup } from "../api/authAPI";
+import { authApi } from "../../../lib/axios/authAPI";
 export default function SignUp() {
   const handleSignUp = async (formData: FormData) => {
     const name = formData.get("name") as string;
@@ -10,7 +10,7 @@ export default function SignUp() {
     const password = formData.get("password") as string;
 
     try {
-      await signup({ email, password, name });
+      await authApi.signup({ email, password, name });
 
       await signIn("credentials", {
         email,
@@ -24,7 +24,6 @@ export default function SignUp() {
     }
   };
 
-  // const user = await getUserSession();
   return (
     <>
       <div className="flex flex-wrap gap-20 justify-center items-center m-18">

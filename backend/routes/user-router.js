@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(
       null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
     );
   },
 });
@@ -54,11 +54,11 @@ userRouter.get("/", async (req, res) => {
     }
 
     let query = {
-      take: take,
+      take: parsedTake,
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
-    }
+    };
 
     if (cursor) {
       query = {
@@ -72,22 +72,22 @@ userRouter.get("/", async (req, res) => {
 
     if (groupId) {
       query = {
-        ...query, 
-        relationLoadStrategy: 'join',
+        ...query,
+        relationLoadStrategy: "join",
         include: {
           galleryId: true,
-        }
-      }
+        },
+      };
     }
     const users = await prisma.user.findMany(query);
     console.log(users);
     let nextCursor = null;
     if (users.length > take) {
-      nextCursor = users[take-1].id;
+      nextCursor = users[take - 1].id;
     }
     res.status(200).json({
-      users, 
-      nextCursor
+      users,
+      nextCursor,
     });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -205,7 +205,7 @@ userRouter.patch(
       console.error("Error updating user:", error);
       res.status(500).json({ error: "Failed to update user" });
     }
-  },
+  }
 );
 
 // Update user location or destination
@@ -215,12 +215,14 @@ userRouter.patch("/:id/position", async (req, res) => {
     const field = req.query.field;
 
     if (!userId || (field !== "location" && field !== "destination")) {
-      return res.status(400).json({ error: "Invalid userId or field"});
+      return res.status(400).json({ error: "Invalid userId or field" });
     }
 
     const { latitude, longitude } = req.body;
-    if (!latitude || !longitude ) {
-      return res.status(400).json({ error: "Latitude and longitude are required" });
+    if (!latitude || !longitude) {
+      return res
+        .status(400)
+        .json({ error: "Latitude and longitude are required" });
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -230,21 +232,21 @@ userRouter.patch("/:id/position", async (req, res) => {
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         [field]: {
           latitude: parseFloat(latitude),
           longitude: parseFloat(longitude),
-        } 
-      }
-    })
-   
+        },
+      },
+    });
+
     const { password, ...safeUser } = updatedUser;
     return res.status(200).json(safeUser);
   } catch (error) {
     console.error("Error updating location: ", error);
     res.status(500).json({ error: "Failed to update location" });
   }
-})
+});
 
 // Update user ready status
 userRouter.patch("/:id/isReady", async (req, res) => {
@@ -253,11 +255,13 @@ userRouter.patch("/:id/isReady", async (req, res) => {
     const { isReady } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "Invalid userId"});
+      return res.status(400).json({ error: "Invalid userId" });
     }
 
-    if (isReady === null ) {
-      return res.status(400).json({ error: "isReady takes either true or false" });
+    if (isReady === null) {
+      return res
+        .status(400)
+        .json({ error: "isReady takes either true or false" });
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -268,15 +272,15 @@ userRouter.patch("/:id/isReady", async (req, res) => {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { isReady },
-    })
-   
+    });
+
     const { password, ...safeUser } = updatedUser;
     return res.status(200).json(safeUser);
   } catch (error) {
     console.error("Error updating location: ", error);
     res.status(500).json({ error: "Failed to update location" });
   }
-})
+});
 
 // Delete a user
 userRouter.delete("/:id", authenticateToken, async (req, res) => {

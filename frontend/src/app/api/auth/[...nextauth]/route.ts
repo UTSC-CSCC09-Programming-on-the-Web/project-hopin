@@ -1,37 +1,28 @@
-import { NextAuthOptions } from "next-auth";
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import Credentials from "next-auth/providers/credentials";
-
-// import { prisma } from "@/lib/prisma";
-// import { session } from "@/lib/session";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
+const BACKEND_URI = process.env.SERVER_INTERNAL_URI!;
 
-// When testing, you need the user to be the test user we set up in google cloud
-
-// Configure NextAuth
-const authOption: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  // pages:{signIn: ''},
+
   providers: [
-    Credentials({
+    CredentialsProvider({
       credentials: {
-        email: { label: "Email", type: "text", placeholder: "Email" },
-        password: {
-          label: "Password",
-          type: "password",
-          placeholder: "Password",
-        },
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      // This function is called when a user tries to sign in with credentials
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const res = await fetch("http://backend:8080/api/auth/signin", {
+          const res = await fetch(`${BACKEND_URI}/api/auth/signin`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -41,78 +32,80 @@ const authOption: NextAuthOptions = {
           });
 
           if (!res.ok) return null;
+
           const user = await res.json();
           return {
             id: user.id.toString(),
-            name: user.name,
-            email: user.email,
+            accessToken: user.accessToken,
           };
-        } catch (error) {
-          console.error("Authorize error:", error);
+        } catch (err) {
+          console.error("Credentials login failed:", err);
           return null;
         }
       },
     }),
+
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
     }),
   ],
+
   callbacks: {
-    // called when user signed in with google and redirected to our app
     async signIn({ account, profile }) {
-      if (account?.provider === "google") {
-        if (!profile?.email) {
-          throw new Error("no profile");
-        }
-        // now check if in our database
-        // if not, update into our database
+      if (account?.provider === "google" && profile?.email) {
         try {
-          const res = await fetch("http://backend:8080/api/auth/google", {
+          // Call backend to upsert the user and get the generated JWT
+          const res = await fetch(`${BACKEND_URI}/api/auth/google`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: profile.email, name: profile.name }),
+            body: JSON.stringify({
+              email: profile.email,
+              name: profile.name,
+            }),
           });
-          if (!res.ok) {
-            console.error("failed to upsert");
-            return false;
-          }
+
+          if (!res.ok) throw new Error("Backend Google auth failed");
+
+          const user = await res.json();
+
+          // Stash backend token and ID in account for jwt()
+          account.id = user.id.toString();
+          account.accessToken = user.accessToken;
         } catch (err) {
-          console.error("error in sign in", err);
+          console.error("Google sign-in error:", err);
           return false;
         }
       }
       return true;
     },
 
-    async jwt({ token, profile, user }) {
+    async jwt({ token, user, account }) {
+      // If the user object is available, the user used credentials login
       if (user) {
         token.id = user.id;
+        token.accessToken = user.accessToken;
       }
-      if (profile?.email && !token.id) {
-        const res = await fetch(
-          `http://backend:8080/api/users/by-email?email=${profile.email}`
-        );
-        const user = await res.json();
-        console.log("setting session");
-        console.log("setting token");
-        token.id = user.id;
+
+      // For Google login, get token from account (not user)
+      if (account?.provider === "google") {
+        token.id = account.id;
+        token.accessToken = account.accessToken;
+        token.profilePicture = account.profilePicture || null;
       }
+
       return token;
     },
+
     async session({ session, token }) {
-      if (token) {
-        console.log("setting session");
-        session.user.id = token.id as string;
-      }
-      if (session.user) {
-        session.user.avatar = session.user.image;
-        delete session.user.image;
+      if (session.user && token) {
+        session.userId = token.id as string;
+        session.accessToken = token.accessToken as string;
       }
       return session;
     },
   },
 };
 
-const handler = NextAuth(authOption);
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

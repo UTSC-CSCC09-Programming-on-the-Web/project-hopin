@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { User, Group } from "../types/user";
 import { useUserContext } from "./UserContext";
-import { userApi } from "@/app/api/userAPI";
+import { userApi } from "../lib/axios/userAPI";
 
 type GroupContextType = {
   group: Group | null;
@@ -25,26 +25,15 @@ export const GroupProvider: React.FC<{
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        userApi.getAllUsers()
-          .then((res) => {
-            return res.users;
-          }).then((members) => { 
-            // For testing purposes
-            members.forEach((member) => {
-              userApi.updateReadyStatus(member.id, true);
-            });
-            setMembers(members); 
-            console.log(members);
-          })
+        const membersData = await userApi.getAllUsers();
+        setMembers(membersData.users);
       } catch (error) {
         console.error("Failed to fetch members.");
       }
-    }
+    };
 
     if (currentUser) fetchMembers();
   }, [currentUser]);
-
-  
 
   const createGroup = () => {
     if (!currentUser) {

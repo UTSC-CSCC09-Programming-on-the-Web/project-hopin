@@ -1,18 +1,25 @@
 "use client";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import toast from "react-hot-toast";
-import "mapbox-gl/dist/mapbox-gl.css";
-import mapboxgl from "mapbox-gl";
-import { fetchMapboxDirections } from "../lib/directionsAPI";
+import { fetchMapboxDirections } from "../src/app/api/directionsAPI";
 import { Coordinates, Route } from "../types/location";
-import { drawRoute, updateRoute } from "./MapContextService";
-import useUsersOnMap from "../lib/hooks/useUsersOnMap";
+import { drawRoute } from "./MapContextService";
+import { useMap } from "../lib/hooks/useMap";
 
 type MapContextType = {
   map: mapboxgl.Map | null;
+  isMapReady: boolean;
   attachToContainer: (el: HTMLDivElement | null) => void;
   centerOnLocation: (location: Coordinates) => void;
   createRoute: (start: Coordinates, end: Coordinates) => void;
+  clearRoute: () => void;
+  route: Route | null;
 };
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
@@ -20,82 +27,69 @@ const MapContext = createContext<MapContextType | undefined>(undefined);
 export const MapDomainProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // const [originalRoute, setOriginalRoute] = useState<Route | null>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
   const [route, setRoute] = useState<Route | null>(null);
+  const { map, isMapReady, attachToContainer, centerOnLocation } = useMap();
 
-  const attachToContainer = (el: HTMLDivElement | null) => {
-    if (!el) return;
-
-    // First-time mount
-    if (!mapRef.current) {
-      mapRef.current = new mapboxgl.Map({
-        accessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN!,
-        container: el,
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [-79.3832, 43.6532],
-        zoom: 12,
-      });
-    } else {
-      const currentContainer = mapRef.current.getContainer();
-      if (el.contains(currentContainer)) return;
-
-      el.innerHTML = "";
-      el.appendChild(currentContainer);
-      mapRef.current.resize();
+  // Memoized function to clear route
+  const clearRoute = useCallback(() => {
+    setRoute(null);
+    // Clear route layer from map if it exists
+    if (map && map.getLayer("route")) {
+      map.removeLayer("route");
     }
-  };
-
-  const centerOnLocation = (location: Coordinates) => {
-    if (!mapRef.current) {
-      console.warn("Map is not initialized");
-      return;
+    if (map && map.getSource("route")) {
+      map.removeSource("route");
     }
-    mapRef.current.flyTo({
-      center: [location.longitude, location.latitude],
-      zoom: 14,
-      essential: true, // This ensures the animation is not interrupted
-    });
-  };
+  }, [map]);
 
-  // Hook to manage user markers on the map
-  useUsersOnMap(mapRef.current);
+  // Memoized function to create route
+  const createRoute = useCallback(
+    async (start: Coordinates, end: Coordinates) => {
+      if (!map || !isMapReady) {
+        console.warn("Map is not ready or initialized");
+        toast.error("Map is not ready. Please try again.");
+        return;
+      }
 
-  // Redraw route when updated
-  useEffect(() => {
-    if (!route || !mapRef.current) return;
-    drawRoute(route, mapRef.current, route.end_location);
-  }, [route]);
-
-  const createRoute = (start: Coordinates, end: Coordinates) => {
-    if (!mapRef.current) {
-      console.warn("Map is not initialized");
-      return;
-    }
-
-    fetchMapboxDirections(start, end)
-      .then((route: Route) => {
-        const createdRoute = {
-          ...route,
+      try {
+        const routeData = await fetchMapboxDirections(start, end);
+        const createdRoute: Route = {
+          ...routeData,
           start_location: start,
           end_location: end,
         };
-        // setOriginalRoute(createdRoute);
         setRoute(createdRoute);
-      })
-      .catch((error: any) => {
+        toast.success("Route created successfully!");
+      } catch (error: unknown) {
         console.error("Error fetching route:", error);
         toast.error("Failed to fetch route. Please try again.");
-      });
-  };
+      }
+    },
+    [map, isMapReady]
+  );
+
+  // Redraw route when route or map changes
+  useEffect(() => {
+    if (!route || !map || !isMapReady) return;
+
+    try {
+      drawRoute(route, map, route.end_location);
+    } catch (error) {
+      console.error("Error drawing route:", error);
+      toast.error("Failed to display route on map.");
+    }
+  }, [route, map, isMapReady]);
 
   return (
     <MapContext.Provider
       value={{
-        map: mapRef.current,
+        map,
+        isMapReady,
         attachToContainer,
         centerOnLocation,
         createRoute,
+        clearRoute,
+        route,
       }}
     >
       {children}

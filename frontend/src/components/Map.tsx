@@ -2,7 +2,6 @@
 import { useEffect, useRef } from "react";
 import "./Map.css";
 import { useMapContext } from "../../contexts/MapContext";
-import useUsersOnMap from "../../lib/hooks/useUsersOnMap";
 
 type MapProps = {
   className?: string;
@@ -10,7 +9,7 @@ type MapProps = {
 
 export default function Map({ className }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { attachToContainer, map } = useMapContext();
+  const { attachToContainer } = useMapContext();
 
   useEffect(() => {
     attachToContainer(containerRef.current);

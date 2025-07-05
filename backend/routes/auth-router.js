@@ -1,23 +1,35 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js"; // import this for singleton prisma
-import jwt from "jsonwebtoken";
 import { authenticateToken, blacklistToken } from "../middleware/auth.js";
 import bcrypt from "bcrypt";
+import { signJWT } from "../utils/jwt.js";
 
 export const authRouter = Router();
-const JWT_SECRET = process.env.JWT_SECRET;
 
 // add new acc from google
 authRouter.post("/google", async (req, res) => {
   const { email, name } = req.body;
 
-  const user = await prisma.user.upsert({
-    where: { email },
-    create: { email, name },
-    update: { name },
-  });
-  console.log("weve added into prisma");
-  res.json(user);
+  try {
+    const user = await prisma.user.upsert({
+      where: { email },
+      create: { email, name },
+      update: { name },
+    });
+
+    console.log("Added user who logged in via Google into prisma");
+
+    // Generate a JWT token for the user
+    const token = signJWT(user.id, user.email);
+
+    res.status(200).json({
+      id: user.id,
+      accessToken: token,
+    });
+  } catch (error) {
+    console.error("Error in Google authentication:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 authRouter.post("/signup", async (req, res) => {
@@ -28,120 +40,79 @@ authRouter.post("/signup", async (req, res) => {
       .json({ error: "Email, password and username are required. " });
   }
 
-  try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(409).json({ error: "User already exists" });
-    }
-
-    const saltRounds = 10;
-    const salt = bcrypt.genSaltSync(saltRounds);
-    const hashedPassword = bcrypt.hashSync(password, salt);
-
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
-    });
-
-    // generate the JWT
-    const token = jwt.sign(
-      { id: newUser.id, email: newUser.email },
-      JWT_SECRET,
-      {
-        expiresIn: "1h",
-      },
-    );
-
-    res.status(201).json({ token });
-  } catch (error) {
-    console.error("Signup error:", error);
-    res.status(500).json({
-      error: error.message || "An error occurred during signup",
-      code: error.code,
-    });
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    return res.status(409).json({ error: "User already exists" });
   }
+
+  const saltRounds = 10;
+  const salt = bcrypt.genSaltSync(saltRounds);
+  const hashedPassword = bcrypt.hashSync(password, salt);
+
+  await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+      name,
+    },
+  });
+
+  // Do not generate the token here, as the user is not logged in yet.
+  // Instead, the user will log in immediately after signing up.
+
+  res.status(201).json({
+    message: "User created successfully",
+    user: { email, name },
+  });
 });
 
 authRouter.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
-  try {
-    // if user doesn't exist
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.password) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // if password is invalid
-    const valid = bcrypt.compareSync(password, user.password);
-    if (!valid) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // get the token
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      },
-    );
-
-    // Return user data along with the token
-    return res.json({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      token,
-    });
-  } catch (error) {
-    console.error("Signin error:", error);
-    res.status(500).json({
-      error: error.message || "An error occurred during signin",
-    });
+  // if user doesn't exist
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user || !user.password) {
+    return res.status(401).json({ error: "Invalid credentials" });
   }
+
+  // if password is invalid
+  const valid = bcrypt.compareSync(password, user.password);
+  if (!valid) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  // Generate a JWT token for the user
+  const token = signJWT(user.id, user.email);
+
+  // dont want to return the password
+  return res.json({
+    id: user.id,
+    accessToken: token,
+  });
 });
 
-authRouter.get("/auth-status", authenticateToken, async (req, res) => {
-  // If we get here, the token was verified in the authenticateToken middleware
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: { id: true, email: true, name: true },
-    });
-
-    res.json({
-      authenticated: true,
-      user,
-    });
-  } catch (error) {
-    console.error("Error checking auth status:", error);
-    res.status(500).json({
-      error:
-        error.message || "An error occurred checking authentication status",
-    });
-  }
-});
-
+// Check if the user is authenticated + return user info
 authRouter.get("/me", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+      },
     });
 
     if (!user) {
-      return res.status(401).json({ error: "User not found" });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    // Exclude sensitive fields
-    const { password, ...userWithoutPassword } = user;
-    return res.json(userWithoutPassword);
-  } catch (error) {
-    console.error("Error fetching current user:", error);
-    res.status(500).json({ error: "Failed to fetch user data" });
+    return res.json(user);
+  } catch (err) {
+    console.error("Error fetching user:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -180,7 +151,7 @@ authRouter.post("/get-token", async (req, res) => {
   // Set cache control headers
   res.set(
     "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
   );
   res.set("Pragma", "no-cache");
   res.set("Expires", "0");
@@ -201,13 +172,7 @@ authRouter.post("/get-token", async (req, res) => {
     }
 
     // Generate a new token for this user
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      },
-    );
+    const token = signJWT(user.id, user.email);
 
     return res.json({ token });
   } catch (err) {
