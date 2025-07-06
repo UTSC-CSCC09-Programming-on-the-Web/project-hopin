@@ -1,9 +1,12 @@
 import "dotenv/config";
 import express from "express";
+import http from "http";
 import cors from "cors";
 import { authRouter } from "./routes/auth-router.js";
 import { userRouter } from "./routes/user-router.js";
 import corsOptions from "./utils/corsOptions.js";
+import groupRouter from "./routes/group-router.js";
+import { setupSocketServer } from "./lib/socket.js";
 
 const PORT = process.env.PORT || 8080;
 export const app = express();
@@ -17,18 +20,13 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use("/api/groups", groupRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 
 // Websocket setup
 const server = http.createServer(app);
-export const io = new SocketServer(server, {
-  cors: {
-    origin: process.env.CLIENT_URI,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+setupSocketServer(server);
 
 server.listen(PORT, "0.0.0.0", (err) => {
   if (err) console.log(err);

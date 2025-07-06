@@ -9,16 +9,43 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(uuid())
-  email         String        @unique
-  password      String?
-  name          String
-  avatar        String?
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String?
+  name         String
+  avatar       String?
 
-  location      Json?
-  destination   Json?
+  location     Json?
+  destination  Json?
 
-  isReady       Boolean?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  isReady      Boolean?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Many-to-one: User belongs to a group
+  groupId      String?
+  group        Group?   @relation("GroupMembers", fields: [groupId], references: [id])
+
+  // One-to-one: User is an owner of a group
+  ownedGroup   Group?   @relation("GroupOwner")
+
+  // One-to-one: User is a driver of a group
+  drivenGroup  Group?   @relation("GroupDriver")
+}
+
+model Group {
+  id           String   @id // We generate ids for groups on creation
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // One-to-one: Group has one owner
+  ownerId      String?  @unique
+  owner        User?    @relation("GroupOwner", fields: [ownerId], references: [id])
+
+  // One-to-one: Group has one driver
+  driverId     String?  @unique
+  driver       User?    @relation("GroupDriver", fields: [driverId], references: [id])
+
+  // One-to-many: Group has many members
+  members      User[]   @relation("GroupMembers")
 }

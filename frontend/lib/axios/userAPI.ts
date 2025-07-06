@@ -101,7 +101,7 @@ export const userApi = {
         throw new Error("Authentication required. Please sign in again.");
       }
 
-      const response = await getApi().patch(
+      const response = await getAuthenticatedApi(session).patch(
         `/users/${session.userId}/position?field=${field}`,
         coordinates
       );
@@ -120,8 +120,8 @@ export const userApi = {
       if (!session?.userId)
         throw new Error("Authentication required. Please sign in again.");
 
-      const response = await getApi().patch(
-        `/users/${session.userId}/isReady`,
+      const response = await getAuthenticatedApi(session).patch(
+        `/users/${session.userId}/ready`,
         {
           isReady,
         }
@@ -131,6 +131,31 @@ export const userApi = {
       return response.data;
     } catch (error) {
       console.error("Failed to update user ready status:", error);
+      handleApiError(error as AxiosError);
+    }
+  },
+
+  // Comprehensive status update - can update location, destination, and ready status in one request
+  updateUserStatus: async (statusData: {
+    location?: Coordinates;
+    destination?: Coordinates | null;
+    isReady?: boolean;
+  }) => {
+    try {
+      const session = await getSession();
+      if (!session?.userId) {
+        throw new Error("Authentication required. Please sign in again.");
+      }
+
+      const response = await getAuthenticatedApi(session).patch(
+        `/users/${session.userId}/status`,
+        statusData
+      );
+
+      console.log("Updated user status:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update user status:", error);
       handleApiError(error as AxiosError);
     }
   },

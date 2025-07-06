@@ -43,5 +43,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  cache:
+    ports:
+      - "6379:6379"
+    command: redis-server --loglevel debug
+
 volumes:
   postgres_data:

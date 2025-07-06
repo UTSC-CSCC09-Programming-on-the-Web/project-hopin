@@ -9,3 +9,7 @@ services:
 
   postgres:
     image: postgres:latest
+
+  cache:
+    image: redis:latest
+    restart: always
