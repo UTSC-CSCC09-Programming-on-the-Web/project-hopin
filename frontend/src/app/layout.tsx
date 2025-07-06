@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { MapDomainProvider } from "../../contexts/MapContext";
-import { Toaster } from "react-hot-toast";
-import { UserProvider } from "../../contexts/UserContext";
-import { GroupProvider } from "../../contexts/GroupContext";
-import { SessionWrapper } from "@/components/SessionWrapper";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -18,20 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <Toaster />
-        <SessionWrapper>
-          <UserProvider>
-          <GroupProvider>
-            <MapDomainProvider>
-              {/* <SessionWrapper> */}
-                {children}
-              {/* </SessionWrapper> */}
-            </MapDomainProvider>
-          </GroupProvider>
-        </UserProvider>
-        </SessionWrapper>
-        
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children}
       </body>
     </html>
   );

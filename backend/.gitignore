@@ -47,12 +47,3 @@ Thumbs.db
 
 # Debug
 .node-debug/
-
-# Uploads directory - keep directory structure but ignore contents
-/uploads/*
-!/uploads/.gitkeep
-!/uploads/avatars
-/uploads/avatars/*
-!/uploads/avatars/.gitkeep
-
-/generated/prisma
