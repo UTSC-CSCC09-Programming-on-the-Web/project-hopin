@@ -31,7 +31,7 @@ services:
           target: /app
         - action: rebuild
           path: ./backend/package.json
-    command: "npm run dev"
+    command: sh -c "npx prisma migrate deploy && npm run dev"
 
   postgres:
     environment:
