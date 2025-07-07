@@ -3,19 +3,26 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function SignIn() {
+  const [errorMessage, setErrorMessage] = useState("");
   // const user = await getUserSession();
   const handleSignIn = async (formData: FormData) => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     try {
-      await signIn("credentials", {
+      const res = await signIn("credentials", {
         email: email,
         password: password,
-        redirect: true,
+        redirect: false,
         callbackUrl: "/home",
       });
+      if (res?.error) {
+        setErrorMessage("Invalid email or password. Please try again.");
+      } else if (res?.ok) {
+        window.location.href = "/home";
+      }
     } catch (error: any) {
       throw new Error(error.message || "Failed to sign up");
     }
@@ -31,6 +38,7 @@ export default function SignIn() {
       <div className="flex flex-wrap gap-20 justify-center items-center m-18">
         <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md">
           <p className="text-center text-xl font-bold pb-8">Sign In</p>
+
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -55,13 +63,9 @@ export default function SignIn() {
               className="border-b-1 border-gray-400 p-2"
               required
             />
-            <div className="flex flex-row justify-between">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" />
-                <span className="text-sm">Remember me</span>
-              </label>
-              <a className="text-sm text-black">Forgot Password?</a>
-            </div>
+            {errorMessage && (
+              <p className="text-red-500 text-sm text-center">{errorMessage}</p>
+            )}
 
             <button
               className="border-1 border-gray-600 rounded-sm p-2 mt-8"

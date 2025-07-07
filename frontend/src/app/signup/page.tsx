@@ -65,13 +65,6 @@ export default function SignUp() {
               className="border-b-1 border-gray-400 p-2"
               required
             />
-            <div className="flex flex-row justify-between">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" />
-                <span className="text-sm">Remember me</span>
-              </label>
-              <a className="text-sm text-black">Forgot Password?</a>
-            </div>
 
             <button
               className="border-1 border-gray-600 rounded-sm p-2 mt-8"
