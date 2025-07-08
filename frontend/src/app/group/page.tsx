@@ -27,6 +27,25 @@ export default function GroupPage() {
   const [startLocation, setStartLocation] = useState<Coordinates | null>(null);
   const [endLocation, setEndLocation] = useState<Coordinates | null>(null);
   const router = useRouter();
+  const isDriver = true; // dummy data for now
+
+  // need to include api to get the nearest passenger
+  // const { group } = useGroupContext();
+  // const { centerOnLocation } = useMapContext();
+  // const enroute = () => {
+  //   const readyPassengers = group?.members?.filter(
+  //     (m) => m.id !== group.driver?.id && m.location
+  //   );
+
+  //   if (!readyPassengers || readyPassengers.length === 0) {
+  //     toast.error("No passengers with available location.");
+  //     return;
+  //   }
+
+  //   const passenger = readyPassengers[0]; // need to find nearest passenger
+  //   centerOnLocation(passenger.location);
+  //   toast(`Navigating to ${passenger.name}`);
+  // };
 
   useEffect(() => {
     if (!startLocation && location) {
@@ -48,72 +67,73 @@ export default function GroupPage() {
 
   return (
     <>
-    <div className="flex flex-row gap-8 items-center px-20">
-      <HopinLogo />
+      <div className="flex flex-row gap-8 items-center px-20">
+        <HopinLogo />
 
-      <button
-        onClick={handleSignOut}
-        className="text-sm font-bold border-1 p-2 rounded-sm"
-      >
-        Log Out
-      </button>
+        <button
+          onClick={handleSignOut}
+          className="text-sm font-bold border-1 p-2 rounded-sm"
+        >
+          Log Out
+        </button>
 
-      <button
-        onClick={() => router.push("/profile")}
-        className="text-sm font-bold border-1 p-2 rounded-sm"
-      >
-        Profile
-      </button>
-    </div>
-    <main className="grid grid-cols-[1fr_3fr] h-full w-full gap-8">
-      {/* Left Side */}
-      <div className="flex flex-col gap-8 items-start">
-        <h5 className="text-gray-700">Journey Planner</h5>
-        <div className="flex gap-4 items-center h-fit">
-          {/* Location Icons */}
-          <div className="flex flex-col h-full gap-2 items-center">
-            <IconWrapper Icon={StartIcon} />
-            {/* vertical dots */}
-            <div className="flex flex-col gap-1 items-center">
-              <div className="w-1 h-1 rounded-full bg-gray-200" />
-              <div className="w-1 h-1 rounded-full bg-gray-200" />
+        <button
+          onClick={() => router.push("/profile")}
+          className="text-sm font-bold border-1 p-2 rounded-sm"
+        >
+          Profile
+        </button>
+      </div>
+      <main className="grid grid-cols-[1fr_3fr] h-full w-full gap-8">
+        {/* Left Side */}
+        <div className="flex flex-col gap-8 items-start">
+          <h5 className="text-gray-700">Journey Planner</h5>
+
+          <div className="flex gap-4 items-center h-fit">
+            {/* Location Icons */}
+            <div className="flex flex-col h-full gap-2 items-center">
+              <IconWrapper Icon={StartIcon} />
+              {/* vertical dots */}
+              <div className="flex flex-col gap-1 items-center">
+                <div className="w-1 h-1 rounded-full bg-gray-200" />
+                <div className="w-1 h-1 rounded-full bg-gray-200" />
+              </div>
+              <IconWrapper Icon={EndIcon} />
             </div>
-            <IconWrapper Icon={EndIcon} />
+            {/* Location Inputs */}
+            <div className="flex flex-col gap-6 items-start">
+              <LocationInput
+                placeholder={
+                  location ? "Current Location" : "Enter starting location"
+                }
+                onSelect={(coord) => {
+                  const place: Coordinates = {
+                    longitude: coord[0],
+                    latitude: coord[1],
+                  };
+                  setStartLocation(place);
+                }}
+              />
+              <LocationInput
+                placeholder="Enter ending location"
+                onSelect={(coord) => {
+                  const place: Coordinates = {
+                    longitude: coord[0],
+                    latitude: coord[1],
+                  };
+                  setEndLocation(place);
+                }}
+              />
+            </div>
           </div>
-          {/* Location Inputs */}
-          <div className="flex flex-col gap-6 items-start">
-            <LocationInput
-              placeholder={
-                location ? "Current Location" : "Enter starting location"
-              }
-              onSelect={(coord) => {
-                const place: Coordinates = {
-                  longitude: coord[0],
-                  latitude: coord[1],
-                };
-                setStartLocation(place);
-              }}
-            />
-            <LocationInput
-              placeholder="Enter ending location"
-              onSelect={(coord) => {
-                const place: Coordinates = {
-                  longitude: coord[0],
-                  latitude: coord[1],
-                };
-                setEndLocation(place);
-              }}
-            />
-          </div>
+          {/* User List */}
+          <ParticipantList />
         </div>
-        {/* User List */}
-        <ParticipantList />
-      </div>
-      {/* Right (Map) Side */}
-      <div className="relative w-full h-full">
-        <Map />
-      </div>
-    </main>
+        {/* Right (Map) Side */}
+        <div className="relative w-full h-full">
+          <Map />
+        </div>
+      </main>
     </>
   );
 }
