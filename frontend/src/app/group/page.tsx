@@ -88,7 +88,7 @@ export default function GroupPage() {
         {/* Left Side */}
         <div className="flex flex-col gap-8 items-start">
           <h5 className="text-gray-700">Journey Planner</h5>
-
+         
           <div className="flex gap-4 items-center h-fit">
             {/* Location Icons */}
             <div className="flex flex-col h-full gap-2 items-center">

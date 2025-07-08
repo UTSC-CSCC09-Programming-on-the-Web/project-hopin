@@ -73,32 +73,42 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="flex flex-row gap-8 items-center px-20">
+      <div className="flex flex-col md:flex-row justify-between p-2 items-center md:px-20 md:py-6  gap-2 md:gap-4">
         <HopinLogo />
 
-        <button
-          onClick={handleSignOut}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Log Out
-        </button>
+        <div className="flex items-center gap-2 md:gap-4 justify-center">
+          <button
+            onClick={handleSignOut}
+            className=" text-xs md:text-sm font-bold border-1 p-2 rounded-sm"
+          >
+            Log Out
+          </button>
 
-        <button
-          onClick={() => router.push("/profile")}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Profile
-        </button>
+          <button
+            onClick={() => router.push("/profile")}
+            className="text-xs md:text-sm font-bold border-1 p-2 rounded-sm"
+          >
+            Profile
+          </button>
+        </div>
       </div>
-      <div className="flex flex-col items-center h-screen gap-8">
-        <div className="relative w-full aspect-video">
+      <div className="flex flex-col items-center gap-8 p-4 ">
+        <div className="relative w-full h-[70vh] aspect-video">
           <Map />
         </div>
-        <div className="flex gap-8 items-center">
+        <div className="flex flex-row gap-4 md:gap-8 items-center">
           {/* TODO: replace with a dynamic route with a generated room id */}
-          <Button text="Create Group" onClick={handleCreateGroupClick} />
-          <div className="text-lg">OR</div>
-          <Button text="Join Group" variant="outline" />
+          <Button
+            className="text-xs md:text-sm"
+            text="Create Group"
+            onClick={handleCreateGroupClick}
+          />
+          <div className=" text-sm md:text-lg">OR</div>
+          <Button
+            className="text-xs md:text-sm"
+            text="Join Group"
+            variant="outline"
+          />
         </div>
       </div>
     </>
