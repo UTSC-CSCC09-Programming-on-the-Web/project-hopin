@@ -18,7 +18,7 @@ type IconWrapperProps = {
 const IconWrapper = ({ Icon }: IconWrapperProps) => {
   return (
     <div className="p-3 outline outline-orange-200 bg-white rounded-full flex items-center justify-center w-fit h-fit">
-      <Icon className="w-6 h-6 text-orange-500" />
+      <Icon className="w-4 h-4  md:w-6 md:h-6 text-orange-500" />
     </div>
   );
 };

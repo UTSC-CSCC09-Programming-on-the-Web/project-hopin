@@ -48,12 +48,13 @@ export default function AutocompleteInput({
   }, [query]);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <Input
         name="location"
         placeholder={placeholder}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        className="text-xs py-1 placeholder:text-sm"
       />
       {results.length > 0 && (
         <ul className="absolute z-20 bg-white border rounded w-full mt-1 max-h-40 overflow-y-auto">

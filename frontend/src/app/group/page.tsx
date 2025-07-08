@@ -28,6 +28,7 @@ export default function GroupPage() {
   const [endLocation, setEndLocation] = useState<Coordinates | null>(null);
   const router = useRouter();
   const isDriver = true; // dummy data for now
+  const [showParticipants, setShowParticipants] = useState(null);
 
   // need to include api to get the nearest passenger
   // const { group } = useGroupContext();
@@ -67,29 +68,14 @@ export default function GroupPage() {
 
   return (
     <>
-      <div className="flex flex-row gap-8 items-center px-20">
-        <HopinLogo />
+      <HopinLogo />
 
-        <button
-          onClick={handleSignOut}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Log Out
-        </button>
-
-        <button
-          onClick={() => router.push("/profile")}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Profile
-        </button>
-      </div>
-      <main className="grid grid-cols-[1fr_3fr] h-full w-full gap-8">
+      <main className="grid grid-cols-1 md:grid-cols-[1fr_3fr] h-full w-full gap-4 md:gap-8">
         {/* Left Side */}
-        <div className="flex flex-col gap-8 items-start">
-          <h5 className="text-gray-700">Journey Planner</h5>
-         
-          <div className="flex gap-4 items-center h-fit">
+        <div className="flex flex-col gap-4 items-start">
+          <h5 className="text-gray-700 text-sm md:text-md">Journey Planner</h5>
+
+          <div className="flex gap-4 items-center h-fit w-full">
             {/* Location Icons */}
             <div className="flex flex-col h-full gap-2 items-center">
               <IconWrapper Icon={StartIcon} />
@@ -101,7 +87,7 @@ export default function GroupPage() {
               <IconWrapper Icon={EndIcon} />
             </div>
             {/* Location Inputs */}
-            <div className="flex flex-col gap-6 items-start">
+            <div className="flex flex-col gap-6 items-start w-full">
               <LocationInput
                 placeholder={
                   location ? "Current Location" : "Enter starting location"
