@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { userApi } from "../../../lib/axios/userAPI";
