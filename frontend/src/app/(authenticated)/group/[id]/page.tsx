@@ -1,7 +1,7 @@
 "use client";
 import LocationInput from "@/components/inputs/LocationInput";
 import Map from "@/components/Map";
-import { Coordinates } from "../../../types/location";
+import { Coordinates } from "../../../../../types/location";
 import { useEffect, useState } from "react";
 import IconWrapper from "@/components/IconWrapper";
 import {
@@ -11,22 +11,18 @@ import {
   UserCircle2,
   MapPin,
 } from "lucide-react";
-import { useMapContext } from "../../../contexts/MapContext";
-import { User } from "../../../types/user";
-import { useGroupContext } from "../../../contexts/GroupContext";
-import useLocation from "../../../lib/hooks/useLocation";
+import { useMapContext } from "../../../../../contexts/MapContext";
+import { User } from "../../../../../types/user";
+import { useGroupContext } from "../../../../../contexts/GroupContext";
+import useLocation from "../../../../../lib/hooks/useLocation";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import { useUserContext } from "../../../contexts/UserContext";
-import HopinLogo from "../ui/hopin-logo";
-import { handleSignOut } from "../home/page";
+import { useUserContext } from "../../../../../contexts/UserContext";
 
 export default function GroupPage() {
   const { createRoute } = useMapContext();
   const location = useLocation();
   const [startLocation, setStartLocation] = useState<Coordinates | null>(null);
   const [endLocation, setEndLocation] = useState<Coordinates | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     if (!startLocation && location) {
@@ -36,7 +32,7 @@ export default function GroupPage() {
       // Draw the route when both locations are set
       createRoute(startLocation, endLocation);
     }
-  }, [location, startLocation, endLocation]);
+  }, [location, startLocation, endLocation, createRoute]);
 
   // useEffect(() => {
   //   if (!group) {
@@ -48,23 +44,6 @@ export default function GroupPage() {
 
   return (
     <>
-      <div className="flex flex-row gap-8 items-center px-20">
-        <HopinLogo />
-
-        <button
-          onClick={handleSignOut}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Log Out
-        </button>
-
-        <button
-          onClick={() => router.push("/profile")}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Profile
-        </button>
-      </div>
       <main className="grid grid-cols-[1fr_3fr] h-full w-full gap-8">
         {/* Left Side */}
         <div className="flex flex-col gap-8 items-start">
@@ -163,6 +142,7 @@ const ParticipantList = () => {
 };
 
 const DriverSection = ({ driver }: { driver: User | null }) => {
+  // TODO: implement driver assignment logic (there is a becomeDriver function in GroupContext)
   return (
     <div className="flex flex-col p-2 gap-2 w-full bg-[#FCC2E8] rounded-lg">
       {/* Header */}
@@ -261,3 +241,5 @@ const ReadySection = ({ members }: ReadySectionProps) => {
     </div>
   );
 };
+
+// TODO: create a user section which shows the current user as can be seen in Figma design

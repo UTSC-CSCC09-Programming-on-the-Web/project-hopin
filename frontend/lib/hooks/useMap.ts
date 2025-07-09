@@ -130,25 +130,32 @@ export const useMap = (): UseMapReturnType => {
 
   // Update users on map based on group or current user
   useEffect(() => {
+    if (!currentUser) {
+      setUsersOnMap(new Map());
+      return;
+    }
+
+    const users = new Map<string, User>();
+
+    // Always show current user if they have a location
+    if (currentUser?.location) {
+      users.set(currentUser.id, currentUser);
+    }
+
+    // User in group -> show ready members
     if (group) {
-      // Group mode: show ready members
-      const updatedUsers = new Map<string, User>();
-      console.log(group);
       group.members.forEach((member) => {
-        if (member.isReady && member.location) {
-          updatedUsers.set(member.id, member);
+        if (
+          member.isReady &&
+          member.location &&
+          member.id !== currentUser?.id
+        ) {
+          users.set(member.id, member);
         }
       });
-      setUsersOnMap(updatedUsers);
-    } else if (currentUser?.location) {
-      // Solo mode: show only current user
-      const soloUser = new Map<string, User>();
-      soloUser.set(currentUser.id, currentUser);
-      setUsersOnMap(soloUser);
-    } else {
-      // No users to show
-      setUsersOnMap(new Map());
     }
+
+    setUsersOnMap(users);
   }, [currentUser, group, group?.members]);
 
   // Update markers when users on map change

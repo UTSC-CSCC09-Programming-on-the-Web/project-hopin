@@ -4,6 +4,16 @@ import { getAuthenticatedApi } from "./api";
 import { AxiosError } from "axios";
 
 export const groupApi = {
+  getUserGroup: async (userId: string) => {
+    try {
+      const response = await getAuthenticatedApi().then((api) =>
+        api.get<Group>(`/users/${userId}/group`)
+      );
+      return response.data;
+    } catch (error) {
+      handleApiError(error as AxiosError);
+    }
+  },
   createGroup: async () => {
     try {
       const response = await getAuthenticatedApi().then((api) =>

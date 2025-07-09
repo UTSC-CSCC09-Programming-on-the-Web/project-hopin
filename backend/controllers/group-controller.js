@@ -47,7 +47,6 @@ export const createGroup = async (req, res) => {
           },
         },
       });
-      groupCreated = true;
 
       // Add the user to the group
       await tx.user.update({
@@ -56,7 +55,6 @@ export const createGroup = async (req, res) => {
           groupId: newGroupId,
         },
       });
-      userUpdated = true;
 
       return group;
     });

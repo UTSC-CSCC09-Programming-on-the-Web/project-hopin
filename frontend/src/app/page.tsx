@@ -3,7 +3,7 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import HopinLogo from "./ui/hopin-logo";
+import HopinLogo from "../components/hopin-logo";
 
 export default function SignIn() {
   // const user = await getUserSession();

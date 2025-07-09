@@ -31,7 +31,7 @@ export const UserProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const { data: session, status } = useSession();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const location = useLocation();
 

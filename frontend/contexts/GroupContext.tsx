@@ -34,6 +34,30 @@ export const GroupProvider: React.FC<{
 
   const socket = useSocket();
 
+  // At every refresh, check if the user is in a group
+  useEffect(() => {
+    const checkUserGroup = async () => {
+      if (!currentUser) return;
+
+      try {
+        const userGroup = await groupApi.getUserGroup(currentUser.id);
+        if (userGroup) {
+          setGroup(userGroup);
+          console.log("User is in a group:", userGroup);
+        } else {
+          console.log("User is not in any group");
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Failed to fetch user group:", error);
+          toast.error("Failed to fetch group information. Please try again.");
+        }
+      }
+    };
+
+    checkUserGroup();
+  }, [currentUser]);
+
   useEffect(() => {
     if (!socket) {
       // Socket is not available (user not authenticated or not connected)
@@ -146,16 +170,17 @@ export const GroupProvider: React.FC<{
     }
 
     try {
-      console.log("made it here");
       const newGroup = await groupApi.createGroup();
       setGroup(newGroup);
+      toast.success("Group created successfully!");
+      router.push(`/group/${newGroup?.id}`);
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Failed to create group:", error);
         toast.error("Failed to create group. Please try again.");
       }
     }
-  }, [currentUser]);
+  }, [currentUser, router]);
 
   const joinGroup = useCallback(
     async (groupId: string) => {

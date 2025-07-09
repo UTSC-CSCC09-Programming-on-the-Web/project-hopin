@@ -1,5 +1,5 @@
-import HopinLogo from "../ui/hopin-logo";
-import SideNav from "../ui/profile/side-nav";
+import HopinLogo from "../../../components/hopin-logo";
+import SideNav from "../../../components/profile/side-nav";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
