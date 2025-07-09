@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Session } from "next-auth";
+import { getSession } from "next-auth/react";
 
 // Api instance for unauthenticated requests
 // This is used for public endpoints that do not require authentication
@@ -17,7 +17,9 @@ export const getApi = () => {
 };
 
 // This is used for endpoints that require authentication
-export const getAuthenticatedApi = (session: Session | null) => {
+export const getAuthenticatedApi = async () => {
+  const session = await getSession();
+
   const authenticatedApi = axios.create({
     baseURL: `${
       process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080"
@@ -31,6 +33,8 @@ export const getAuthenticatedApi = (session: Session | null) => {
     authenticatedApi.defaults.headers.common[
       "Authorization"
     ] = `Bearer ${session.accessToken}`;
+  } else {
+    throw new Error("No authentication token available. Please sign in again.");
   }
 
   return authenticatedApi;

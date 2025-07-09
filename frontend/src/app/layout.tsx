@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { UserProvider } from "../../contexts/UserContext";
 import { GroupProvider } from "../../contexts/GroupContext";
 import { SessionWrapper } from "@/components/SessionWrapper";
+import { SocketProvider } from "../../contexts/SocketContext";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -21,17 +22,14 @@ export default function RootLayout({
       <body>
         <Toaster />
         <SessionWrapper>
-          <UserProvider>
-          <GroupProvider>
-            <MapDomainProvider>
-              {/* <SessionWrapper> */}
-                {children}
-              {/* </SessionWrapper> */}
-            </MapDomainProvider>
-          </GroupProvider>
-        </UserProvider>
+          <SocketProvider>
+            <UserProvider>
+              <GroupProvider>
+                <MapDomainProvider>{children}</MapDomainProvider>
+              </GroupProvider>
+            </UserProvider>
+          </SocketProvider>
         </SessionWrapper>
-        
       </body>
     </html>
   );

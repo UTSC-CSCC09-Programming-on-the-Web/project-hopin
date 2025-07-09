@@ -3,77 +3,146 @@ import { io } from "../lib/socket.js";
 import { prisma, userSafeSelect } from "../lib/prisma.js";
 import redisClient from "../lib/redis.js";
 
+/**
+ * Helper function to verify group exists in both Redis and Database
+ * Cleans up inconsistencies automatically
+ */
+const verifyGroupExists = async (groupId) => {
+  const redisExists = await redisClient.SISMEMBER("groupIds", groupId);
+
+  if (!redisExists) {
+    return { exists: false, error: "Group not found" };
+  }
+
+  const dbGroup = await prisma.group.findUnique({
+    where: { id: groupId },
+    include: { members: true },
+  });
+
+  if (!dbGroup) {
+    // Group exists in Redis but not in DB - clean up Redis
+    await redisClient.SREM("groupIds", groupId);
+    return { exists: false, error: "Group not found" };
+  }
+
+  return { exists: true, group: dbGroup };
+};
+
 export const createGroup = async (req, res) => {
   const userId = req.user.id;
   const newGroupId = await generateGroupId();
 
+  let redisUpdated = false;
+
   try {
-    const group = await prisma.group.create({
-      data: {
-        id: newGroupId,
-        ownerId: userId,
-        members: {
-          connect: { id: userId },
+    // Use a database transaction for atomicity
+    await prisma.$transaction(async (tx) => {
+      // Create the group
+      const group = await tx.group.create({
+        data: {
+          id: newGroupId,
+          ownerId: userId,
+          members: {
+            connect: { id: userId },
+          },
         },
-      },
-    });
-
-    // Add the user to the group
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        groupId: newGroupId,
-      },
-    });
-
-    // Emit a socket event to notify the user that they have created the group
-    const socketId = await redisClient.hget("userSockets", userId);
-    if (socketId) {
-      io.to(socketId).emit("createdGroup", {
-        groupId: newGroupId,
       });
-    }
+      groupCreated = true;
 
-    // Add the group id to the redis set for quick access
-    await redisClient.sadd("groupIds", newGroupId);
+      // Add the user to the group
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          groupId: newGroupId,
+        },
+      });
+      userUpdated = true;
 
-    res.status(201).json(group);
+      return group;
+    });
+
+    // Add the group id to the redis set for quick access (outside transaction)
+    await redisClient.SADD("groupIds", newGroupId);
+    redisUpdated = true;
+
+    // Include the group members, owner, and driver in the response
+    const groupWithDetails = await prisma.group.findUnique({
+      where: { id: newGroupId },
+      include: {
+        members: { select: userSafeSelect },
+        owner: { select: userSafeSelect },
+        driver: { select: userSafeSelect },
+      },
+    });
+
+    res.status(201).json(groupWithDetails);
   } catch (error) {
     console.error("Error creating group:", error);
+
+    // Rollback redis update if it was successful
+    if (redisUpdated) {
+      try {
+        await redisClient.SREM("groupIds", newGroupId);
+        console.log(`Cleaned up Redis entry for group ${newGroupId}`);
+      } catch (redisError) {
+        console.error(
+          "Failed to remove group from Redis during cleanup:",
+          redisError
+        );
+      }
+    }
+
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const joinGroup = async (req, res) => {
   const { id: groupId } = req.params;
+  const userId = req.user.id;
 
   if (!groupId) {
     return res.status(400).json({ error: "Group ID is required." });
   }
 
   try {
-    // Check group existence in Redis
-    const groupExists = await redisClient.sismember("groupIds", groupId);
-    if (!groupExists) {
-      return res.status(404).json({ error: "Group not found" });
+    // Verify group exists and get its current state
+    const verification = await verifyGroupExists(groupId);
+    if (!verification.exists) {
+      return res.status(404).json({ error: verification.error });
     }
 
-    // Update user and group in parallel
-    await Promise.all([
-      prisma.user.update({
-        where: { id: req.user.id },
+    const existingGroup = verification.group;
+
+    // Check if user is already a member
+    const isAlreadyMember = existingGroup.members.some(
+      (member) => member.id === userId
+    );
+    if (isAlreadyMember) {
+      return res
+        .status(400)
+        .json({ error: "You are already a member of this group" });
+    }
+
+    // Use transaction to ensure atomicity
+    await prisma.$transaction(async (tx) => {
+      // Update user's groupId
+      await tx.user.update({
+        where: { id: userId },
         data: { groupId },
-      }),
-      prisma.group.update({
+      });
+
+      // Add user to group members
+      await tx.group.update({
         where: { id: groupId },
         data: {
           members: {
-            connect: { id: req.user.id },
+            connect: { id: userId },
           },
         },
-      }),
-    ]);
+      });
+    });
 
+    // Get updated group details
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       include: {
@@ -83,11 +152,16 @@ export const joinGroup = async (req, res) => {
       },
     });
 
-    // Instruct client to join room
-    const socketId = await redisClient.hget("userSockets", req.user.id);
+    // Notify user to join the socket room
+    const socketId = await redisClient.HGET("userSockets", userId);
     if (socketId) {
-      io.to(socketId).emit("joinGroup", { groupId });
+      io.to(socketId).emit("join_group", { groupId });
     }
+
+    // Notify other group members about the new member
+    io.to(groupId).emit("member_joined", {
+      user: group.members.find((member) => member.id === userId),
+    });
 
     res.status(200).json(group);
   } catch (error) {
@@ -100,69 +174,86 @@ export const leaveGroup = async (req, res) => {
   const { id: groupId } = req.params;
   const userId = req.user.id;
 
-  // Check if the group exists
-  const groupExists = await redisClient.sismember("groupIds", groupId);
-  if (!groupExists) {
-    return res.status(404).json({ error: "Group not found" });
-  }
-
-  // Check if the user is a member of the group
-  const group = await prisma.group.findUnique({
-    where: { id: groupId },
-    include: { members: true },
-  });
-  if (!group || !group.members.some((member) => member.id === userId)) {
-    return res
-      .status(403)
-      .json({ error: "You are not a member of this group" });
+  if (!groupId) {
+    return res.status(400).json({ error: "Group ID is required." });
   }
 
   try {
-    await Promise.all([
-      // Remove user from group
-      prisma.group.update({
+    // Verify group exists and get its current state
+    const verification = await verifyGroupExists(groupId);
+    if (!verification.exists) {
+      return res.status(404).json({ error: verification.error });
+    }
+
+    const group = verification.group;
+
+    // Check if the user is a member of the group
+    const isMember = group.members.some((member) => member.id === userId);
+    if (!isMember) {
+      return res
+        .status(403)
+        .json({ error: "You are not a member of this group" });
+    }
+
+    const isOwner = group.ownerId === userId;
+    const isLastMember = group.members.length === 1;
+
+    // Use transaction for atomicity
+    await prisma.$transaction(async (tx) => {
+      // Remove user from group members
+      await tx.group.update({
         where: { id: groupId },
         data: {
           members: {
             disconnect: { id: userId },
           },
         },
-      }),
+      });
+
       // Update user's groupId to null
-      prisma.user.update({
+      await tx.user.update({
         where: { id: userId },
         data: { groupId: null },
-      }),
-    ]);
+      });
 
-    const isOwner = group.ownerId === userId;
-    const lastMember = group.members.length === 1;
-    // If the user was the owner or the last member, delete the group
-    if (isOwner || lastMember) {
-      await prisma.group.delete({ where: { id: groupId } });
+      // If owner leaves or last member, delete the group
+      if (isOwner || isLastMember) {
+        await tx.group.delete({ where: { id: groupId } });
+      }
+    });
+
+    // Handle post-transaction cleanup and notifications
+    if (isOwner || isLastMember) {
+      // Remove the group ID from Redis
+      try {
+        await redisClient.SREM("groupIds", groupId);
+      } catch (redisError) {
+        console.error("Failed to remove group from Redis:", redisError);
+      }
+
       if (isOwner) {
         // Notify all members that the group has been deleted
-        io.to(groupId).emit("groupDeleted", {
-          groupId,
+        io.to(groupId).emit("group_deleted", {
+          reason: "owner_left",
+          message: "Group was deleted because the owner left",
         });
+      } else {
+        // Last member left - no one to notify
+        console.log(`Group ${groupId} deleted as last member left`);
       }
-      // Remove the group ID from Redis
-      await redisClient.srem("groupIds", groupId);
     } else {
       // Notify remaining members that the user has left
-      io.to(groupId).emit("memberLeft", {
+      io.to(groupId).emit("member_left", {
         userId,
-        groupId,
+        userName:
+          group.members.find((m) => m.id === userId)?.name || "Unknown user",
       });
     }
 
-    // Emit a socket event to notify the user that they have left the group
-    const socketId = await redisClient.hget("userSockets", userId);
-    if (socketId) {
-      io.to(socketId).emit("leftGroup", { groupId });
-    }
-
-    res.status(200).json({ message: "Successfully left the group" });
+    res.status(200).json({
+      message: "Successfully left the group",
+      groupDeleted: isOwner || isLastMember,
+    });
   } catch (error) {
     console.error("Error leaving group:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -171,18 +262,20 @@ export const leaveGroup = async (req, res) => {
 
 export const getGroup = async (req, res) => {
   const { id: groupId } = req.params;
+  const userId = req.user.id;
 
   if (!groupId) {
     return res.status(400).json({ error: "Group ID is required." });
   }
 
   try {
-    // Check group existence in Redis
-    const groupExists = await redisClient.sismember("groupIds", groupId);
-    if (!groupExists) {
-      return res.status(404).json({ error: "Group not found" });
+    // Verify group exists and get its current state
+    const verification = await verifyGroupExists(groupId);
+    if (!verification.exists) {
+      return res.status(404).json({ error: verification.error });
     }
 
+    // Get full group details with safe user selections
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       include: {
@@ -192,12 +285,8 @@ export const getGroup = async (req, res) => {
       },
     });
 
-    if (!group) {
-      return res.status(404).json({ error: "Group not found" });
-    }
-
     // Check if the user is a member of the group
-    const isMember = group.members.some((member) => member.id === req.user.id);
+    const isMember = group.members.some((member) => member.id === userId);
     if (!isMember) {
       return res
         .status(403)
@@ -220,30 +309,40 @@ export const becomeDriver = async (req, res) => {
   }
 
   try {
-    // Check group existence in Redis
-    const groupExists = await redisClient.sismember("groupIds", groupId);
-    if (!groupExists) {
-      return res.status(404).json({ error: "Group not found" });
+    // Verify group exists and get its current state
+    const verification = await verifyGroupExists(groupId);
+    if (!verification.exists) {
+      return res.status(404).json({ error: verification.error });
     }
 
+    const group = verification.group;
+
     // Check if the user is a member of the group
-    const group = await prisma.group.findUnique({
-      where: { id: groupId },
-      include: { members: true },
-    });
-    if (!group || !group.members.some((member) => member.id === userId)) {
+    const isMember = group.members.some((member) => member.id === userId);
+    if (!isMember) {
       return res
         .status(403)
         .json({ error: "You are not a member of this group" });
     }
 
+    // Get current group with driver info
+    const groupWithDriver = await prisma.group.findUnique({
+      where: { id: groupId },
+      include: {
+        driver: { select: userSafeSelect },
+      },
+    });
+
     // Check if the group already has a driver
-    if (group.driver) {
-      return res.status(400).json({ error: "Group already has a driver" });
+    if (groupWithDriver.driver) {
+      return res.status(400).json({
+        error: "Group already has a driver",
+        currentDriver: groupWithDriver.driver,
+      });
     }
 
     // Update the group to set the driver
-    await prisma.group.update({
+    const updatedGroup = await prisma.group.update({
       where: { id: groupId },
       data: {
         driver: { connect: { id: userId } },
@@ -256,12 +355,12 @@ export const becomeDriver = async (req, res) => {
     });
 
     // Emit a socket event to notify all members that the user has become the driver
-    io.to(groupId).emit("driverChanged", {
-      groupId,
-      driver: userId,
+    io.to(groupId).emit("driver_changed", {
+      driver: updatedGroup.driver,
+      message: `${updatedGroup.driver.name} is now the driver`,
     });
 
-    res.status(200).json(group);
+    res.status(200).json(updatedGroup);
   } catch (error) {
     console.error("Error becoming driver:", error);
     res.status(500).json({ error: "Internal server error" });

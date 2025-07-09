@@ -133,6 +133,7 @@ export const useMap = (): UseMapReturnType => {
     if (group) {
       // Group mode: show ready members
       const updatedUsers = new Map<string, User>();
+      console.log(group);
       group.members.forEach((member) => {
         if (member.isReady && member.location) {
           updatedUsers.set(member.id, member);

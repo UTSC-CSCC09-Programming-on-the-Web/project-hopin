@@ -13,7 +13,7 @@ import { Coordinates } from "../types/location";
 import useLocation from "../lib/hooks/useLocation";
 import { userApi } from "../lib/axios/userAPI";
 import { authApi } from "../lib/axios/authAPI";
-import { useSession } from "next-auth/react";
+import { useSession, signOut as nextAuthSignOut } from "next-auth/react";
 
 type UserContextType = {
   currentUser: User | null;
@@ -23,7 +23,6 @@ type UserContextType = {
   updateProfile: (userData: FormData) => Promise<User>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
-  isAuthenticated: () => Promise<boolean>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -31,34 +30,10 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const location = useLocation();
-
-  const fetchUserData = useCallback(async (showErrorToast = true) => {
-    setLoading(true);
-    try {
-      const userData = await authApi.getCurrentUser();
-      setCurrentUser(userData);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Failed to fetch user data:", error);
-        if (showErrorToast) {
-          toast.error("Failed to load user data. Please try again.");
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Check authentication status when app loads & connect to NextAuth session
-  useEffect(() => {
-    if (!session) return;
-    console.log(session);
-    fetchUserData();
-  }, [session, fetchUserData]);
 
   // fetch additional user data from the backend using authApi refresh
   const refreshUser = useCallback(async () => {
@@ -103,17 +78,16 @@ export const UserProvider: React.FC<{
   // Sign out user
   const signOut = useCallback(async (): Promise<void> => {
     try {
-      // Use authApi for consistent signout handling
+      // Use authApi for backend signout
       await authApi.signOut();
       setCurrentUser(null);
       toast.success("Signed out successfully");
-      // Redirect to home page
-      window.location.href = "/";
     } catch (error: unknown) {
       console.error("Error signing out:", error);
+      // Even if there's an error, try to sign out with NextAuth
+      await nextAuthSignOut({ callbackUrl: "/" });
+      setCurrentUser(null);
       toast.error("Sign out may have failed. Redirecting to home page.");
-      // Even if there's an error, try to navigate away
-      window.location.href = "/";
     }
   }, []);
 
@@ -135,26 +109,36 @@ export const UserProvider: React.FC<{
     }
   }, []);
 
-  // Check if user is authenticated
-  const isAuthenticated = useCallback(async (): Promise<boolean> => {
-    return await authApi.isAuthenticated();
-  }, []);
+  // Check if the user is authenticated and fetch user data
+  useEffect(() => {
+    if (!session || status !== "authenticated") return;
+    // Re-verify authentication status
+    const revalidateAuth = async () => {
+      // Try to fetch user data, if it fails it means that the user is not
+      // authenticated on the server even though NextAuth thinks they are
+      try {
+        setLoading(true);
+        const userData = await authApi.getCurrentUser();
+        setCurrentUser(userData);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          await nextAuthSignOut({ callbackUrl: "/" });
+          setCurrentUser(null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    revalidateAuth();
+  }, [session, status]);
 
   // Update user location
   useEffect(() => {
-    if (!currentUser?.id || !location) return;
+    if (status !== "authenticated" || !session || !location) return;
 
     const updateUserLocation = async () => {
       try {
-        // Check if user is still authenticated before updating location
-        const isAuth = await authApi.isAuthenticated();
-        if (!isAuth) {
-          console.warn(
-            "User no longer authenticated, skipping location update"
-          );
-          return;
-        }
-
         const coordinates: Coordinates = {
           latitude: location.latitude,
           longitude: location.longitude,
@@ -171,7 +155,7 @@ export const UserProvider: React.FC<{
     };
 
     updateUserLocation();
-  }, [currentUser?.id, location]);
+  }, [status, session, location]);
 
   return (
     <UserContext.Provider
@@ -183,7 +167,6 @@ export const UserProvider: React.FC<{
         updateProfile,
         signOut,
         deleteAccount,
-        isAuthenticated,
       }}
     >
       {children}

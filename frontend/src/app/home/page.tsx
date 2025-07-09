@@ -73,28 +73,32 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="flex flex-row gap-8 items-center px-20">
-        <HopinLogo />
+      <div className="flex flex-col justify-between items-center h-screen gap-8">
+        <div className="relative z-10 flex items-center px-16 w-full bg-white justify-between">
+          <HopinLogo />
 
-        <button
-          onClick={handleSignOut}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Log Out
-        </button>
+          <div className="flex gap-4 items-center">
+            <button
+              onClick={handleSignOut}
+              className="text-sm font-bold border-1 p-2 rounded-sm"
+            >
+              Log Out
+            </button>
 
-        <button
-          onClick={() => router.push("/profile")}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Profile
-        </button>
-      </div>
-      <div className="flex flex-col items-center h-screen gap-8">
-        <div className="relative w-full aspect-video">
-          <Map />
+            <button
+              onClick={() => router.push("/profile")}
+              className="text-sm font-bold border-1 p-2 rounded-sm"
+            >
+              Profile
+            </button>
+          </div>
         </div>
-        <div className="flex gap-8 items-center">
+        <div className="fixed inset-0">
+          <div className="relative h-screen w-full">
+            <Map />
+          </div>
+        </div>
+        <div className="flex gap-8 items-center bg-white p-10 rounded-lg shadow-lg z-10 mb-4">
           {/* TODO: replace with a dynamic route with a generated room id */}
           <Button text="Create Group" onClick={handleCreateGroupClick} />
           <div className="text-lg">OR</div>

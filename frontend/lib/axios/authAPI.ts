@@ -1,7 +1,7 @@
 import { getApi, getAuthenticatedApi } from "./api";
 import { handleApiError } from "../../src/utils/apiUtils";
 import { AxiosError } from "axios";
-import { getSession } from "next-auth/react";
+import { getSession, signOut as nextAuthSignOut } from "next-auth/react";
 
 export interface SignupData {
   email: string;
@@ -19,19 +19,6 @@ export interface AuthResponse {
   accessToken: string;
   message?: string;
 }
-
-/**
- * Check if user is authenticated by verifying session
- */
-export const isAuthenticated = async (): Promise<boolean> => {
-  try {
-    const session = await getSession();
-    return !!(session?.accessToken && session?.userId);
-  } catch (error) {
-    console.error("Error checking authentication status:", error);
-    return false;
-  }
-};
 
 /**
  * Get current session information
@@ -103,7 +90,7 @@ export const authApi = {
     }
 
     try {
-      const authenticatedApi = getAuthenticatedApi(session);
+      const authenticatedApi = await getAuthenticatedApi();
       const response = await authenticatedApi.get("/auth/me");
       return response.data;
     } catch (error) {
@@ -120,7 +107,7 @@ export const authApi = {
       const session = await getSession();
 
       if (session?.accessToken) {
-        const authenticatedApi = getAuthenticatedApi(session);
+        const authenticatedApi = await getAuthenticatedApi();
         await authenticatedApi.post("/auth/signout");
       }
     } catch (error) {
@@ -130,17 +117,8 @@ export const authApi = {
       );
     }
 
-    // Client-side cleanup - Clear NextAuth related items only
-    // Note: NextAuth handles most of the session cleanup automatically
-    if (typeof document !== "undefined") {
-      // Clear NextAuth cookies by setting them to expire
-      document.cookie =
-        "next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie =
-        "next-auth.csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie =
-        "next-auth.callback-url=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    }
+    // Clear NextAuth session
+    await nextAuthSignOut({ callbackUrl: "/" });
 
     return { message: "Signed out successfully" };
   },
@@ -183,11 +161,6 @@ export const authApi = {
   },
 
   /**
-   * Check if the current user is authenticated
-   */
-  isAuthenticated,
-
-  /**
    * Get current session
    */
   getCurrentSession,
@@ -202,7 +175,7 @@ export const authApi = {
         throw new Error("No active session found");
       }
 
-      // Force a session update by calling getCurrentUser
+      // Simply call getCurrentUser to get fresh data
       const userData = await authApi.getCurrentUser();
       return userData;
     } catch (error) {

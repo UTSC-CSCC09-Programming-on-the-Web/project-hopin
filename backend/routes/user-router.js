@@ -20,7 +20,7 @@ const broadcastUserUpdate = async (userId, updateType = "update") => {
 
     if (user && user.groupId) {
       const { groupId, ...safeUser } = user;
-      io.to(groupId).emit("userStatusUpdate", {
+      io.to(groupId).emit("user_status_update", {
         user: safeUser,
         updateType,
         timestamp: new Date().toISOString(),
@@ -133,7 +133,6 @@ userRouter.get("/", async (req, res) => {
       };
     }
     const users = await prisma.user.findMany(query);
-    console.log(users);
     let nextCursor = null;
     if (users.length > take) {
       nextCursor = users[take - 1].id;

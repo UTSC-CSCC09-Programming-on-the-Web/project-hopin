@@ -3,6 +3,7 @@ import { getApi, getAuthenticatedApi } from "./api";
 import { AxiosError } from "axios";
 import { handleApiError } from "../../src/utils/apiUtils";
 import { getSession } from "next-auth/react";
+import { signOut as nextAuthSignOut } from "next-auth/react";
 
 // Auth-related API functions
 let nextCursor: string | null = null;
@@ -70,7 +71,7 @@ export const userApi = {
     }
 
     try {
-      const authenticatedApi = getAuthenticatedApi(session);
+      const authenticatedApi = await getAuthenticatedApi();
       // For FormData, we need to remove the Content-Type header to let the browser set it
       const response = await authenticatedApi.patch(
         `/users/${session.userId}`,
@@ -101,9 +102,11 @@ export const userApi = {
         throw new Error("Authentication required. Please sign in again.");
       }
 
-      const response = await getAuthenticatedApi(session).patch(
-        `/users/${session.userId}/position?field=${field}`,
-        coordinates
+      const response = await getAuthenticatedApi().then((api) =>
+        api.patch(
+          `/users/${session.userId}/position?field=${field}`,
+          coordinates
+        )
       );
 
       console.log(`Updated user ${field}:`, response.data[field]);
@@ -120,11 +123,10 @@ export const userApi = {
       if (!session?.userId)
         throw new Error("Authentication required. Please sign in again.");
 
-      const response = await getAuthenticatedApi(session).patch(
-        `/users/${session.userId}/ready`,
-        {
+      const response = await getAuthenticatedApi().then((api) =>
+        api.patch(`/users/${session.userId}/ready`, {
           isReady,
-        }
+        })
       );
 
       console.log("Updated user ready status:", response.data.isReady);
@@ -147,9 +149,8 @@ export const userApi = {
         throw new Error("Authentication required. Please sign in again.");
       }
 
-      const response = await getAuthenticatedApi(session).patch(
-        `/users/${session.userId}/status`,
-        statusData
+      const response = await getAuthenticatedApi().then((api) =>
+        api.patch(`/users/${session.userId}/status`, statusData)
       );
 
       console.log("Updated user status:", response.data);
@@ -165,8 +166,9 @@ export const userApi = {
       const session = await getSession();
 
       if (session?.accessToken) {
-        const authenticatedApi = getAuthenticatedApi(session);
-        await authenticatedApi.post("/auth/signout");
+        await getAuthenticatedApi().then((authenticatedApi) =>
+          authenticatedApi.post("/auth/signout")
+        );
       }
     } catch (error) {
       console.warn(
@@ -175,18 +177,8 @@ export const userApi = {
       );
     }
 
-    // Client-side cleanup - Clear NextAuth related items only
-    // Note: NextAuth handles most of the session cleanup automatically
-    if (typeof document !== "undefined") {
-      // Clear NextAuth cookies by setting them to expire
-      document.cookie =
-        "next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie =
-        "next-auth.csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie =
-        "next-auth.callback-url=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    }
-
+    // Use NextAuth signOut for proper session cleanup
+    await nextAuthSignOut({ callbackUrl: "/" });
     return { message: "Signed out successfully" };
   },
 
@@ -198,9 +190,8 @@ export const userApi = {
     }
 
     try {
-      const authenticatedApi = getAuthenticatedApi(session);
-      const response = await authenticatedApi.delete(
-        `/users/${session.userId}`
+      const response = await getAuthenticatedApi().then((api) =>
+        api.delete(`/users/${session.userId}`)
       );
 
       // The API returns 204 No Content for successful deletion
