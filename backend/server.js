@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { authRouter } from "./routes/auth-router.js";
 import { userRouter } from "./routes/user-router.js";
+import { paymentRouter } from "./routes/payment-router.js"
 import corsOptions from "./utils/corsOptions.js";
 
 const PORT = 8080;
@@ -18,6 +19,7 @@ app.use((req, res, next) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
+app.use("/api/payments", paymentRouter);
 
 app.listen(PORT, "0.0.0.0", (err) => {
   if (err) console.log(err);
