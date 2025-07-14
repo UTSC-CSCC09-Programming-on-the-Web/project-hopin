@@ -1,13 +1,14 @@
+import { get } from "http";
 import { getApi } from "./api";
 
 export const paymentApi = {
   
-  createCheckoutSession: async (priceId: string) => {
+  createCheckoutSession: async (userId: string, priceId: string) => {
     try {
       const response = await getApi().post(
         "payments/create-checkout-session", 
         {
-            // userId
+            userId,
             // userEmail
             priceId,
         }
@@ -17,6 +18,19 @@ export const paymentApi = {
       console.error('PaymentAPI: Error creating checkout session:', error);
       throw error;
     }
+  },
+
+  createPortalSession: async (userId: string, checkoutSessionId: string) => {
+    try {
+      const response = await getApi().post(
+        "payments/create-portal-session",
+        {
+          userId,
+          checkoutSessionId,
+        },
+      )
+      window.location.href = response.data.url;
+    } catch (error) {}
   }
 }
 

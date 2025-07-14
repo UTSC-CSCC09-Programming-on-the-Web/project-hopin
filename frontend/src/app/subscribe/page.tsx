@@ -2,10 +2,12 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { useState } from "react";
 import { paymentApi } from "../../../lib/axios/paymentAPI";
+import { useUserContext } from '../../../contexts/UserContext';
 import toast from "react-hot-toast";
 
 export default function Subscribe() {
   const [isLoading, setLoading] = useState(false);
+  const {currentUser} = useUserContext();
   return (
     <>
       <div className="" >
@@ -18,7 +20,11 @@ export default function Subscribe() {
             onClick={(e)=>{
               e.preventDefault();
               setLoading(true);
-              paymentApi.createCheckoutSession("price_1RjN3wPEdGwKucITLv9t6SGq") // TODO: move to env
+              if (!currentUser) {
+                console.log("Please log in to start a subscription plan.");
+                return;
+              }
+              paymentApi.createCheckoutSession(currentUser.id, "price_1RjN3wPEdGwKucITLv9t6SGq") // TODO: move to env
                 .then(async (session) => {
                   const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PKEY!);
                   if (stripe === null) return;
@@ -41,7 +47,3 @@ export default function Subscribe() {
     </>
   );
 }
-// TODO: autofill/lock email used in checkout
-// TODO: UI
-// TODO: payment with authentication
-// TODO: configure stripe customer portal 
