@@ -3,12 +3,15 @@ import { Coordinates } from "./location";
 // Sample User Type (update when API is available)
 export type User = {
   id: string;
-  name: string;
-  // TODO: Add profile picture when available
-  // profilePicture?: string;
+  email?: string;
+  // Exclude password for security reasons
+  name?: string;
+  avatar?: string;
   location?: Coordinates;
   destination?: Coordinates; // Where the user is going (if known)
-  isReady: boolean;
+  isReady?: boolean;
+  createdAt?: Date,
+  updatedAt?: Date
 };
 
 export type Group = {

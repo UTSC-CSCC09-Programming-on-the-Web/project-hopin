@@ -18,6 +18,8 @@ import useLocation from "../../../lib/hooks/useLocation";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useUserContext } from "../../../contexts/UserContext";
+import HopinLogo from "../ui/hopin-logo";
+import { handleSignOut } from "../home/page";
 
 export default function GroupPage() {
   const { createRoute } = useMapContext();
@@ -45,6 +47,24 @@ export default function GroupPage() {
   // if (!group) return null;
 
   return (
+    <>
+    <div className="flex flex-row gap-8 items-center px-20">
+      <HopinLogo />
+
+      <button
+        onClick={handleSignOut}
+        className="text-sm font-bold border-1 p-2 rounded-sm"
+      >
+        Log Out
+      </button>
+
+      <button
+        onClick={() => router.push("/profile")}
+        className="text-sm font-bold border-1 p-2 rounded-sm"
+      >
+        Profile
+      </button>
+    </div>
     <main className="grid grid-cols-[1fr_3fr] h-full w-full gap-8">
       {/* Left Side */}
       <div className="flex flex-col gap-8 items-start">
@@ -94,6 +114,7 @@ export default function GroupPage() {
         <Map />
       </div>
     </main>
+    </>
   );
 }
 
@@ -186,7 +207,15 @@ const UserInfo = ({ user }: { user: User }) => {
     <div className="flex justify-between items-center">
       <div className="flex gap-3 items-center">
         {/* TODO: replace with user profile picture */}
-        <UserCircle2 className="w-8 h-8 text-gray-500" />
+        {user.avatar ? (
+          <img
+            src={user.avatar}
+            alt={`${user.name || "User"}'s avatar`}
+            className="w-8 h-8 object-cover opacity-70"
+          />
+        ) : (
+          <UserCircle2 className="w-8 h-8 text-gray-500" />
+        )}
         <div className="text-base text-gray-800">{name}</div>
       </div>
       <div

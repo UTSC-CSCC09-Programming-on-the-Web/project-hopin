@@ -4,6 +4,7 @@ import { MapDomainProvider } from "../../contexts/MapContext";
 import { Toaster } from "react-hot-toast";
 import { UserProvider } from "../../contexts/UserContext";
 import { GroupProvider } from "../../contexts/GroupContext";
+import { SessionWrapper } from "@/components/SessionWrapper";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -19,11 +20,18 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Toaster />
-        <UserProvider>
+        <SessionWrapper>
+          <UserProvider>
           <GroupProvider>
-            <MapDomainProvider>{children}</MapDomainProvider>
+            <MapDomainProvider>
+              {/* <SessionWrapper> */}
+                {children}
+              {/* </SessionWrapper> */}
+            </MapDomainProvider>
           </GroupProvider>
         </UserProvider>
+        </SessionWrapper>
+        
       </body>
     </html>
   );

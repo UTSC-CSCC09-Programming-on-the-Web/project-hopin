@@ -1,4 +1,4 @@
-import { Coordinates, Route } from "../types/location";
+import { Coordinates, Route } from "../../../types/location";
 
 export const fetchMapboxDirections = async (
   start: Coordinates,

@@ -29,22 +29,24 @@ const useUsersOnMap = (map: mapboxgl.Map | null) => {
       return;
     }
 
+    console.log(currentUser);
     if (!currentUser) return;
     // If no group, just set the current user
     setUsersOnMap((prev) => {
       const copy = new Map(prev);
-      if (currentUser.isReady) {
+      if (currentUser) {
         copy.set(currentUser.id, currentUser);
       } else {
+        // TODO: check authentication state instead
         copy.delete(currentUser.id);
       }
       return copy;
     });
-  }, [currentUser, group?.members]);
+  }, [currentUser, group, group?.members]);
 
   useEffect(() => {
     updateUserMarkers(map, Array.from(usersOnMap.values()), currentUser);
-  }, [usersOnMap, currentUser]);
+  }, [usersOnMap, map, currentUser]);
 };
 
 export default useUsersOnMap;
@@ -70,12 +72,34 @@ const updateUserMarkers = (
     el.className =
       "user-marker flex flex-col items-center justify-center gap-1";
 
-    // TODO: Replace with user's profile picture when available
+    const avatarHtml = user.avatar
+      ? `
+      <img
+        src="${user.avatar}"
+        alt="${user.name || "User"}'s avatar"
+        class="w-full h-full object-cover opacity-70"
+      />
+      `
+      : `
+      <div class="absolute inset-[1px] rounded-full border-2 border-gray-500 z-10 pointer-events-none"></div>
+        <div class="w-full h-full flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg"
+              class="w-full h-full text-gray-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1">
+            <path d="M18 20a6 6 0 0 0-12 0" />
+            <circle cx="12" cy="10" r="4" />
+          </svg>
+        </div>
+      `;
+
     el.innerHTML = `
       <div class="relative rounded-full overflow-hidden border-2 border-white ${
         isCurrentUser ? "w-12 h-12 shadow-lg" : "w-10 h-10 shadow-md"
       }">
-      <img src="https://www.operationkindness.org/wp-content/uploads/blog-kitten-nursery-operation-kindness.jpg" class="w-full h-full object-cover" />
+        ${avatarHtml}
       </div>
       <span class="label-sm bg-white text-gray-900 px-1 shadow-xs rounded">${
         isCurrentUser ? "You" : user.name

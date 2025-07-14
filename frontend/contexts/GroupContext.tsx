@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
-import { Group } from "../types/user";
+import { createContext, useContext, useState, useEffect } from "react";
+import { User, Group } from "../types/user";
 import { useUserContext } from "./UserContext";
+import { userApi } from "../lib/axios/userAPI";
 
 type GroupContextType = {
   group: Group | null;
@@ -18,6 +19,21 @@ export const GroupProvider: React.FC<{
 }> = ({ children }) => {
   const { currentUser } = useUserContext();
   const [group, setGroup] = useState<Group | null>(null);
+  const [members, setMembers] = useState<User[]>([]);
+
+  // Fetch members of the group when component mounts
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const membersData = await userApi.getAllUsers();
+        setMembers(membersData.users);
+      } catch (error) {
+        console.error("Failed to fetch members.");
+      }
+    };
+
+    if (currentUser) fetchMembers();
+  }, [currentUser]);
 
   const createGroup = () => {
     if (!currentUser) {
@@ -42,22 +58,26 @@ export const GroupProvider: React.FC<{
         location: { longitude: -79.3822, latitude: 43.6532 },
         isReady: true,
       },
-      members: [
-        currentUser,
-        // TODO: Sample members, replace with actual API call to fetch members
-        {
-          id: "1",
-          name: "John Doe",
-          location: { longitude: -79.3822, latitude: 43.6532 },
-          isReady: true,
-        },
-        {
-          id: "2",
-          name: "Jessica Smith",
-          location: { longitude: -118.2437, latitude: 34.0522 },
-          isReady: true,
-        },
-      ],
+      members: members,
+      // members: [
+      //   {
+      //     ...currentUser,
+      //     isReady: true,
+      //   },
+      //   // TODO: Sample members, replace with actual API call to fetch members
+      //   {
+      //     id: "1",
+      //     name: "John Doe",
+      //     location: { longitude: -79.3822, latitude: 43.6532 },
+      //     isReady: true,
+      //   },
+      //   {
+      //     id: "2",
+      //     name: "Jessica Smith",
+      //     location: { longitude: -118.2437, latitude: 34.0522 },
+      //     isReady: true,
+      //   },
+      // ],
     });
   };
 

@@ -14,6 +14,5 @@ export default function Map({ className }: MapProps) {
   useEffect(() => {
     attachToContainer(containerRef.current);
   }, [attachToContainer]);
-
   return <div ref={containerRef} id="map-container" className={className} />;
 }
