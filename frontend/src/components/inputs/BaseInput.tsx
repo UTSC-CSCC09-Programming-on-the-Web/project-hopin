@@ -54,9 +54,9 @@ const InputLabel = ({
   required,
 }: InputLabelProps) => {
   return (
-    <div className="flex items-baseline gap-2">
+    <div className="flex items-center gap-2">
       {labelIcon}
-      <label className="label text-orange-800" htmlFor={htmlFor}>
+      <label className="label text-lg text-orange-800" htmlFor={htmlFor}>
         {text}
         {required && <span className="text-red-500">*</span>}
       </label>
