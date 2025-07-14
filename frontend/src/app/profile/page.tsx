@@ -178,7 +178,7 @@ function UserProfile() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-4xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
       <div className="flex flex-col items-center md:flex-row md:items-start gap-6">
         {/* Avatar Section */}
         <div className="w-24 h-24 relative rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">

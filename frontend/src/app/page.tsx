@@ -35,9 +35,9 @@ export default function SignIn() {
         <img
           src="/logo.png"
           alt="HopIn Logo"
-          className="w-12 h-12 object-contain"
+          className="w-10 h-10 object-contain"
         />
-        <h1 className="font-bold text-5xl">HopIn</h1>
+        <h1 className="font-bold text-4xl">HopIn</h1>
       </div>
 
       <div className="flex flex-col gap-8 md:flex-row md:gap-20 justify-center items-center flex-1 m-4 md:m-18">

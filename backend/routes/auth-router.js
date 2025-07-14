@@ -69,26 +69,34 @@ authRouter.post("/signup", async (req, res) => {
 authRouter.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
-  // if user doesn't exist
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !user.password) {
-    return res.status(401).json({ error: "Invalid credentials" });
+  try {
+    
+  
+    // if user doesn't exist
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !user.password) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // if password is invalid
+    const valid = bcrypt.compareSync(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Generate a JWT token for the user
+    const token = signJWT(user.id, user.email);
+
+    // dont want to return the password
+    return res.json({
+      id: user.id,
+      accessToken: token,
+    });
   }
-
-  // if password is invalid
-  const valid = bcrypt.compareSync(password, user.password);
-  if (!valid) {
-    return res.status(401).json({ error: "Invalid credentials" });
+  catch (error) {
+    // is it bad to display this?
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  // Generate a JWT token for the user
-  const token = signJWT(user.id, user.email);
-
-  // dont want to return the password
-  return res.json({
-    id: user.id,
-    accessToken: token,
-  });
 });
 
 // Check if the user is authenticated + return user info

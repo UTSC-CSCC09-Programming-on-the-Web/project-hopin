@@ -169,7 +169,9 @@ export default function GroupPage() {
               </div>
             </div>
           </div>
-          <Map />
+          <div className="relative w-full h-[70vh] aspect-video">
+            <Map />
+          </div>
           <MobileParticipants>
             <ParticipantList />
           </MobileParticipants>
