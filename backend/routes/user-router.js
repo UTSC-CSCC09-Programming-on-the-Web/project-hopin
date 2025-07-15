@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(
       null,
-      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
     );
   },
 });
@@ -205,7 +205,7 @@ userRouter.patch(
       console.error("Error updating user:", error);
       res.status(500).json({ error: "Failed to update user" });
     }
-  }
+  },
 );
 
 // Update user location or destination

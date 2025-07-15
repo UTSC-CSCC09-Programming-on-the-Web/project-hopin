@@ -18,7 +18,6 @@ function SuccessContent() {
           className=''
           onClick={(e) => {
             e.preventDefault();
-            
             if (sessionId && currentUser) {
               paymentApi.createPortalSession(currentUser.id, sessionId);
             } else {

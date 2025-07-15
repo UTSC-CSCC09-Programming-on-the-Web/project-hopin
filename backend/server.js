@@ -3,11 +3,16 @@ import express from "express";
 import cors from "cors";
 import { authRouter } from "./routes/auth-router.js";
 import { userRouter } from "./routes/user-router.js";
-import { paymentRouter } from "./routes/payment-router.js"
+import { paymentRouter } from "./routes/payment-router.js";
 import corsOptions from "./utils/corsOptions.js";
 
 const PORT = 8080;
 export const app = express();
+
+// Use raw body parser for webhook endpoint
+app.use('/api/payments/stripe-webhook', express.raw({ type: 'application/json' }));
+
+// Use JSON parser for other routes
 app.use(express.json());
 app.use(cors(corsOptions));
 app.use(express.static("static"));

@@ -151,7 +151,7 @@ authRouter.post("/get-token", async (req, res) => {
   // Set cache control headers
   res.set(
     "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate"
+    "no-store, no-cache, must-revalidate, proxy-revalidate",
   );
   res.set("Pragma", "no-cache");
   res.set("Expires", "0");

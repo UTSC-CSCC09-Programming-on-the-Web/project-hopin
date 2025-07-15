@@ -24,7 +24,7 @@ export default function Subscribe() {
                 console.log("Please log in to start a subscription plan.");
                 return;
               }
-              paymentApi.createCheckoutSession(currentUser.id, "price_1RjN3wPEdGwKucITLv9t6SGq") // TODO: move to env
+              paymentApi.createCheckoutSession(currentUser.id, currentUser.email!, "price_1RlDmGPEdGwKucITXtzxQfQ5") // TODO: move to env
                 .then(async (session) => {
                   const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PKEY!);
                   if (stripe === null) return;

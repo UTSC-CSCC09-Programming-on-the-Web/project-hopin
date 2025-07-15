@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "prisma generate && next build",
     "start": "node server",
-    "dev": "nodemon server"
+    "dev": "nodemon server",
+    // "stripe:listen": "stripe listen --forward-to localhost:8080/api/payments/stripe-webhook --skip-verify"
   },
   "author": "",
   "license": "ISC",
