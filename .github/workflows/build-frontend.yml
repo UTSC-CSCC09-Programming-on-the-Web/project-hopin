@@ -1,4 +1,4 @@
-name: Publish Angular Skeleton to GHCR & Deploy on VM
+name: Publish Frontend to GHCR & Deploy on VM
 
 on:
   push:
