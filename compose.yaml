@@ -61,3 +61,7 @@ services:
       POSTGRES_PASSWORD: hopinc09
     expose:
       - "5432"
+
+networks:
+  default:
+    name: hopin-net
