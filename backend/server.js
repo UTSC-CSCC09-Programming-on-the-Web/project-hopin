@@ -16,8 +16,14 @@ app.use((req, res, next) => {
   next();
 });
 
+
+
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({status: "Backend service healthy"});
+});
 
 app.listen(PORT, "0.0.0.0", (err) => {
   if (err) console.log(err);
