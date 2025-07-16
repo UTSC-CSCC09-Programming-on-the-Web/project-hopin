@@ -1,7 +1,9 @@
 import { getApi, getAuthenticatedApi } from "./api";
 import { handleApiError } from "../../src/utils/apiUtils";
 import { AxiosError } from "axios";
-import { getSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
+import { NextResponse } from "next/server";
+import { use } from "react";
 
 export interface SignupData {
   email: string;
@@ -210,4 +212,22 @@ export const authApi = {
       throw error;
     }
   },
+
+  // validateToken: async () => {
+  //   try {
+  //     const session = await getSession();
+  //     console.log("SESSSSHHH", session);
+  //     if (session?.accessToken) {
+  //       const authenticatedApi = getAuthenticatedApi(session);
+  //       const res = await authenticatedApi.post("/auth/validate-token");
+  //       console.log("@@@authApi ", res);
+  //       return res.data.valid;
+  //     }
+  //   } catch (error) {
+  //     console.warn(
+  //       "Backend signout failed, but continuing with client cleanup:",
+  //       error
+  //     );
+  //   }
+  // },
 };

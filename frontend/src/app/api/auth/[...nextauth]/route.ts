@@ -1,6 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { userApi } from "../../../../../lib/axios/userAPI";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
@@ -34,9 +35,18 @@ const authOptions: NextAuthOptions = {
           if (!res.ok) return null;
 
           const user = await res.json();
+
+          let isSubscribed = false;
+          try {
+            isSubscribed = await userApi.isSubscribed(user.id);
+          } catch (error) {
+            console.error("Error fetching subscription status:", error);
+          }
+
           return {
             id: user.id.toString(),
             accessToken: user.accessToken,
+            isSubscribed,
           };
         } catch (err) {
           console.error("Credentials login failed:", err);
@@ -85,6 +95,14 @@ const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.accessToken = user.accessToken;
+        try {
+          console.log("@jwt")
+          const isSubscribed = await userApi.isSubscribed(user.id);
+          token.isSubscribed = isSubscribed;
+        } catch (error) {
+          console.error("Error fetching subscription status:", error);
+          token.isSubscribed = false;
+        }
       }
 
       // For Google login, get token from account (not user)
@@ -92,6 +110,14 @@ const authOptions: NextAuthOptions = {
         token.id = account.id;
         token.accessToken = account.accessToken;
         token.profilePicture = account.profilePicture || null;
+        try {
+          console.log("@jwt2")
+          const isSubscribed = await userApi.isSubscribed(account.id as string);
+          token.isSubscribed = isSubscribed;
+        } catch (error) {
+          console.error("Error fetching subscription status:", error);
+          token.isSubscribed = false;
+        }
       }
 
       return token;
@@ -101,6 +127,7 @@ const authOptions: NextAuthOptions = {
       if (session.user && token) {
         session.userId = token.id as string;
         session.accessToken = token.accessToken as string;
+        session.isSubscribed = Boolean(token.isSubscribed);
       }
       return session;
     },

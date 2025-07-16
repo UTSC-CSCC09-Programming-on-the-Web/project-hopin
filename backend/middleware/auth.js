@@ -4,8 +4,18 @@ import jwt from "jsonwebtoken";
 const blacklistedTokens = new Set();
 
 // Export function to add tokens to blacklist (used by auth-router)
-export const blacklistToken = (token) => {
-  blacklistedTokens.add(token);
+export const blacklistToken = {
+  add: (token) => {
+    blacklistedTokens.add(token);
+  },
+
+  isBlacklisted: (token) => {
+    return blacklistedTokens.has(token);
+  },
+
+  cleanup: () => {
+    blacklistedTokens.clear();
+  }
 };
 
 // use this function if the feature you're incorporating requires authentication
@@ -26,3 +36,8 @@ export function authenticateToken(req, res, next) {
     next();
   });
 }
+
+setInterval(() => {
+  tokenBlacklist.cleanup();
+
+}, 60 * 60 * 1000)

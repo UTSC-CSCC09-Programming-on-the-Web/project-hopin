@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 
 const links = [
-  { name: "Personal Information", href: "/profile" },
-  { name: "Pending Payments & History", href: "/profile/payments" },
+  { name: "Personal Information", href: "/account" },
+  { name: "Pending Payments & History", href: "/account/payments" },
 ];
 
 export default function SideNav() {

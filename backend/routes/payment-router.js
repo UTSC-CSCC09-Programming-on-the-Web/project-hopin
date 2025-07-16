@@ -56,7 +56,7 @@ paymentRouter.post("/create-portal-session", async (req, res) => {
   //     .json({ error: "You are not authorized to view the portal session" });
   //   return;
   // }
-  const returnUrl = "http://localhost:3000/profile";
+  const returnUrl = "http://localhost:3000/account";
   try {
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
@@ -74,7 +74,6 @@ paymentRouter.post("/create-portal-session", async (req, res) => {
   }
 });
 
-// test webhooks with 
 // stripe listen --forward-to localhost:8080/api/payments/stripe-webhook --skip-verify
 paymentRouter.post("/stripe-webhook", async (req, res) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
@@ -88,7 +87,6 @@ paymentRouter.post("/stripe-webhook", async (req, res) => {
       signature,
       webhookSecret
     );
-    
     // Handle events
     switch (event.type) {
       case "checkout.session.completed":

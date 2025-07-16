@@ -123,7 +123,7 @@ authRouter.post("/signout", authenticateToken, (req, res) => {
 
     if (token) {
       // Add token to blacklist using the shared function
-      blacklistToken(token);
+      blacklistToken.add(token);
       console.log("Token blacklisted:", token.substring(0, 20) + "...");
     }
 
@@ -179,4 +179,9 @@ authRouter.post("/get-token", async (req, res) => {
     console.error("Error getting token:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
+});
+
+// Validate token 
+authRouter.post("/validate-token", authenticateToken, (req, res) => {
+  return res.json({ valid: true, user: req.user });
 });

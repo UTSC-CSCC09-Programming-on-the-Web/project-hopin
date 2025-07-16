@@ -84,10 +84,10 @@ export default function HomePage() {
         </button>
 
         <button
-          onClick={() => router.push("/profile")}
+          onClick={() => router.push("/account")}
           className="text-sm font-bold border-1 p-2 rounded-sm"
         >
-          Profile
+          Account
         </button>
       </div>
       <div className="flex flex-col items-center h-screen gap-8">

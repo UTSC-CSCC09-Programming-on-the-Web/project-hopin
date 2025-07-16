@@ -2,7 +2,7 @@ import { Coordinates } from "../../types/location";
 import { getApi, getAuthenticatedApi } from "./api";
 import { AxiosError } from "axios";
 import { handleApiError } from "../../src/utils/apiUtils";
-import { getSession } from "next-auth/react";
+import { getSession, signOut } from "next-auth/react";
 
 // Auth-related API functions
 let nextCursor: string | null = null;
@@ -162,6 +162,9 @@ export const userApi = {
         "next-auth.callback-url=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
 
+    // NextAuth's signout method
+    await signOut({ callbackUrl: "/", redirect: false });
+
     return { message: "Signed out successfully" };
   },
 
@@ -189,21 +192,32 @@ export const userApi = {
     }
   },
 
-  getSubscriptionStatus: async() => {
-    const session = await getSession();
-    if (!session?.accessToken || !session?.userId) {
-      throw new Error("Authentication required. Please sign in again.");
-    }
+  getSubscriptionStatus: async (userId?: string) => {
     try {
-      const authenticatedApi = getAuthenticatedApi(session);
-      const response = await authenticatedApi.get(
-        `/users/${session.userId}`
-      );
-      return { subscriptionStatus: response.data.subscriptionStatus };
+      if (!userId) {
+        const session = await getSession();
+        if (!session?.userId) {
+          throw new Error("Authentication required. Please sign in again.");
+        }
+        userId = session.userId;
+      }
+      const user = await userApi.getUserById(userId);
+      return {
+        subscriptionStatus: user?.subscriptionStatus ?? "none"
+      };
     } catch (error) {
       console.error("Subscription status check error:", error);
       handleApiError(error as AxiosError);
     }
   },
 
+  isSubscribed: async (userId?: string) => {
+    try {
+      const subscriptionData = await userApi.getSubscriptionStatus(userId);
+      return subscriptionData?.subscriptionStatus === "active";
+    } catch (error) {
+      console.error("isSubscribed check error:", error);
+      return false;
+    }
+  },
 };
