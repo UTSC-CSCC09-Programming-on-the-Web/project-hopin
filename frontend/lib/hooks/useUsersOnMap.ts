@@ -38,7 +38,7 @@ const useUsersOnMap = (map: mapboxgl.Map | null) => {
         copy.set(currentUser.id, currentUser);
       } else {
         // TODO: check authentication state instead
-        copy.delete(currentUser.id);
+        // copy.delete(currentUser.id);
       }
       return copy;
     });

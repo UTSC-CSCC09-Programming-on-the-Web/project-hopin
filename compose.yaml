@@ -1,11 +1,63 @@
+version: "3.7"
+
 services:
-  frontend:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./vhost:/etc/nginx/vhost.d
+      - ./html:/usr/share/nginx/html
+      - ./dhparam:/etc/nginx/dhparam
+
+  nginx-proxy-acme:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
     depends_on:
-      - backend
+      - nginx-proxy
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/nginx/certs
+      - ./vhost:/etc/nginx/vhost.d
+      - ./html:/usr/share/nginx/html
+      - ./acme:/etc/acme.sh
+    environment:
+      - DEFAULT_EMAIL=jane.low@mail.utoronto.ca
+
+  frontend:
+    image: ghcr.io/utsc-cscc09-programming-on-the-web/frontend-hopin:latest
+    container_name: frontend
+    restart: always
+    expose:
+      - "3000"
+    environment:
+      - VIRTUAL_HOST=hop-in.dev
+      - LETSENCRYPT_HOST=hop-in.dev
+      - LETSENCRYPT_EMAIL=jane.low@mail.utoronto.ca
 
   backend:
-    depends_on:
-      - postgres
+    image: ghcr.io/utsc-cscc09-programming-on-the-web/backend-hopin:latest
+    container_name: backend
+    restart: always
+    expose:
+      - "8080"
+    environment:
+      - VIRTUAL_HOST=api.hop-in.dev
+      - LETSENCRYPT_HOST=api.hop-in.dev
+      - LETSENCRYPT_EMAIL=jane.low@mail.utoronto.ca
 
   postgres:
     image: postgres:latest
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hopinc09
+    expose:
+      - "5432"

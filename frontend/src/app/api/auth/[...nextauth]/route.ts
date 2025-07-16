@@ -43,7 +43,9 @@ const authOptions: NextAuthOptions = {
           };
         } catch (err) {
           console.error("Credentials login failed:", err);
-          throw new Error(err.message || "Something went wrong during login.");
+
+          const e = err as { message?: string };
+          throw new Error(e.message ?? "Something went wrong during login.");
         }
       },
     }),
