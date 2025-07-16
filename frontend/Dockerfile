@@ -5,11 +5,10 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY . .
+COPY .env .env
 
 # Build the Next.js app
 RUN npm run build
-
-COPY .env .env
 ENV PORT=3000
 EXPOSE 3000
 
