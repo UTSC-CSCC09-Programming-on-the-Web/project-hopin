@@ -13,7 +13,7 @@ interface FormData {
   avatar: File | string | null;
 }
 
-function UserProfile() {
+function UserAccount() {
   const { currentUser, loading, updateProfile, signOut, deleteAccount } =
     useUserContext();
   const [isEditing, setIsEditing] = useState(false);
@@ -415,10 +415,10 @@ function UserProfile() {
   );
 }
 
-export default function Profile() {
+export default function Account() {
   return (
     <div className="container mx-auto p-4 min-h-screen bg-gray-50">
-      <UserProfile />
+      <UserAccount />
     </div>
   );
 }

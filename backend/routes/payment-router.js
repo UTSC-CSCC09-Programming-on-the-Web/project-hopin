@@ -56,7 +56,7 @@ paymentRouter.post("/create-portal-session", async (req, res) => {
   //     .json({ error: "You are not authorized to view the portal session" });
   //   return;
   // }
-  const returnUrl = "http://localhost:3000/profile";
+  const returnUrl = "http://localhost:3000/account";
   try {
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,

@@ -59,10 +59,10 @@ export default function GroupPage() {
       </button>
 
       <button
-        onClick={() => router.push("/profile")}
+        onClick={() => router.push("/account")}
         className="text-sm font-bold border-1 p-2 rounded-sm"
       >
-        Profile
+        Account
       </button>
     </div>
     <main className="grid grid-cols-[1fr_3fr] h-full w-full gap-8">
