@@ -4,23 +4,59 @@
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import HopinLogo from "./ui/hopin-logo";
+import { userApi } from "../../lib/axios/userAPI";
+import { useRouter } from "next/navigation";
 
 export default function SignIn() {
-  // const user = await getUserSession();
+
+  const router = useRouter();
+
+  const checkSubscriptionAndRedirect = async () => {
+    try {
+      const subscriptionData = await userApi.getSubscriptionStatus();
+      const isSubscribed = subscriptionData?.subscriptionStatus === "active";
+
+      if (isSubscribed) {
+        router.push("/home");
+      } else {
+        router.push("/subscribe");
+      }
+    } catch (error) {
+      console.error("Error checking subscription status:", error);
+      router.push("/")
+    }
+  }
+ 
   const handleSignIn = async (formData: FormData) => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     try {
-      await signIn("credentials", {
-        email: email,
-        password: password,
-        redirect: true,
-        callbackUrl: "/home",
-      });
+      const res = await signIn("credentials", {
+        email: email, 
+        password: password, 
+        redirect: false, // No auto-redirect. Redirect based on subscription status. 
+      })
+
+      if (res?.ok) {
+        await checkSubscriptionAndRedirect();
+      } else {
+        throw new Error(res?.error || "Failed to sign in");
+      }
     } catch (error: any) {
       throw new Error(error.message || "Failed to sign in");
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const res = await signIn("google", { redirect: false });
+      if (res?.ok) {
+        await checkSubscriptionAndRedirect();
+      } 
+    } catch (error: any) {
+      console.error("Google sign in error:", error);
+    }
+  }
 
   return (
     <main>
@@ -70,7 +106,7 @@ export default function SignIn() {
           </form>
           <button
             className="border-1 border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
-            onClick={() => signIn("google", { callbackUrl: "/home" })}
+            onClick={handleGoogleSignIn}
           >
             <img className="w-1/9" src="google.png" alt="Google Logo" />
             <span>Sign in with Google</span>

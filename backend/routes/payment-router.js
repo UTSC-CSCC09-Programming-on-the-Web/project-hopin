@@ -21,7 +21,7 @@ paymentRouter.post("/create-checkout-session", async (req, res) => {
         },
       ],
       success_url:
-        "http://localhost:3000/subscribe/success?session_id={CHECKOUT_SESSION_ID}",
+        "http://localhost:3000/home",
       cancel_url: "http://localhost:3000/subscribe",
     });
     res.json({

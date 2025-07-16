@@ -10,7 +10,7 @@ export type User = {
   location?: Coordinates;
   destination?: Coordinates; // Where the user is going (if known)
   isReady?: boolean;
-  stripeCustomerId?: string;
+  customerId?: string;
   subscriptionStatus?: string;
   createdAt?: Date,
   updatedAt?: Date

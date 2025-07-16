@@ -188,4 +188,22 @@ export const userApi = {
       handleApiError(error as AxiosError);
     }
   },
+
+  getSubscriptionStatus: async() => {
+    const session = await getSession();
+    if (!session?.accessToken || !session?.userId) {
+      throw new Error("Authentication required. Please sign in again.");
+    }
+    try {
+      const authenticatedApi = getAuthenticatedApi(session);
+      const response = await authenticatedApi.get(
+        `/users/${session.userId}`
+      );
+      return { subscriptionStatus: response.data.subscriptionStatus };
+    } catch (error) {
+      console.error("Subscription status check error:", error);
+      handleApiError(error as AxiosError);
+    }
+  },
+
 };

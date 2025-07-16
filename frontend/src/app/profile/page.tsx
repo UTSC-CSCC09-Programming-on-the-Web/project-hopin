@@ -400,8 +400,8 @@ function UserProfile() {
         className=''
         onClick={(e) => {
           e.preventDefault();
-          if (currentUser) {
-            paymentApi.createPortalSession(currentUser.id, currentUser.stripeCustomerId);
+          if (currentUser && currentUser.id && currentUser.customerId) {
+            paymentApi.createPortalSession(currentUser.id, currentUser.customerId);
           } else {
             console.error('No session ID available');
           }

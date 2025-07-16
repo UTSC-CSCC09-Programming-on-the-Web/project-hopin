@@ -11,7 +11,7 @@ export default function SignUp() {
 
     try {
       await authApi.signup({ email, password, name });
-
+      window.location.href = "http://localhost:3000/subscribe"; // After signup, lead to monthly subscription page
       await signIn("credentials", {
         email,
         password,
@@ -78,7 +78,12 @@ export default function SignUp() {
           </form>
           <button
             className="border border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
-            onClick={() => signIn("google")}
+            onClick={() => {
+              signIn("google", {
+                redirect: true,
+                callbackUrl: "/subscribe",
+              });
+            }}
           >
             <img className="w-1/9" src="google.png" alt="Google Logo" />
             <span>Sign up with Google</span>

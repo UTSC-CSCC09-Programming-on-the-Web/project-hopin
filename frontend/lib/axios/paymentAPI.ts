@@ -21,16 +21,16 @@ export const paymentApi = {
     }
   },
 
-  createPortalSession: async (userId: string, stripeCustomerId: string | null) => {
+  createPortalSession: async (userId: string, customerId: string | null) => {
     try {
       const response = await getApi().post(
         "payments/create-portal-session",
         {
           userId,
-          stripeCustomerId,
+          customerId,
         },
       )
       window.location.href = response.data.url;
     } catch (error) {}
-  }
+  },
 }
