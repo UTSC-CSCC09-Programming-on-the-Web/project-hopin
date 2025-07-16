@@ -62,4 +62,4 @@ jobs:
             docker pull ghcr.io/utsc-cscc09-programming-on-the-web/backend-hopin:latest
             docker stop backend || true
             docker rm backend || true
-            docker run -d --name backend --env-file ./backend.env -p 3000:3000 ghcr.io/utsc-cscc09-programming-on-the-web/backend-hopin:latest
+            docker run -d --name backend --env-file ./backend.env -p 8080:8080 ghcr.io/utsc-cscc09-programming-on-the-web/backend-hopin:latest
