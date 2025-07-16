@@ -7,8 +7,8 @@ on:
       - main
       - feat/deploy
     # Only run this workflow if the commit has modified files from frontend
-    # paths:
-    #   - backend/**
+    paths:
+      - backend/**
 
 env:
   IMAGE_NAME: backend-hopin
