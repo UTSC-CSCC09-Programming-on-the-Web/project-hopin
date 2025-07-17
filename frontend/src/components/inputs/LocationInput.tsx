@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import debounce from "../../utils/debounce";
-import { fetchMapboxPlaces } from "../../app/api/placesAPI";
+import { fetchMapboxPlaces } from "@/lib/apis/placesAPI";
 import Input from "./Input";
 
 type Feature = {

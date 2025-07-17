@@ -1,245 +1,53 @@
 "use client";
-import LocationInput from "@/components/inputs/LocationInput";
 import Map from "@/components/Map";
-import { Coordinates } from "../../../../../types/location";
-import { useEffect, useState } from "react";
-import IconWrapper from "@/components/IconWrapper";
-import {
-  Flag as StartIcon,
-  MapPin as EndIcon,
-  CarTaxiFront,
-  UserCircle2,
-  MapPin,
-} from "lucide-react";
-import { useMapContext } from "../../../../../contexts/MapContext";
-import { User } from "../../../../../types/user";
-import { useGroupContext } from "../../../../../contexts/GroupContext";
-import useLocation from "../../../../../lib/hooks/useLocation";
-import toast from "react-hot-toast";
-import { useUserContext } from "../../../../../contexts/UserContext";
+import { useGroupStore } from "@/stores/GroupStore";
+import { X } from "lucide-react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { useUserStore } from "@/stores/UserStore";
+import PassengerControls from "./PassengerControls/PassengerControls";
+import DriverControls from "./DriverControls/DriverControls";
 
 export default function GroupPage() {
-  const { createRoute } = useMapContext();
-  const location = useLocation();
-  const [startLocation, setStartLocation] = useState<Coordinates | null>(null);
-  const [endLocation, setEndLocation] = useState<Coordinates | null>(null);
+  const user = useUserStore((s) => s.user);
+  const group = useGroupStore((state) => state.group);
+  const loadingGroup = useGroupStore((state) => state.loadingGroup);
+  const router = useRouter();
 
   useEffect(() => {
-    if (!startLocation && location) {
-      // If no start location is set, use the current location
-      setStartLocation(location);
-    } else if (startLocation && endLocation) {
-      // Draw the route when both locations are set
-      createRoute(startLocation, endLocation);
-    }
-  }, [location, startLocation, endLocation, createRoute]);
-
-  // useEffect(() => {
-  //   if (!group) {
-  //     router.push("/"); // Redirect to home if no group
-  //   }
-  // }, [group, createGroup]);
-
-  // if (!group) return null;
-
-  return (
-    <>
-      <main className="grid grid-cols-[1fr_3fr] h-full w-full gap-8">
-        {/* Left Side */}
-        <div className="flex flex-col gap-8 items-start">
-          <h5 className="text-gray-700">Journey Planner</h5>
-          <div className="flex gap-4 items-center h-fit">
-            {/* Location Icons */}
-            <div className="flex flex-col h-full gap-2 items-center">
-              <IconWrapper Icon={StartIcon} />
-              {/* vertical dots */}
-              <div className="flex flex-col gap-1 items-center">
-                <div className="w-1 h-1 rounded-full bg-gray-200" />
-                <div className="w-1 h-1 rounded-full bg-gray-200" />
-              </div>
-              <IconWrapper Icon={EndIcon} />
-            </div>
-            {/* Location Inputs */}
-            <div className="flex flex-col gap-6 items-start">
-              <LocationInput
-                placeholder={
-                  location ? "Current Location" : "Enter starting location"
-                }
-                onSelect={(coord) => {
-                  const place: Coordinates = {
-                    longitude: coord[0],
-                    latitude: coord[1],
-                  };
-                  setStartLocation(place);
-                }}
-              />
-              <LocationInput
-                placeholder="Enter ending location"
-                onSelect={(coord) => {
-                  const place: Coordinates = {
-                    longitude: coord[0],
-                    latitude: coord[1],
-                  };
-                  setEndLocation(place);
-                }}
-              />
-            </div>
-          </div>
-          {/* User List */}
-          <ParticipantList />
-        </div>
-        {/* Right (Map) Side */}
-        <div className="relative w-full h-full">
-          <Map />
-        </div>
-      </main>
-    </>
-  );
-}
-
-const ParticipantList = () => {
-  const { group } = useGroupContext();
-  const { currentUser } = useUserContext();
-
-  if (!group) {
-    // Return skeleton state
-    return (
-      <div className="w-full h-full flex animate-pulse bg-gray-200 rounded-lg" />
-    );
-  }
-
-  return (
-    <div className="h-full w-full flex flex-col rounded-lg overflow-clip bg-white shadow-sm">
-      {/* Heading */}
-      <div className="content-center bg-orange-400 px-4 py-2">
-        <div className="text-lg font-semibold text-center text-white">
-          Participants ({group.members.length})
-        </div>
-      </div>
-      {/* Body */}
-      <div className="h-full w-full flex flex-col gap-4 p-4 items-center overflow-y-scroll scrollbar-hidden">
-        {/* Driver Section */}
-        <DriverSection driver={group.driver} />
-        {/* Ready Users List */}
-        <ReadySection
-          members={group.members.filter((member) => {
-            return (
-              member.id !== group.driver?.id && currentUser?.id !== member.id
-            );
-          })}
-        />
-      </div>
-
-      {/* Footer (Room Code) */}
-      <div className="w-full flex flex-col items-center p-4 bg-orange-400">
-        <h5 className="font-semibold text-white">{group.id}</h5>
-        <div className="label text-orange-100">
-          Share this code with your group!
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const DriverSection = ({ driver }: { driver: User | null }) => {
-  // TODO: implement driver assignment logic (there is a becomeDriver function in GroupContext)
-  return (
-    <div className="flex flex-col p-2 gap-2 w-full bg-[#FCC2E8] rounded-lg">
-      {/* Header */}
-      <div className="flex gap-2 items-center">
-        <div
-          className="rounded-full p-1 w-fit aspect-square shadow-xs"
-          style={{
-            backgroundImage:
-              "linear-gradient(159deg, #8A107E 13.79%, #500934 122.63%)",
-          }}
-        >
-          <CarTaxiFront className="w-5 h-5 text-white" />
-        </div>
-        <div className="text-[#8A1076] text-base font-medium">Driver</div>
-      </div>
-      <div className="inset-shadow-xs bg-white p-2 w-full flex flex-col overflow-scroll scrollbar-hidden gap-4 rounded-lg">
-        {/* User Info */}
-        {driver ? (
-          <UserInfo user={driver} />
-        ) : (
-          <div className="text-gray-500 text-sm">No driver assigned yet</div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const UserInfo = ({ user }: { user: User }) => {
-  const { centerOnLocation } = useMapContext();
-
-  const { name, location } = user;
-
-  const onLocationClick = () => {
-    if (!location) {
-      toast.error("Location not available for this user.");
+    if (!group && !loadingGroup) {
+      router.push("/home");
       return;
     }
-    centerOnLocation(location);
-  };
+  }, [group, loadingGroup, router]);
+
+  if (loadingGroup) {
+    return <LoadingSpinner text="Loading group information..." />;
+  }
+
+  if (!loadingGroup && !group) {
+    return null;
+  }
+
+  const isDriver = group?.driver?.id === user?.id;
 
   return (
-    <div className="flex justify-between items-center">
-      <div className="flex gap-3 items-center">
-        {/* TODO: replace with user profile picture */}
-        {user.avatar ? (
-          <img
-            src={user.avatar}
-            alt={`${user.name || "User"}'s avatar`}
-            className="w-8 h-8 object-cover opacity-70"
-          />
-        ) : (
-          <UserCircle2 className="w-8 h-8 text-gray-500" />
-        )}
-        <div className="text-base text-gray-800">{name}</div>
-      </div>
-      <div
-        className="p-2 btn bg-(image:--button-orange-gradient)"
-        onClick={onLocationClick}
-      >
-        <MapPin className="w-4 h-4 text-white" />
-      </div>
-    </div>
-  );
-};
+    <div className="relative w-full h-screen">
+      {/* Control Panel */}
+      {isDriver ? <DriverControls /> : <PassengerControls />}
 
-type ReadySectionProps = {
-  members: User[];
-};
-
-const ReadySection = ({ members }: ReadySectionProps) => {
-  return (
-    <div className="flex flex-col p-2 gap-2 w-full bg-[#D1FCC2] rounded-lg">
-      {/* Header */}
-      <div className="flex gap-2 items-center">
-        <div
-          className="rounded-full p-1 w-fit aspect-square shadow-xs"
-          style={{
-            backgroundImage:
-              "linear-gradient(159deg, #108A2C 13.79%, #095019 122.63%)",
-          }}
+      {/* Leave group button */}
+      <div className="absolute right-8 top-8 z-20">
+        <button
+          className="h-fit aspect-square p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition"
+          onClick={() => useGroupStore.getState().leaveGroup()}
         >
-          <CarTaxiFront className="w-5 h-5 text-white" />
-        </div>
-        <div className="text-[#108A2C] text-base font-medium">
-          Ready Passengers
-        </div>
+          <X className="w-6 h-6 text-gray-600" />
+        </button>
       </div>
-      <div className="inset-shadow-xs bg-white p-2 w-full flex flex-col overflow-scroll scrollbar-hidden gap-4 rounded-lg">
-        {/* User Info */}
-        {members.length > 0 ? (
-          members.map((member) => <UserInfo key={member.id} user={member} />)
-        ) : (
-          <div className="text-gray-500 text-sm">No passengers ready yet</div>
-        )}
-      </div>
+      {/* Map */}
+      <Map />
     </div>
   );
-};
-
-// TODO: create a user section which shows the current user as can be seen in Figma design
+}

@@ -16,7 +16,11 @@ const verifyGroupExists = async (groupId) => {
 
   const dbGroup = await prisma.group.findUnique({
     where: { id: groupId },
-    include: { members: true },
+    include: {
+      members: { select: userSafeSelect },
+      owner: { select: userSafeSelect },
+      driver: { select: userSafeSelect },
+    },
   });
 
   if (!dbGroup) {
@@ -72,6 +76,14 @@ export const createGroup = async (req, res) => {
         driver: { select: userSafeSelect },
       },
     });
+
+    // Notify the user via socket that they have created a new group
+    const socketId = await redisClient.HGET("userSockets", userId);
+    if (socketId) {
+      io.to(socketId).emit("group_created", {
+        groupId: newGroupId,
+      });
+    }
 
     res.status(201).json(groupWithDetails);
   } catch (error) {
@@ -150,16 +162,11 @@ export const joinGroup = async (req, res) => {
       },
     });
 
-    // Notify user to join the socket room
+    // Instruct client to join the socket room
     const socketId = await redisClient.HGET("userSockets", userId);
     if (socketId) {
       io.to(socketId).emit("join_group", { groupId });
     }
-
-    // Notify other group members about the new member
-    io.to(groupId).emit("member_joined", {
-      user: group.members.find((member) => member.id === userId),
-    });
 
     res.status(200).json(group);
   } catch (error) {
@@ -243,7 +250,7 @@ export const leaveGroup = async (req, res) => {
       // Notify remaining members that the user has left
       io.to(groupId).emit("member_left", {
         userId,
-        userName:
+        username:
           group.members.find((m) => m.id === userId)?.name || "Unknown user",
       });
     }
@@ -361,6 +368,57 @@ export const becomeDriver = async (req, res) => {
     res.status(200).json(updatedGroup);
   } catch (error) {
     console.error("Error becoming driver:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const unbecomeDriver = async (req, res) => {
+  const { id: groupId } = req.params;
+  const userId = req.user.id;
+
+  if (!groupId) {
+    console.log("Made it here in unbecomeDriver");
+    return res.status(400).json({ error: "Group ID is required." });
+  }
+
+  try {
+    // Verify group exists and get its current state
+    const verification = await verifyGroupExists(groupId);
+    if (!verification.exists) {
+      return res.status(404).json({ error: verification.error });
+    }
+
+    const group = verification.group;
+
+    // Check if the user is the driver of the group
+    if (group.driver?.id !== userId) {
+      return res
+        .status(403)
+        .json({ error: "You are not the driver of this group" });
+    }
+
+    // Update the group to remove the driver
+    const updatedGroup = await prisma.group.update({
+      where: { id: groupId },
+      data: {
+        driver: { disconnect: true },
+      },
+      include: {
+        members: { select: userSafeSelect },
+        owner: { select: userSafeSelect },
+        driver: { select: userSafeSelect },
+      },
+    });
+
+    // Emit a socket event to notify all members that the driver has changed
+    io.to(groupId).emit("driver_changed", {
+      driver: null,
+      message: `${group.driver.name} is no longer the driver`,
+    });
+
+    res.status(200).json(updatedGroup);
+  } catch (error) {
+    console.error("Error unbecoming driver:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

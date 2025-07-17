@@ -9,7 +9,6 @@ export type User = {
   avatar?: string;
   location?: Coordinates;
   destination?: Coordinates; // Where the user is going (if known)
-  isReady?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 };

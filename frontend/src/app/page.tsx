@@ -17,8 +17,12 @@ export default function SignIn() {
         redirect: true,
         callbackUrl: "/home",
       });
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to sign in");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Failed to sign in");
+      } else {
+        throw new Error("Failed to sign in");
+      }
     }
   };
 

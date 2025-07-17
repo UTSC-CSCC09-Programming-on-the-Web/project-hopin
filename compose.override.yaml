@@ -46,7 +46,7 @@ services:
   cache:
     ports:
       - "6379:6379"
-    command: redis-server --loglevel debug
+    command: ["redis-server", "--loglevel", "warning"]
 
 volumes:
   postgres_data:

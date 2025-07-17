@@ -544,23 +544,25 @@ userRouter.delete("/:id", authenticateToken, async (req, res) => {
   }
 });
 
-userRouter.get("/:id/group", authenticateToken, async (req, res) => {
+// Get the current user's group
+// This endpoint returns the group details for the authenticated user
+userRouter.get("/me/group", authenticateToken, async (req, res) => {
   try {
-    const userId = req.params.id;
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { groupId: true },
+    });
 
-    // Find and authorize user
-    const user = await findAndAuthorizeUser(userId, req.user.id, false);
-
-    if (!user.groupId) {
+    if (!user?.groupId) {
       return res.status(404).json({ error: "User is not in a group" });
     }
 
     const group = await prisma.group.findUnique({
       where: { id: user.groupId },
       include: {
-        members: {
-          select: userSafeSelect,
-        },
+        members: { select: userSafeSelect },
+        owner: { select: userSafeSelect },
+        driver: { select: userSafeSelect },
       },
     });
 

@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import { UserCircle2 } from "lucide-react";
-import { useUserContext } from "../../../../contexts/UserContext";
 import toast from "react-hot-toast";
+import { useUserStore } from "@/stores/UserStore";
 
 interface FormData {
   name: string;
@@ -14,7 +14,13 @@ interface FormData {
 
 function UserProfile() {
   const { currentUser, loading, updateProfile, signOut, deleteAccount } =
-    useUserContext();
+    useUserStore((s) => ({
+      currentUser: s.user,
+      loading: s.loadingUser,
+      updateProfile: s.updateProfile,
+      signOut: s.signOut,
+      deleteAccount: s.deleteAccount,
+    }));
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: "",

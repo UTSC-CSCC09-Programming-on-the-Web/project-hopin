@@ -1,19 +1,24 @@
 import { handleApiError } from "@/utils/apiUtils";
-import { Group } from "../../types/user";
+import { Group } from "@/types/user";
 import { getAuthenticatedApi } from "./api";
 import { AxiosError } from "axios";
 
 export const groupApi = {
-  getUserGroup: async (userId: string) => {
+  getUserGroup: async () => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
-        api.get<Group>(`/users/${userId}/group`)
+        api.get<Group>(`/users/me/group`)
       );
       return response.data;
     } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        return undefined;
+      }
+      console.error("Error fetching user group:", error);
       handleApiError(error as AxiosError);
     }
   },
+
   createGroup: async () => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
@@ -67,6 +72,17 @@ export const groupApi = {
       return response.data;
     } catch (error) {
       console.error("Error becoming driver:", error);
+      handleApiError(error as AxiosError);
+    }
+  },
+  unbecomeDriver: async (groupId: string) => {
+    try {
+      const response = await getAuthenticatedApi().then((api) =>
+        api.post<Group>(`/groups/${groupId}/unbecome-driver`)
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error unbecoming driver:", error);
       handleApiError(error as AxiosError);
     }
   },

@@ -1,33 +1,32 @@
 "use client";
 
 import Header from "@/components/Header";
-import { useUserContext } from "../../../contexts/UserContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
-import { Loader as LoadingIcon } from "lucide-react";
+import { useUserStore } from "@/stores/UserStore";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { useSyncUser } from "@/hooks/useSyncUser";
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser, loading } = useUserContext();
+  const user = useUserStore((state) => state.user);
+  const loading = useUserStore((state) => state.loadingUser);
   const router = useRouter();
+
+  useSyncUser();
 
   // Checks if the user is logged in (this layout wraps protected pages)
   useEffect(() => {
-    if (!loading && !currentUser) {
+    if (!loading && !user) {
       toast.error("You must be logged in to view this page.");
       router.push("/");
     }
-  }, [loading, currentUser, router]);
+  }, [loading, user, router]);
 
   if (loading) {
-    return (
-      <div className="w-full flex flex-col gap-4 items-center justify-center h-screen">
-        <LoadingIcon className="animate-spin text-gray-500" size={24} />
-        <div className="label text-gray-500">Loading...</div>
-      </div>
-    );
+    return <LoadingSpinner text="Loading your data..." />;
   }
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center h-screen">
         You must be logged in to view this page.
@@ -36,7 +35,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex flex-col justify-between items-center h-screen gap-8">
+    <div className="flex flex-col justify-between items-center h-screen">
       <Header />
       {children}
     </div>
