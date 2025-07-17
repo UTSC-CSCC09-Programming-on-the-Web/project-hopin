@@ -176,7 +176,6 @@ function UserProfile() {
       </div>
     );
   }
-
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
       <div className="flex flex-col items-center md:flex-row md:items-start gap-6">
@@ -188,7 +187,7 @@ function UserProfile() {
               onClick={handleImageClick}
             >
               {imagePreview ? (
-                <Image
+                <img
                   src={imagePreview}
                   alt="Avatar preview"
                   width={96}
@@ -196,7 +195,7 @@ function UserProfile() {
                   className="w-full h-full object-cover"
                 />
               ) : currentUser.avatar && !imageLoadError ? (
-                <Image
+                <img
                   src={currentUser.avatar}
                   alt={`${currentUser.name || "User"}'s avatar`}
                   width={96}
@@ -246,7 +245,7 @@ function UserProfile() {
               />
             </div>
           ) : currentUser.avatar && !imageLoadError ? (
-            <Image
+            <img
               src={currentUser.avatar}
               alt={`${currentUser.name || "User"}'s avatar`}
               width={96}
