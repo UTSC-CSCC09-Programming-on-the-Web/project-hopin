@@ -28,7 +28,7 @@ services:
       watch:
         - action: sync
           path: ./backend
-          target: /app
+          target: /appdock
         - action: rebuild
           path: ./backend/package.json
     command: sh -c "npx prisma migrate deploy && npm run dev"

@@ -39,28 +39,8 @@ import Button from "@/components/buttons/Button";
 import Map from "@/components/Map";
 import { useGroupContext } from "../../../contexts/GroupContext";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
-import { userApi } from "../../../lib/axios/userAPI";
+
 import HopinLogo from "../ui/hopin-logo";
-
-export const handleSignOut = async () => {
-  try {
-    // Clear both NextAuth and custom JWT tokens
-    await Promise.all([
-      userApi.signOut(), // Clear custom JWT tokens
-      signOut({ redirect: false }), // Clear NextAuth session without auto-redirect
-    ]);
-
-    console.log("User signed out successfully from all sessions");
-    // Navigate to home page
-    window.location.href = "/";
-  } catch (error) {
-    console.error("Error during unified sign out:", error);
-    // Even if there's an error, try to navigate away
-    alert("Sign out may have failed. Redirecting to home page.");
-    window.location.href = "/";
-  }
-};
 
 export default function HomePage() {
   const { createGroup } = useGroupContext();
@@ -73,32 +53,24 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="flex flex-row gap-8 items-center px-20">
-        <HopinLogo />
-
-        <button
-          onClick={handleSignOut}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Log Out
-        </button>
-
-        <button
-          onClick={() => router.push("/profile")}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Profile
-        </button>
-      </div>
-      <div className="flex flex-col items-center h-screen gap-8">
-        <div className="relative w-full aspect-video">
+      <HopinLogo></HopinLogo>
+      <div className="flex flex-col items-center gap-8 p-4 ">
+        <div className="relative w-full h-[70vh] aspect-video">
           <Map />
         </div>
-        <div className="flex gap-8 items-center">
+        <div className="flex flex-row gap-4 md:gap-8 items-center">
           {/* TODO: replace with a dynamic route with a generated room id */}
-          <Button text="Create Group" onClick={handleCreateGroupClick} />
-          <div className="text-lg">OR</div>
-          <Button text="Join Group" variant="outline" />
+          <Button
+            className="text-xs md:text-sm"
+            text="Create Group"
+            onClick={handleCreateGroupClick}
+          />
+          <div className=" text-sm md:text-lg">OR</div>
+          <Button
+            className="text-xs md:text-sm"
+            text="Join Group"
+            variant="outline"
+          />
         </div>
       </div>
     </>
