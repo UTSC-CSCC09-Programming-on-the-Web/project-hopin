@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { authApi } from "../lib/axios/authAPI";
+import { paymentApi } from "../lib/axios/paymentAPI";
 
 export async function middleware(req: NextRequest) {
   
