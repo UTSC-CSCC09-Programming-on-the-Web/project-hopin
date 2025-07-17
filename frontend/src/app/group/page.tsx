@@ -18,8 +18,8 @@ import useLocation from "../../../lib/hooks/useLocation";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useUserContext } from "../../../contexts/UserContext";
-import HopinLogo from "../ui/hopin-logo";
-import { handleSignOut } from "../home/page";
+import Head from "next/head";
+import Header from "@/components/header";
 
 export default function GroupPage() {
   const { createRoute } = useMapContext();
@@ -48,23 +48,7 @@ export default function GroupPage() {
 
   return (
     <>
-    <div className="flex flex-row gap-8 items-center px-20">
-      <HopinLogo />
-
-      <button
-        onClick={handleSignOut}
-        className="text-sm font-bold border-1 p-2 rounded-sm"
-      >
-        Log Out
-      </button>
-
-      <button
-        onClick={() => router.push("/account")}
-        className="text-sm font-bold border-1 p-2 rounded-sm"
-      >
-        Account
-      </button>
-    </div>
+    <Header />
     <main className="grid grid-cols-[1fr_3fr] h-full w-full gap-8">
       {/* Left Side */}
       <div className="flex flex-col gap-8 items-start">

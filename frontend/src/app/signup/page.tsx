@@ -1,8 +1,9 @@
-// import { getUserSession } from "@/lib/session";
 "use client";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { authApi } from "../../../lib/axios/authAPI";
+import Header from "@/components/header";
+
 export default function SignUp() {
   const handleSignUp = async (formData: FormData) => {
     const name = formData.get("name") as string;
@@ -11,7 +12,7 @@ export default function SignUp() {
 
     try {
       await authApi.signup({ email, password, name });
-      window.location.href = "http://localhost:3000/subscribe"; // After signup, lead to monthly subscription page
+      window.location.href = "http://localhost:3000/account/subscribe"; // After signup, lead to monthly subscription page
       await signIn("credentials", {
         email,
         password,
@@ -26,7 +27,8 @@ export default function SignUp() {
 
   return (
     <>
-      <div className="flex flex-wrap gap-20 justify-center items-center m-18">
+      <Header />
+      <div className="flex flex-wrap gap-20 justify-center items-center m-18 mt-0">
         <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md">
           <p className="text-center text-xl font-bold pb-8">Sign Up</p>
           <form
@@ -81,7 +83,7 @@ export default function SignUp() {
             onClick={() => {
               signIn("google", {
                 redirect: true,
-                callbackUrl: "/subscribe",
+                callbackUrl: "/account/subscribe",
               });
             }}
           >

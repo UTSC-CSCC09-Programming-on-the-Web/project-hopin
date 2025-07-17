@@ -5,6 +5,20 @@ import { prisma } from "../lib/prisma.js";
 const stripe = new Stripe(process.env.STRIPE_SKEY);
 export const paymentRouter = Router();
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const intervalToMs = {
+  day: MS_PER_DAY, 
+  week: MS_PER_DAY * 7,
+  month: MS_PER_DAY * 30, 
+  year: MS_PER_DAY * 365
+};
+const intervalToLabel = {
+  day: "Daily", 
+  week: "Weekly",
+  month: "Monthly", 
+  year: "Yearly"
+};
+
 paymentRouter.post("/create-checkout-session", async (req, res) => {
   try {
     const { userId, userEmail, priceId } = req.body; 
@@ -22,8 +36,9 @@ paymentRouter.post("/create-checkout-session", async (req, res) => {
       ],
       success_url:
         "http://localhost:3000/home",
-      cancel_url: "http://localhost:3000/subscribe",
+      cancel_url: "http://localhost:3000/account/subscribe",
     });
+    
     res.json({
       id: session.id,
       metadata: session.metadata,
@@ -243,5 +258,50 @@ paymentRouter.post("/stripe-webhook", async (req, res) => {
   } catch (error) {
     console.log("Webhook signature verification failed:", error);
     return res.status(400);
+  }
+});
+
+paymentRouter.get("/subscriptions/:userId", async (req, res) => {
+
+  try {
+    const { userId } = req.params;
+
+    const userSubscription = await prisma.userSubscription.findUnique({ where: { userId } });
+    if (!userSubscription) {
+      console.log("User does not have a subscription");
+      return res.status(404).json({ error: "User does not have a subscription" });
+    }
+
+    const subscriptionData = await stripe.subscriptions.retrieve(userSubscription.subscriptionId);
+    if (!subscriptionData) {
+      console.log("Error retrieving subscription detail:", error);
+      return res.status(400);
+    }
+
+    const anchorDate = new Date(subscriptionData.billing_cycle_anchor * 1000);
+    const now = new Date();
+    const timeDiff = now.getTime() - anchorDate.getTime();
+    const millisecondsPerInterval = intervalToMs[subscriptionData.plan.interval] ?? 0; // TODO: adjust this value 
+    const intervalCount = subscriptionData.plan.interval_count;
+    const intervalPassed = Math.floor(timeDiff / (millisecondsPerInterval * intervalCount));
+    const nextBillingDate = new Date(
+      anchorDate.getTime() + (intervalPassed) * intervalCount * millisecondsPerInterval
+    );
+
+    // TODO: enum interval 
+    console.log(subscriptionData);
+    res.json({
+      id: subscriptionData.id,
+      name: subscriptionData.plan.nickname,
+      amount: ((subscriptionData.plan.amount)/100).toFixed(2),
+      interval: intervalToLabel[subscriptionData.plan.interval],
+      nextBillingDate: nextBillingDate,
+      startDate: new Date(subscriptionData.start_date * 1000), 
+      status: subscriptionData.status,
+    })
+
+  } catch (error) {
+    console.error("Error getting subscription data:", error);
+    return res.status(500).json({ error: "Error getting subscription data", details: error.message });
   }
 });

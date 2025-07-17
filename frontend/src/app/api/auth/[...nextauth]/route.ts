@@ -96,7 +96,6 @@ const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.accessToken = user.accessToken;
         try {
-          console.log("@jwt")
           const isSubscribed = await userApi.isSubscribed(user.id);
           token.isSubscribed = isSubscribed;
         } catch (error) {
@@ -111,7 +110,6 @@ const authOptions: NextAuthOptions = {
         token.accessToken = account.accessToken;
         token.profilePicture = account.profilePicture || null;
         try {
-          console.log("@jwt2")
           const isSubscribed = await userApi.isSubscribed(account.id as string);
           token.isSubscribed = isSubscribed;
         } catch (error) {

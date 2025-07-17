@@ -5,7 +5,7 @@ export default function HopinLogo() {
     <Link
       key="hopin-logo"
       href="/home"
-      className="flex flex-row gap-8 p-20 pb-10"
+      className="flex flex-row gap-8"
     >
       <img src="logo.png" alt="HopIn Logo" />
       <h1 className="font-bold text-5xl">HopIn</h1>

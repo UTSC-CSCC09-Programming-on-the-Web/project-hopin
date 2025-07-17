@@ -31,6 +31,21 @@ export const paymentApi = {
         },
       )
       window.location.href = response.data.url;
-    } catch (error) {}
+    } catch (error) {
+      console.log("Error connecting to portal session:", error);
+      throw error;
+    }
   },
+
+  getSubscriptionDetail: async (userId: string) => {
+    try {
+      const response = await getApi().get(
+        `payments/subscriptions/${userId}`, 
+      )
+      return response.data;
+    } catch (error) {
+      console.log("Error getting subscription detail:", error);
+      throw error;
+    }
+  }, 
 }

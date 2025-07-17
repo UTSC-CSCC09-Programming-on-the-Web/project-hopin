@@ -5,7 +5,6 @@ import Image from "next/image";
 import { UserCircle2 } from "lucide-react";
 import { useUserContext } from "../../../contexts/UserContext";
 import toast from "react-hot-toast";
-import { paymentApi } from "../../../lib/axios/paymentAPI";
 
 interface FormData {
   name: string;
@@ -368,7 +367,6 @@ function UserAccount() {
                     </p>
                   )}
                 </div>
-
                 {/* Action Buttons */}
                 <div className="flex gap-3 flex-wrap">
                   <button
@@ -395,22 +393,6 @@ function UserAccount() {
           </div>
         </div>
       </div>
-      <button
-        type="button"
-        className=''
-        onClick={(e) => {
-          e.preventDefault();
-          if (currentUser && currentUser.id && currentUser.customerId) {
-            paymentApi.createPortalSession(currentUser.id, currentUser.customerId);
-          } else {
-            console.error('No session ID available');
-          }
-        }}>
-        Manage subscription
-      </button>
-      {/* <span>
-        {currentUser.subscriptionStatus}
-      </span> */}
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { authApi } from "../lib/axios/authAPI";
 
 export async function middleware(req: NextRequest) {
   
@@ -8,7 +9,7 @@ export async function middleware(req: NextRequest) {
 
   const isPublic = ["/", "/signup"].includes(pathname); // Also blocked for already signed in users
   const requiresSubscription = ["/home", "/group"].includes(pathname); 
-  const requiresAuth = ["/account", "/subscribe"].includes(pathname);
+  const requiresAuth = ["/account", "/account/subscribe"].includes(pathname);
 
   // Not logged in and trying to access non-public routes
   if (!token && (requiresSubscription || requiresAuth)) {
@@ -17,24 +18,14 @@ export async function middleware(req: NextRequest) {
 
   // Check token's validity on the backend
   if (token?.accessToken) {
-    try {
-      const res = await fetch("http://backend:8080/api/auth/validate-token", {
-        method: "POST", 
-        headers: {
-            Authorization: `Bearer ${token.accessToken}`,
-            "Content-Type": "application/json",
-        }
-      });
-      const result = await res.json();
-      if (!result.valid) {
-        console.log("Token invalid, redirecting to login");
-        const response = NextResponse.redirect(new URL("/", req.url));
-        response.cookies.delete("next-auth.session-token");
-        response.cookies.delete("next-auth.csrf-token");
-        return response;
-      }
-    } catch (error) {
-        console.error("Token validation error:", error);
+    const validationResult = await authApi.validateTokenServer(token.accessToken as string);
+    
+    if (!validationResult.valid) {
+      console.log("Token invalid, redirecting to login:", validationResult.error);
+      const response = NextResponse.redirect(new URL("/", req.url));
+      response.cookies.delete("next-auth.session-token");
+      response.cookies.delete("next-auth.csrf-token");
+      return response;
     }
   }
 
@@ -45,7 +36,7 @@ export async function middleware(req: NextRequest) {
 
   // Not subscribed and trying to access subscription-only routes
   if (token && requiresSubscription && !token.isSubscribed) {
-    return NextResponse.redirect(new URL("/subscribe", req.url));
+    return NextResponse.redirect(new URL("/account/subscribe", req.url));
   }
 
   return NextResponse.next();

@@ -41,7 +41,8 @@ import { useGroupContext } from "../../../contexts/GroupContext";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { userApi } from "../../../lib/axios/userAPI";
-import HopinLogo from "../ui/hopin-logo";
+import { useEffect } from "react";
+import Header from "@/components/header";
 
 export const handleSignOut = async () => {
   try {
@@ -66,6 +67,16 @@ export default function HomePage() {
   const { createGroup } = useGroupContext();
   const router = useRouter();
 
+  // Redirect users without subscriptions
+  useEffect(() => {
+    const checkSubscription = async () => {
+      userApi.isSubscribed().then(active => {
+        if (!active) router.push("/account/subscribe");
+      })
+    }
+    checkSubscription();
+  }, []);
+
   const handleCreateGroupClick = () => {
     createGroup();
     router.push("/group");
@@ -73,23 +84,7 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="flex flex-row gap-8 items-center px-20">
-        <HopinLogo />
-
-        <button
-          onClick={handleSignOut}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Log Out
-        </button>
-
-        <button
-          onClick={() => router.push("/account")}
-          className="text-sm font-bold border-1 p-2 rounded-sm"
-        >
-          Account
-        </button>
-      </div>
+      <Header />
       <div className="flex flex-col items-center h-screen gap-8">
         <div className="relative w-full aspect-video">
           <Map />
