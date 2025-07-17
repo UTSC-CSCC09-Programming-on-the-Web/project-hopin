@@ -36,9 +36,9 @@ const authOptions: NextAuthOptions = {
 
           const user = await res.json();
 
-          let isSubscribed = false;
+          let subscriptionData;
           try {
-            isSubscribed = await userApi.isSubscribed(user.id);
+            subscriptionData = await userApi.getSubscriptionStatus(user.id);
           } catch (error) {
             console.error("Error fetching subscription status:", error);
           }
@@ -46,7 +46,7 @@ const authOptions: NextAuthOptions = {
           return {
             id: user.id.toString(),
             accessToken: user.accessToken,
-            isSubscribed,
+            subscriptionStatus: subscriptionData?.subscriptionStatus,
           };
         } catch (err) {
           console.error("Credentials login failed:", err);
@@ -96,11 +96,11 @@ const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.accessToken = user.accessToken;
         try {
-          const isSubscribed = await userApi.isSubscribed(user.id);
-          token.isSubscribed = isSubscribed;
+          const subscriptionData = await userApi.getSubscriptionStatus(user.id);
+          token.subscriptionStatus = subscriptionData?.subscriptionStatus;
         } catch (error) {
           console.error("Error fetching subscription status:", error);
-          token.isSubscribed = false;
+          token.subscriptionStatus = "unknown";
         }
       }
 
@@ -110,11 +110,11 @@ const authOptions: NextAuthOptions = {
         token.accessToken = account.accessToken;
         token.profilePicture = account.profilePicture || null;
         try {
-          const isSubscribed = await userApi.isSubscribed(account.id as string);
-          token.isSubscribed = isSubscribed;
+          const subscriptionData = await userApi.getSubscriptionStatus(account.id as string);
+          token.subscriptionStatus = subscriptionData?.subscriptionStatus;
         } catch (error) {
           console.error("Error fetching subscription status:", error);
-          token.isSubscribed = false;
+          token.subscriptionStatus = "unknown";
         }
       }
 
@@ -125,7 +125,7 @@ const authOptions: NextAuthOptions = {
       if (session.user && token) {
         session.userId = token.id as string;
         session.accessToken = token.accessToken as string;
-        session.isSubscribed = Boolean(token.isSubscribed);
+        session.subscriptionStatus = token.subscriptionStatus as string;
       }
       return session;
     },

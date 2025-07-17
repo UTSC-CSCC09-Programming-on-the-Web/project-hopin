@@ -43,6 +43,8 @@ import { signOut } from "next-auth/react";
 import { userApi } from "../../../lib/axios/userAPI";
 import { useEffect } from "react";
 import Header from "@/components/header";
+import { useUserContext } from "../../../contexts/UserContext";
+import { paymentApi } from "../../../lib/axios/paymentAPI";
 
 export const handleSignOut = async () => {
   try {
@@ -66,12 +68,20 @@ export const handleSignOut = async () => {
 export default function HomePage() {
   const { createGroup } = useGroupContext();
   const router = useRouter();
-
+  const { currentUser } = useUserContext();
   // Redirect users without subscriptions
   useEffect(() => {
     const checkSubscription = async () => {
-      userApi.isSubscribed().then(active => {
-        if (!active) router.push("/account/subscribe");
+      userApi.getSubscriptionStatus().then(stat => {
+        if (stat?.subscriptionStatus === "active") return;
+        else if (stat?.subscriptionStatus === "paused") {
+          if (currentUser?.id && currentUser?.customerId) {
+            paymentApi.createPortalSession(currentUser.id, currentUser.customerId);
+          } else {
+            console.error("Missing user id or customer id for portal session.");
+            router.push("/account/subscribe");
+          }
+        } else router.push("/account/subscribe");
       })
     }
     checkSubscription();
