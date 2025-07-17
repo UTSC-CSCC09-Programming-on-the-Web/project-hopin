@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { authApi } from "../lib/axios/authAPI";
+import { paymentApi } from "../lib/axios/paymentAPI";
 
 export async function middleware(req: NextRequest) {
   
@@ -35,7 +36,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Not subscribed and trying to access subscription-only routes
-  if (token && requiresSubscription && !token.isSubscribed) {
+  if (token && requiresSubscription && token.subscriptionStatus !== "active") {
     return NextResponse.redirect(new URL("/account/subscribe", req.url));
   }
 

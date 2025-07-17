@@ -106,7 +106,33 @@ function SubscriptionDetail() {
       </div>
     );
 
-  } else if (currentUser?.subscriptionStatus !== "active") {
+  } else if (currentUser?.subscriptionStatus === "paused") {
+    console.log("Redirect to stripe customer portal");
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-8">
+            <p className="text-gray-600">Your subscription has been paused. Please visit the portal to manage your plan.</p>
+          </div>
+          <div className="px-6 pb-6">
+            <button
+              type="button"
+              className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+              onClick={(e) => {
+                e.preventDefault();
+                if (currentUser && currentUser.id && currentUser.customerId) {
+                  paymentApi.createPortalSession(currentUser.id, currentUser.customerId);
+                } else {
+                  console.error('No session ID available');
+                }
+              }}
+            >
+              Manage Subscription
+            </button>
+          </div> 
+        </div>
+      </div>);
+  } else {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto">

@@ -165,7 +165,7 @@ paymentRouter.post("/stripe-webhook", async (req, res) => {
         await prisma.userSubscription.upsert({
           where: { subscriptionId: updatedSubscription.id },
           update: {
-            plan: plan ?? "none",
+            plan: plan ?? "unknown",
             status: updatedSubscription.status,
             startDate: new Date(item?.current_period_start * 1000),
             endDate: new Date(item?.current_period_end * 1000),
@@ -174,7 +174,7 @@ paymentRouter.post("/stripe-webhook", async (req, res) => {
           create: {
             userId: user.id,
             subscriptionId: updatedSubscription.id,
-            plan: plan ?? "none", 
+            plan: plan ?? "unknown", 
             status: updatedSubscription.status,
             startDate: new Date(item?.current_period_start * 1000),
             endDate: new Date(item?.current_period_end * 1000),

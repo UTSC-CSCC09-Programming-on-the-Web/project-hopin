@@ -203,7 +203,7 @@ export const userApi = {
       }
       const user = await userApi.getUserById(userId);
       return {
-        subscriptionStatus: user?.subscriptionStatus ?? "none"
+        subscriptionStatus: user?.subscriptionStatus ?? "unknown"
       };
     } catch (error) {
       console.error("Subscription status check error:", error);

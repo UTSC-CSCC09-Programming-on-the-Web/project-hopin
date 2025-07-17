@@ -4,18 +4,18 @@ declare module "next-auth" {
   interface Session {
     userId: string;
     accessToken: string;
-    isSubscribed: boolean;
+    subscriptionStatus: string;
   }
 
   interface JWT {
     userId: string;
     accessToken: string;
-    isSubscribed: boolean;
+    subscriptionStatus: string;
   }
 
   interface User {
     id: string;
     accessToken: string;
-    isSubscribed: boolean;
+    subscriptionStatus: string;
   }
 }
