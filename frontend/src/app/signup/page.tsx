@@ -35,8 +35,8 @@ export default function SignUp() {
   return (
     <>
       <Header />
-      <main className="min-h-screen flex flex-col">
-        <div className="flex flex-col gap-8 md:flex-row md:gap-20 justify-center items-center flex-1 m-4 md:m-18 mt-0">
+      <main className="min-h-screen flex flex-col pt-0">
+        <div className="flex flex-col gap-8 md:flex-row md:gap-20 justify-center items-center flex-1 m-4 md:m-18 mt-0 pt-0">
           <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md md:max-w-lg">
             <p className="text-center text-xl font-bold pb-8">Sign Up</p>
             <form

@@ -1,11 +1,16 @@
 import { get } from "http";
-import { getApi } from "./api";
+import { getApi, getAuthenticatedApi } from "./api";
+import { getSession } from "next-auth/react";
 
 export const paymentApi = {
   
   createCheckoutSession: async (userId: string, userEmail: string, priceId: string) => {
     try {
-      const response = await getApi().post(
+      const session = await getSession();
+      if (!session?.accessToken || !session?.userId) {
+        throw new Error("Authentication required. Please sign in again.");
+      }
+      const response = await getAuthenticatedApi(session).post(
         "payments/create-checkout-session", 
         {
             userId,
@@ -23,7 +28,11 @@ export const paymentApi = {
 
   createPortalSession: async (userId: string, customerId: string | null) => {
     try {
-      const response = await getApi().post(
+      const session = await getSession();
+      if (!session?.accessToken || !session?.userId) {
+        throw new Error("Authentication required. Please sign in again.");
+      }
+      const response = await getAuthenticatedApi(session).post(
         "payments/create-portal-session",
         {
           userId,
@@ -39,7 +48,11 @@ export const paymentApi = {
 
   getSubscriptionDetail: async (userId: string) => {
     try {
-      const response = await getApi().get(
+      const session = await getSession();
+      if (!session?.accessToken || !session?.userId) {
+        throw new Error("Authentication required. Please sign in again.");
+      }
+      const response = await getAuthenticatedApi(session).get(
         `payments/subscriptions/${userId}`, 
       )
       return response.data;

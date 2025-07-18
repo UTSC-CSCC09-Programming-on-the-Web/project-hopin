@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Stripe from "stripe";
 import { prisma } from "../lib/prisma.js";
+import { authenticateToken } from "../middleware/auth.js";
 
 const stripe = new Stripe(process.env.STRIPE_SKEY);
 export const paymentRouter = Router();
@@ -19,9 +20,20 @@ const intervalToLabel = {
   year: "Yearly"
 };
 
-paymentRouter.post("/create-checkout-session", async (req, res) => {
+paymentRouter.post("/create-checkout-session", authenticateToken, async (req, res) => {
   try {
     const { userId, userEmail, priceId } = req.body; 
+
+    // Ensure user exists in the database
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId, 
+        email: userEmail,
+      }
+    });
+
+    console.log("User exists");
+
     const session = await stripe.checkout.sessions.create({
       metadata: {
         userId,
@@ -48,6 +60,7 @@ paymentRouter.post("/create-checkout-session", async (req, res) => {
       success_url: session.success_url,
       cancel_url: session.cancel_url,
     });
+
   } catch (error) {
     console.error("Error creating checkout session:", error);
     res
@@ -59,20 +72,21 @@ paymentRouter.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-paymentRouter.post("/create-portal-session", async (req, res) => {
-  const { userId, customerId } = req.body; // TODO: Verify user is authenticated
-  // Verify user trying to access the portal is the same as the user that created a checkout session
-  // const checkoutSession =
-  //   await stripe.checkout.sessions.retrieve(customerId);
-  // const customer = checkoutSession.metadata.userId;
-  // if (userId !== customer) {
-  //   res
-  //     .status(404)
-  //     .json({ error: "You are not authorized to view the portal session" });
-  //   return;
-  // }
+paymentRouter.post("/create-portal-session", authenticateToken, async (req, res) => {
+  const { userId, customerId } = req.body; 
   const returnUrl = "http://localhost:3000/account";
+
   try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId, 
+        customerId: customerId,
+      }
+    });
+    if (!user) {
+      console.error("User does not exist with a matching stripe customer id");
+      return res.status(400);
+    }
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
@@ -261,10 +275,16 @@ paymentRouter.post("/stripe-webhook", async (req, res) => {
   }
 });
 
-paymentRouter.get("/subscriptions/:userId", async (req, res) => {
+paymentRouter.get("/subscriptions/:userId", authenticateToken, async (req, res) => {
 
   try {
     const { userId } = req.params;
+
+    const user = await prisma.user.findUnique({ where: { id: userId }});
+    if (!user) {
+      console.error("User not found");
+      return res.status(400);
+    }
 
     const userSubscription = await prisma.userSubscription.findUnique({ where: { userId } });
     if (!userSubscription) {
@@ -281,15 +301,13 @@ paymentRouter.get("/subscriptions/:userId", async (req, res) => {
     const anchorDate = new Date(subscriptionData.billing_cycle_anchor * 1000);
     const now = new Date();
     const timeDiff = now.getTime() - anchorDate.getTime();
-    const millisecondsPerInterval = intervalToMs[subscriptionData.plan.interval] ?? 0; // TODO: adjust this value 
+    const millisecondsPerInterval = intervalToMs[subscriptionData.plan.interval] ?? 0;
     const intervalCount = subscriptionData.plan.interval_count;
     const intervalPassed = Math.floor(timeDiff / (millisecondsPerInterval * intervalCount));
     const nextBillingDate = new Date(
       anchorDate.getTime() + (intervalPassed) * intervalCount * millisecondsPerInterval
     );
 
-    // TODO: enum interval 
-    console.log(subscriptionData);
     res.json({
       id: subscriptionData.id,
       name: subscriptionData.plan.nickname,

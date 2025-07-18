@@ -270,7 +270,6 @@ const UserInfo = ({ user }: { user: User }) => {
   return (
     <div className="flex justify-between items-center">
       <div className="flex gap-3 items-center">
-        {/* TODO: replace with user profile picture */}
         {user.avatar ? (
           <img
             src={user.avatar}
