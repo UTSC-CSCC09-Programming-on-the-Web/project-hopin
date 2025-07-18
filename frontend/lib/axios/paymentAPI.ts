@@ -3,25 +3,28 @@ import { getApi, getAuthenticatedApi } from "./api";
 import { getSession } from "next-auth/react";
 
 export const paymentApi = {
-  
-  createCheckoutSession: async (userId: string, userEmail: string, priceId: string) => {
+  createCheckoutSession: async (
+    userId: string,
+    userEmail: string,
+    priceId: string,
+  ) => {
     try {
       const session = await getSession();
       if (!session?.accessToken || !session?.userId) {
         throw new Error("Authentication required. Please sign in again.");
       }
       const response = await getAuthenticatedApi(session).post(
-        "payments/create-checkout-session", 
+        "payments/create-checkout-session",
         {
-            userId,
-            userEmail,
-            priceId,
-        }
-        );
-        console.log("@paymentAPI :: ", response.data);
-        return response.data;
+          userId,
+          userEmail,
+          priceId,
+        },
+      );
+      console.log("@paymentAPI :: ", response.data);
+      return response.data;
     } catch (error) {
-      console.error('PaymentAPI: Error creating checkout session:', error);
+      console.error("PaymentAPI: Error creating checkout session:", error);
       throw error;
     }
   },
@@ -38,7 +41,7 @@ export const paymentApi = {
           userId,
           customerId,
         },
-      )
+      );
       window.location.href = response.data.url;
     } catch (error) {
       console.log("Error connecting to portal session:", error);
@@ -53,12 +56,12 @@ export const paymentApi = {
         throw new Error("Authentication required. Please sign in again.");
       }
       const response = await getAuthenticatedApi(session).get(
-        `payments/subscriptions/${userId}`, 
-      )
+        `payments/subscriptions/${userId}`,
+      );
       return response.data;
     } catch (error) {
       console.log("Error getting subscription detail:", error);
       throw error;
     }
-  }, 
-}
+  },
+};

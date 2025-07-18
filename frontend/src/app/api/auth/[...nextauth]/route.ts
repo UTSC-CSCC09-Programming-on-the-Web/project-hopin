@@ -113,7 +113,9 @@ const authOptions: NextAuthOptions = {
         token.accessToken = account.accessToken;
         token.profilePicture = account.profilePicture || null;
         try {
-          const subscriptionData = await userApi.getSubscriptionStatus(account.id as string);
+          const subscriptionData = await userApi.getSubscriptionStatus(
+            account.id as string,
+          );
           token.subscriptionStatus = subscriptionData?.subscriptionStatus;
         } catch (error) {
           console.error("Error fetching subscription status:", error);

@@ -17,7 +17,7 @@ export default function SignIn() {
         email: email,
         password: password,
         redirect: true, // was false
-        callbackUrl: "/home"
+        callbackUrl: "/home",
       });
       if (res?.error) {
         setErrorMessage(res.error);
@@ -27,16 +27,16 @@ export default function SignIn() {
     } catch (error: any) {
       throw new Error(error.message || "Failed to sign in");
     }
-  }
+  };
 
-  const handleGoogleSignIn = async() => {
+  const handleGoogleSignIn = async () => {
     console.log("handleGoogleSignIn");
     try {
       const res = await signIn("google", { callbackUrl: "/home" });
     } catch (error: any) {
       throw new Error(error.message || "Failed to sign in with Google");
     }
-  }
+  };
 
   return (
     <>
@@ -70,7 +70,9 @@ export default function SignIn() {
                 required
               />
               {errorMessage && (
-                <p className="text-red-500 text-sm text-center">{errorMessage}</p>
+                <p className="text-red-500 text-sm text-center">
+                  {errorMessage}
+                </p>
               )}
 
               <button

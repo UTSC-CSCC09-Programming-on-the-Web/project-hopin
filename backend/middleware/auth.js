@@ -15,7 +15,7 @@ export const blacklistToken = {
 
   cleanup: () => {
     blacklistedTokens.clear();
-  }
+  },
 };
 
 // use this function if the feature you're incorporating requires authentication
@@ -37,7 +37,9 @@ export function authenticateToken(req, res, next) {
   });
 }
 
-setInterval(() => {
-  tokenBlacklist.cleanup();
-
-}, 60 * 60 * 1000)
+setInterval(
+  () => {
+    tokenBlacklist.cleanup();
+  },
+  60 * 60 * 1000,
+);

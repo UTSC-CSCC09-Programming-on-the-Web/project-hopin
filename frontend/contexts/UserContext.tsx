@@ -97,7 +97,7 @@ export const UserProvider: React.FC<{
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Sign out user
@@ -150,7 +150,7 @@ export const UserProvider: React.FC<{
         const isAuth = await authApi.isAuthenticated();
         if (!isAuth) {
           console.warn(
-            "User no longer authenticated, skipping location update"
+            "User no longer authenticated, skipping location update",
           );
           return;
         }
@@ -161,7 +161,7 @@ export const UserProvider: React.FC<{
         };
         const updatedUser = await userApi.updateLocationOrDestination(
           "location",
-          coordinates
+          coordinates,
         );
         setCurrentUser(updatedUser);
       } catch (error) {

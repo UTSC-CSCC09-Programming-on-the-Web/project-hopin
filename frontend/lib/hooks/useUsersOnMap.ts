@@ -54,7 +54,7 @@ export default useUsersOnMap;
 const updateUserMarkers = (
   map: mapboxgl.Map | null,
   users: User[],
-  currentUser: User | null
+  currentUser: User | null,
 ) => {
   if (!map || !location) return;
 

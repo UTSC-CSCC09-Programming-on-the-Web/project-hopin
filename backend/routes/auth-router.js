@@ -70,8 +70,6 @@ authRouter.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    
-  
     // if user doesn't exist
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.password) {
@@ -92,8 +90,7 @@ authRouter.post("/signin", async (req, res) => {
       id: user.id,
       accessToken: token,
     });
-  }
-  catch (error) {
+  } catch (error) {
     // is it bad to display this?
     return res.status(500).json({ message: "Internal server error" });
   }
@@ -189,7 +186,7 @@ authRouter.post("/get-token", async (req, res) => {
   }
 });
 
-// Validate token 
+// Validate token
 authRouter.post("/validate-token", authenticateToken, (req, res) => {
   return res.json({ valid: true, user: req.user });
 });

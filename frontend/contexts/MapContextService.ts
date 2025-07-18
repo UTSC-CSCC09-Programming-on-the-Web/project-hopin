@@ -5,7 +5,7 @@ import { Position } from "geojson";
 export const drawRoute = (
   route: Route,
   map: mapboxgl.Map,
-  end: Coordinates
+  end: Coordinates,
 ) => {
   const geojson = {
     type: "Feature" as const,
@@ -46,7 +46,7 @@ export const drawRoute = (
 // This is used to update the route on the map as the user moves
 export const updateRoute = (
   route: Route | null,
-  location: Coordinates | undefined
+  location: Coordinates | undefined,
 ): Route | null => {
   if (!location || !route) return route;
 
@@ -61,9 +61,9 @@ export const updateRoute = (
   const closestStepIndex = findClosestIndex(
     steps.map(
       (s) =>
-        [s.maneuver.location[0], s.maneuver.location[1]] as GeoJSON.Position
+        [s.maneuver.location[0], s.maneuver.location[1]] as GeoJSON.Position,
     ),
-    location
+    location,
   );
   const remainingSteps = steps.slice(closestStepIndex);
 
@@ -109,7 +109,7 @@ const haversine = (
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number => {
   const R = 6371e3; // Earth radius in meters
   const φ1 = toRad(lat1),

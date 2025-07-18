@@ -94,7 +94,7 @@ function UserAccount() {
       };
       reader.readAsDataURL(file);
     },
-    []
+    [],
   );
 
   // Handle image click for editing
@@ -107,7 +107,7 @@ function UserAccount() {
   // Reset file input
   const resetFileInput = useCallback(() => {
     const fileInput = document.getElementById(
-      "avatar-upload"
+      "avatar-upload",
     ) as HTMLInputElement;
     if (fileInput) {
       fileInput.value = "";
@@ -140,7 +140,7 @@ function UserAccount() {
   // Handle account deletion with confirmation
   const handleDeleteAccount = useCallback(async () => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete your account? This action cannot be undone."
+      "Are you sure you want to delete your account? This action cannot be undone.",
     );
 
     if (!confirmed) return;
@@ -292,7 +292,10 @@ function UserAccount() {
                       name="name"
                       value={formData.name}
                       onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, name: e.target.value }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
                       }
                       className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required

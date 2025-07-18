@@ -78,32 +78,32 @@ export default function SignUp() {
                 </p>
               )}
 
+              <button
+                className="border-1 border-gray-600 rounded-sm p-2 mt-8"
+                type="submit"
+              >
+                Sign Up
+              </button>
+            </form>
             <button
-              className="border-1 border-gray-600 rounded-sm p-2 mt-8"
-              type="submit"
+              className="border border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
+              onClick={() => {
+                signIn("google", {
+                  redirect: true,
+                  callbackUrl: "/account/subscribe",
+                });
+              }}
             >
-              Sign Up
+              <img className="w-1/9" src="google.png" alt="Google Logo" />
+              <span>Sign up with Google</span>
             </button>
-          </form>
-          <button
-            className="border border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
-            onClick={() => {
-              signIn("google", {
-                redirect: true,
-                callbackUrl: "/account/subscribe",
-              });
-            }}
-          >
-            <img className="w-1/9" src="google.png" alt="Google Logo" />
-            <span>Sign up with Google</span>
-          </button>
-          <div className="flex justify-center items-center gap-4 mt-4">
-            <p>Already a member?</p>
-            <Link href="/" className="font-bold hover:underline">
-              Sign In
-            </Link>
+            <div className="flex justify-center items-center gap-4 mt-4">
+              <p>Already a member?</p>
+              <Link href="/" className="font-bold hover:underline">
+                Sign In
+              </Link>
+            </div>
           </div>
-        </div>
 
           <div className="flex items-center justify-center flex-col gap-12 w-full max-w-md">
             <p className="text-3xl font-bold">Hello!</p>

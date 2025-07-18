@@ -84,7 +84,7 @@ export const useMap = (): UseMapReturnType => {
         essential: true,
       });
     },
-    [isMapReady]
+    [isMapReady],
   );
 
   // Memoized function to add user markers
@@ -125,7 +125,7 @@ export const useMap = (): UseMapReturnType => {
         centerOnLocation(currentUser.location);
       }
     },
-    [isMapReady, clearMarkers, centerOnLocation]
+    [isMapReady, clearMarkers, centerOnLocation],
   );
 
   // Update users on map based on group or current user
@@ -182,7 +182,7 @@ export const useMap = (): UseMapReturnType => {
 // Helper function to create user markers
 const createUserMarker = (
   user: User,
-  isCurrentUser: boolean
+  isCurrentUser: boolean,
 ): mapboxgl.Marker => {
   const el = document.createElement("div");
   el.className = "user-marker flex flex-col items-center justify-center gap-1";

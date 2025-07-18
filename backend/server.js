@@ -10,7 +10,10 @@ const PORT = 8080;
 export const app = express();
 
 // Use raw body parser for webhook endpoint
-app.use('/api/payments/stripe-webhook', express.raw({ type: 'application/json' }));
+app.use(
+  "/api/payments/stripe-webhook",
+  express.raw({ type: "application/json" }),
+);
 
 // Use JSON parser for other routes
 app.use(express.json());

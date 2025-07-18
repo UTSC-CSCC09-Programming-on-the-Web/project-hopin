@@ -6,10 +6,11 @@ import { Session } from "next-auth";
 // such as fetching all users or public user profiles
 export const getApi = () => {
   // Use internal Docker network URL for server-side calls, public URL for client-side
-  const baseURL = typeof window === 'undefined' 
-    ? process.env.SERVER_INTERNAL_URI || "http://backend:8080"
-    : process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080";
-    
+  const baseURL =
+    typeof window === "undefined"
+      ? process.env.SERVER_INTERNAL_URI || "http://backend:8080"
+      : process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080";
+
   const api = axios.create({
     baseURL: `${baseURL}/api`,
     headers: {
@@ -22,10 +23,11 @@ export const getApi = () => {
 // This is used for endpoints that require authentication
 export const getAuthenticatedApi = (session: Session | null) => {
   // Use internal Docker network URL for server-side calls, public URL for client-side
-  const baseURL = typeof window === 'undefined' 
-    ? process.env.SERVER_INTERNAL_URI || "http://backend:8080"
-    : process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080";
-    
+  const baseURL =
+    typeof window === "undefined"
+      ? process.env.SERVER_INTERNAL_URI || "http://backend:8080"
+      : process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080";
+
   const authenticatedApi = axios.create({
     baseURL: `${baseURL}/api`,
     headers: {
@@ -34,9 +36,8 @@ export const getAuthenticatedApi = (session: Session | null) => {
   });
 
   if (session?.accessToken) {
-    authenticatedApi.defaults.headers.common[
-      "Authorization"
-    ] = `Bearer ${session.accessToken}`;
+    authenticatedApi.defaults.headers.common["Authorization"] =
+      `Bearer ${session.accessToken}`;
   }
 
   return authenticatedApi;

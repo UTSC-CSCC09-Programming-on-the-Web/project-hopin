@@ -19,7 +19,7 @@ export const handleApiError = (error: AxiosError): never => {
     }
   } else if (error.request) {
     throw new Error(
-      "Network error. Please check your connection and try again."
+      "Network error. Please check your connection and try again.",
     );
   } else {
     throw new Error(`Request error: ${error.message}`);

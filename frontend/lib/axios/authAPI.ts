@@ -100,7 +100,7 @@ export const authApi = {
 
     if (!session?.accessToken) {
       throw new Error(
-        "Authentication token not available. Please sign in again."
+        "Authentication token not available. Please sign in again.",
       );
     }
 
@@ -128,7 +128,7 @@ export const authApi = {
     } catch (error) {
       console.warn(
         "Backend signout failed, but continuing with client cleanup:",
-        error
+        error,
       );
     }
 
@@ -168,7 +168,7 @@ export const authApi = {
    */
   handleGoogleAuth: async (
     email: string,
-    name: string
+    name: string,
   ): Promise<AuthResponse> => {
     try {
       const api = getApi();
@@ -226,22 +226,26 @@ export const authApi = {
       return { valid: res.data.valid, user: res.data.user };
     } catch (error) {
       console.error("Token validation error:", error);
-      return { valid: false, error: error instanceof Error ? error.message : "Unknown error" };
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   },
 
   // Server-side token validation (for middleware)
   validateTokenServer: async (accessToken: string) => {
     try {
-      const baseURL = typeof window === 'undefined' 
-        ? process.env.SERVER_INTERNAL_URI || 'http://backend:8080'
-        : process.env.NEXT_PUBLIC_SERVER_URI || 'http://localhost:8080';
+      const baseURL =
+        typeof window === "undefined"
+          ? process.env.SERVER_INTERNAL_URI || "http://backend:8080"
+          : process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080";
 
       const response = await fetch(`${baseURL}/api/auth/validate-token`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -253,7 +257,10 @@ export const authApi = {
       return { valid: result.valid, user: result.user };
     } catch (error) {
       console.error("Server token validation error:", error);
-      return { valid: false, error: error instanceof Error ? error.message : "Unknown error" };
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   },
 };

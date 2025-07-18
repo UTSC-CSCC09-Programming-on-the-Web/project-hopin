@@ -6,7 +6,6 @@ import { motion, useMotionValue, animate } from "framer-motion";
 const MIN_Y = 400; // collapsed
 const MAX_Y = 0; // sheet open
 
-
 export default function MobileParticipants({
   children,
 }: {
@@ -22,9 +21,7 @@ export default function MobileParticipants({
     const finalY = currentY > halfway ? MIN_Y : MAX_Y;
     // animate the drawer
     animate(y, finalY, { type: "spring", stiffness: 300, damping: 30 });
- 
   };
-
 
   return (
     <motion.div

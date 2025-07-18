@@ -12,8 +12,8 @@ export type User = {
   isReady?: boolean;
   customerId?: string;
   subscriptionStatus?: string;
-  createdAt?: Date,
-  updatedAt?: Date
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type Group = {

@@ -72,18 +72,21 @@ export default function HomePage() {
   // Redirect users without subscriptions
   useEffect(() => {
     const checkSubscription = async () => {
-      userApi.getSubscriptionStatus().then(stat => {
+      userApi.getSubscriptionStatus().then((stat) => {
         if (stat?.subscriptionStatus === "active") return;
         else if (stat?.subscriptionStatus === "paused") {
           if (currentUser?.id && currentUser?.customerId) {
-            paymentApi.createPortalSession(currentUser.id, currentUser.customerId);
+            paymentApi.createPortalSession(
+              currentUser.id,
+              currentUser.customerId,
+            );
           } else {
             console.error("Missing user id or customer id for portal session.");
             router.push("/account/subscribe");
           }
         } else router.push("/account/subscribe");
-      })
-    }
+      });
+    };
     checkSubscription();
   }, []);
 

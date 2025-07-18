@@ -11,7 +11,7 @@ export default function useLocation() {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
         }),
-      (err) => console.error(err)
+      (err) => console.error(err),
     );
     return () => navigator.geolocation.clearWatch(id);
   }, []);

@@ -65,7 +65,7 @@ export const MapDomainProvider: React.FC<{ children: React.ReactNode }> = ({
         toast.error("Failed to fetch route. Please try again.");
       }
     },
-    [map, isMapReady]
+    [map, isMapReady],
   );
 
   // Redraw route when route or map changes
