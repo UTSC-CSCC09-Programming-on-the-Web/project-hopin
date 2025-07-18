@@ -96,14 +96,22 @@ export default function HomePage() {
     <>
       <Header />
       <div className="flex flex-col items-center h-screen gap-8">
-        <div className="relative w-full aspect-video">
+        <div className="relative w-full h-[70vh] aspect-video">
           <Map />
         </div>
-        <div className="flex gap-8 items-center">
+        <div className="flex flex-row gap-4 md:gap-8 items-center">
           {/* TODO: replace with a dynamic route with a generated room id */}
-          <Button text="Create Group" onClick={handleCreateGroupClick} />
-          <div className="text-lg">OR</div>
-          <Button text="Join Group" variant="outline" />
+          <Button
+            className="text-xs md:text-sm"
+            text="Create Group"
+            onClick={handleCreateGroupClick}
+          />
+          <div className=" text-sm md:text-lg">OR</div>
+          <Button
+            className="text-xs md:text-sm"
+            text="Join Group"
+            variant="outline"
+          />
         </div>
       </div>
     </>

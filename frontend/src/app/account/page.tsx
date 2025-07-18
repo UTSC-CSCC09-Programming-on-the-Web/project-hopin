@@ -189,7 +189,7 @@ function UserAccount() {
                 onClick={handleImageClick}
               >
                 {imagePreview ? (
-                  <Image
+                  <img
                     src={imagePreview}
                     alt="Avatar preview"
                     width={96}
@@ -197,7 +197,7 @@ function UserAccount() {
                     className="w-full h-full object-cover"
                   />
                 ) : currentUser.avatar && !imageLoadError ? (
-                  <Image
+                  <img
                     src={currentUser.avatar}
                     alt={`${currentUser.name || "User"}'s avatar`}
                     width={96}
@@ -247,7 +247,7 @@ function UserAccount() {
                 />
               </div>
             ) : currentUser.avatar && !imageLoadError ? (
-              <Image
+              <img
                 src={currentUser.avatar}
                 alt={`${currentUser.name || "User"}'s avatar`}
                 width={96}

@@ -4,8 +4,10 @@
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Header from "@/components/header";
+import { useState } from "react";
 
 export default function SignIn() {
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleCredentialSignIn = async (formData: FormData) => {
     const email = formData.get("email") as string;
@@ -14,9 +16,14 @@ export default function SignIn() {
       const res = await signIn("credentials", {
         email: email,
         password: password,
-        redirect: true, 
+        redirect: true, // was false
         callbackUrl: "/home"
       });
+      if (res?.error) {
+        setErrorMessage(res.error);
+      } else if (res?.ok) {
+        window.location.href = "/home"; // Manual redirect after successful login
+      }
     } catch (error: any) {
       throw new Error(error.message || "Failed to sign in");
     }
@@ -34,9 +41,9 @@ export default function SignIn() {
   return (
     <>
       <Header />
-      <main>
-        <div className="flex flex-wrap gap-20 justify-center items-center m-18 mt-0">
-          <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md">
+      <main className="min-h-screen flex flex-col">
+        <div className="flex flex-col gap-8 md:flex-row md:gap-20 justify-center items-center flex-1 m-4 md:m-18">
+          <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md md:max-w-lg">
             <p className="text-center text-xl font-bold pb-8">Sign In</p>
             <form
               onSubmit={(e) => {
@@ -62,13 +69,9 @@ export default function SignIn() {
                 className="border-b-1 border-gray-400 p-2"
                 required
               />
-              <div className="flex flex-row justify-between">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" />
-                  <span className="text-sm">Remember me</span>
-                </label>
-                <a className="text-sm text-black">Forgot Password?</a>
-              </div>
+              {errorMessage && (
+                <p className="text-red-500 text-sm text-center">{errorMessage}</p>
+              )}
 
               <button
                 className="border-1 border-gray-600 rounded-sm p-2 mt-8"
@@ -91,9 +94,8 @@ export default function SignIn() {
               </Link>
             </div>
           </div>
-
           <div className="flex items-center justify-center flex-col gap-12 w-full max-w-md">
-            <p className="text-3xl font-bold">Welcome Back!</p>
+            <p className="text-2xl md:text-3xl font-bold">Welcome Back!</p>
             <img
               className="w-2/3"
               src="destination.png"
@@ -104,6 +106,5 @@ export default function SignIn() {
         </div>
       </main>
     </>
-    
   );
 }

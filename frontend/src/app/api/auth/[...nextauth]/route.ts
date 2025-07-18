@@ -32,7 +32,10 @@ const authOptions: NextAuthOptions = {
             }),
           });
 
-          if (!res.ok) return null;
+          if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.message || "Failed to sign in");
+          }
 
           const user = await res.json();
 
@@ -50,7 +53,7 @@ const authOptions: NextAuthOptions = {
           };
         } catch (err) {
           console.error("Credentials login failed:", err);
-          return null;
+          throw new Error(err.message || "Something went wrong during login.");
         }
       },
     }),

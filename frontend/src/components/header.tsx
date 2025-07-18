@@ -29,6 +29,7 @@ export const handleSignOut = async () => {
 };
 
 export default function Header() {
+  const [isLoading, setLoading] = useState(false);
   const { currentUser } = useUserContext();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -59,9 +60,11 @@ export default function Header() {
               onClick={() => {
                 setIsDropdownOpen(!isDropdownOpen);
               }}>
-              
               {currentUser?.avatar ? (
-                <img src={currentUser?.avatar} alt={`${currentUser.name || "User"}'s avatar`} />
+                <img 
+                  src={currentUser?.avatar} 
+                  alt={`${currentUser.name || "User"}'s avatar`} 
+                  className="w-8 h-8 rounded-full"/>
               ) : (
                 <UserCircle2
                     className="w-full h-full text-gray-500 scale-150"
