@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import HopinLogo from "@/app/ui/hopin-logo";
 import { useUserContext } from "../../contexts/UserContext";
-import { UserCircle2 } from "lucide-react";
+import { Hop, UserCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { userApi } from "../../lib/axios/userAPI";
 import { signOut } from "next-auth/react";
@@ -54,7 +54,7 @@ export default function Header() {
   }, []);
 
   return (
-    <div className="flex flex-row gap-8 items-center px-20 p-12 pl-30 pr-30">
+    <div className="flex flex-row gap-8 items-center justify-between px-10 p-5 relative md:px-20 md:p-12 md:pl-30 md:pr-30">
       <HopinLogo />
       {currPath !== "/" && currPath !== "/signup" ? (
         <div
@@ -71,7 +71,7 @@ export default function Header() {
               <img
                 src={currentUser?.avatar}
                 alt={`${currentUser.name || "User"}'s avatar`}
-                className="w-8 h-8 rounded-full"
+                className="w-8 h-8 rounded-full right-0"
               />
             ) : (
               <UserCircle2
@@ -79,7 +79,9 @@ export default function Header() {
                 strokeWidth={1}
               />
             )}
-            <span className="whitespace-nowrap">{currentUser?.name}</span>
+            <span className="whitespace-nowrap hidden right-0 md:block">
+              {currentUser?.name}
+            </span>
           </div>
 
           {isDropdownOpen && (

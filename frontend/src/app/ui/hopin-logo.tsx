@@ -26,7 +26,11 @@ export const handleSignOut = async () => {
 export default function HopinLogo() {
   const router = useRouter();
   return (
-    <Link key="hopin-logo" href="/home" className="flex flex-row gap-8">
+    <Link
+      key="hopin-logo"
+      href="/home"
+      className="flex flex-row items-center gap-4 md:gap-6 md:gap-8"
+    >
       <img src="logo.png" alt="HopIn Logo" />
       <h1 className="font-bold text-5xl">HopIn</h1>
     </Link>

@@ -75,19 +75,18 @@ function SubscriptionDetail() {
                     })
                   : "Unknown"}
               </span>
-              <div className="flex items-baseline gap-2 mb-2 mt-4 ml-1">
+              <div className="flex flex-col md:flex-row md:items-baseline gap-2 mb-2 mt-4 ml-1">
                 <span className="text-2xl font-bold text-gray-900">
                   {" "}
                   {subscriptionData.name[0].toUpperCase() +
                     subscriptionData.name.slice(1)}{" "}
-                  Plan
                 </span>
                 <span className="text-lg text-gray-500 font-medium">
                   {subscriptionData.interval[0].toUpperCase() +
                     subscriptionData.interval.slice(1)}
                 </span>
               </div>
-              <div className="flex items-center text-gray-600 mb-2 ml-1">
+              <div className="flex items-start text-gray-600 mb-2 ml-1">
                 <svg
                   className="w-5 h-5 mr-2"
                   fill="none"
@@ -118,7 +117,7 @@ function SubscriptionDetail() {
             <div className="px-6 pb-6 space-y-3">
               <button
                 type="button"
-                className="w-full bg-gray-100 text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                className="w-full bg-gray-100 text-wrap text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors duration-200"
                 onClick={(e) => {
                   e.preventDefault();
                   if (currentUser && currentUser.id && currentUser.customerId) {
@@ -188,7 +187,7 @@ function SubscriptionDetail() {
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-gray-500 to-gray-600 px-6 py-4">
-              <h3 className="text-2xl font-bold text-white">Standard Plan</h3>
+              <h3 className="text-2xl font-bold text-white">Standard</h3>
               <div className="flex items-baseline text-white">
                 <span className="text-3xl font-bold">$5.00</span>
                 <span className="text-xl ml-1 opacity-90">/ month</span>

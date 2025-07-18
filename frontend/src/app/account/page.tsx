@@ -353,42 +353,36 @@ function UserAccount() {
               </div>
             ) : (
               /* View Mode */
-              <div>
+              <div className="flex flex-col items-center md:items-start">
                 <h2 className="text-2xl font-bold mb-4">
                   {currentUser.name || "User"}
                 </h2>
                 <div className="space-y-2 mb-6">
                   <p className="text-gray-600">
-                    <span className="font-medium">Email:</span>{" "}
+                    <span className="w-full font-medium text-center mb:text-right"></span>{" "}
                     {currentUser.email || "Not available"}
                   </p>
-                  {currentUser.location && (
+                  {/* {currentUser.location && (
                     <p className="text-gray-600">
                       <span className="font-medium">Location:</span>{" "}
                       {currentUser.location.latitude.toFixed(4)},{" "}
                       {currentUser.location.longitude.toFixed(4)}
                     </p>
-                  )}
+                  )} */}
                 </div>
                 {/* Action Buttons */}
-                <div className="flex gap-3 flex-wrap">
+                <div className="flex gap-3 flex-col md:flex-row">
                   <button
                     onClick={handleEditToggle}
                     className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                   >
-                    Edit Profile
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
-                  >
-                    Sign Out
+                    Edit
                   </button>
                   <button
                     onClick={handleDeleteAccount}
                     className="px-6 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-800 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
                   >
-                    Delete Account
+                    Delete
                   </button>
                 </div>
               </div>

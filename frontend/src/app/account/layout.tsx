@@ -7,8 +7,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <>
       <Header />
       <main className="pt-0">
-        <div className="flex flex-row gap-8 p-10 pt-0">
-          <div className="w-72 min-h-fit p-2">
+        <div className="flex flex-col md:flex-row gap-8 p-0 pt-0">
+          <div className="w-full min-h-fit p-2 md:w-1/5">
             <SideNav />
           </div>
           <div className="flex-grow">{children}</div>
