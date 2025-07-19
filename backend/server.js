@@ -8,7 +8,7 @@ import corsOptions from "./utils/corsOptions.js";
 const PORT = 8080;
 export const app = express();
 app.use(express.json());
-app.use("*", cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(express.static("static"));
 
 app.use((req, res, next) => {
@@ -20,7 +20,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 
 app.get("/api/health", (req, res) => {
-  res.status(200).json({status: "Backend service healthy"});
+  res.status(200).json({ status: "Backend service healthy" });
 });
 
 app.listen(PORT, "0.0.0.0", (err) => {
