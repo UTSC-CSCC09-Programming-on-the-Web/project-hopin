@@ -1,7 +1,32 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { authApi } from "../lib/axios/authAPI";
-import { paymentApi } from "../lib/axios/paymentAPI";
+
+// Checking subscription status directly from the backend 
+const checkSubscriptionStatus = async (userId: string, accessToken: string): Promise<string> => {
+  try {
+    const baseURL = process.env.SERVER_INTERNAL_URI || "http://backend:8080";
+    const res = await fetch(`${baseURL}/api/users/subscription-status/${userId}`, {
+      method: "GET", 
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      }
+    });
+
+    if (!res.ok) {
+      console.error("Failed to fetch subscription status:", res.statusText);
+      return "unknown";
+    }
+
+    const data = await res.json();
+    return data.subscriptionStatus ?? "unknown";
+    
+  } catch (error) {
+    console.error("Error checking subscriptions tatus from the middleware:", error);
+    return "unknown"
+  }
+}
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -40,8 +65,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // Not subscribed and trying to access subscription-only routes
-  if (token && requiresSubscription && token.subscriptionStatus !== "active") {
-    return NextResponse.redirect(new URL("/account/subscribe", req.url));
+  if (token && requiresSubscription) {
+    const subscriptionStatus = await checkSubscriptionStatus(token.id as string, token.accessToken as string);
+    if (subscriptionStatus !== "active") {
+      return NextResponse.redirect(new URL("/account/subscribe", req.url));
+    }     
   }
 
   return NextResponse.next();

@@ -18,7 +18,7 @@ model User {
   destination        Json?
   isReady            Boolean?
   customerId         String?            @unique
-  subscriptions      UserSubscription[]
+  subscriptions      UserSubscription[] 
   subscriptionStatus String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -26,7 +26,7 @@ model User {
 
 model UserSubscription {
   id             String   @id @default(uuid())
-  user           User     @relation(fields: [userId], references: [id])
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String   @unique
   subscriptionId String   @unique
   plan           String

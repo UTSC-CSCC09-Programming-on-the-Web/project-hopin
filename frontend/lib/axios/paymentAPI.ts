@@ -1,6 +1,7 @@
 import { get } from "http";
 import { getApi, getAuthenticatedApi } from "./api";
 import { getSession } from "next-auth/react";
+import { authApi } from "./authAPI";
 
 export const paymentApi = {
   createCheckoutSession: async (
@@ -21,7 +22,7 @@ export const paymentApi = {
           priceId,
         },
       );
-      console.log("@paymentAPI :: ", response.data);
+      
       return response.data;
     } catch (error) {
       console.error("PaymentAPI: Error creating checkout session:", error);

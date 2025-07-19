@@ -147,6 +147,7 @@ function UserAccount() {
 
     try {
       await deleteAccount();
+      handleSignOut();
     } catch (error) {
       // Error handling is done in UserContext
       console.error("Account deletion failed:", error);
@@ -179,7 +180,7 @@ function UserAccount() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md overflow-hidden">
         <div className="flex flex-col items-center md:flex-row md:items-start gap-6">
           {/* Avatar Section */}
           <div className="w-24 h-24 relative rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
@@ -357,18 +358,18 @@ function UserAccount() {
                 <h2 className="text-2xl font-bold mb-4">
                   {currentUser.name || "User"}
                 </h2>
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2 mb-6 text-center">
                   <p className="text-gray-600">
-                    <span className="w-full font-medium text-center mb:text-right"></span>{" "}
+                    <span className="w-full font-medium mb:text-right">Email:</span>{" "}
                     {currentUser.email || "Not available"}
                   </p>
-                  {/* {currentUser.location && (
+                  {currentUser.location && (
                     <p className="text-gray-600">
                       <span className="font-medium">Location:</span>{" "}
                       {currentUser.location.latitude.toFixed(4)},{" "}
                       {currentUser.location.longitude.toFixed(4)}
                     </p>
-                  )} */}
+                  )}
                 </div>
                 {/* Action Buttons */}
                 <div className="flex gap-3 flex-col md:flex-row">

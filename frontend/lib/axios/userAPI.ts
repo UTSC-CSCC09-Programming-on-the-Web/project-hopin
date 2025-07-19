@@ -80,7 +80,7 @@ export const userApi = {
             // Remove Content-Type to let browser set multipart/form-data with boundary
             "Content-Type": undefined,
           },
-        },
+        }
       );
 
       console.log("Update user response:", response.data);
@@ -93,7 +93,7 @@ export const userApi = {
 
   updateLocationOrDestination: async (
     field: "location" | "destination",
-    coordinates: Coordinates,
+    coordinates: Coordinates
   ) => {
     try {
       const session = await getSession();
@@ -103,7 +103,7 @@ export const userApi = {
 
       const response = await getApi().patch(
         `/users/${session.userId}/position?field=${field}`,
-        coordinates,
+        coordinates
       );
 
       console.log(`Updated user ${field}:`, response.data[field]);
@@ -124,7 +124,7 @@ export const userApi = {
         `/users/${session.userId}/isReady`,
         {
           isReady,
-        },
+        }
       );
 
       console.log("Updated user ready status:", response.data.isReady);
@@ -146,7 +146,7 @@ export const userApi = {
     } catch (error) {
       console.warn(
         "Backend signout failed, but continuing with client cleanup:",
-        error,
+        error
       );
     }
 
@@ -178,7 +178,7 @@ export const userApi = {
     try {
       const authenticatedApi = getAuthenticatedApi(session);
       const response = await authenticatedApi.delete(
-        `/users/${session.userId}`,
+        `/users/${session.userId}`
       );
 
       // The API returns 204 No Content for successful deletion
@@ -203,7 +203,7 @@ export const userApi = {
       }
       const user = await userApi.getUserById(userId);
       return {
-        subscriptionStatus: user?.subscriptionStatus ?? "unknown",
+        subscriptionStatus: user?.subscriptionStatus ?? "unknown"
       };
     } catch (error) {
       console.error("Subscription status check error:", error);

@@ -307,3 +307,25 @@ userRouter.delete("/:id", authenticateToken, async (req, res) => {
     return res.status(500).json({ error: "Failed to delete user" });
   }
 });
+
+userRouter.get("/subscription-status/:userId", authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }, 
+      select: { subscriptionStatus: true },
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.json({
+      subscriptionStatus: user.subscriptionStatus || "unknown",
+    });
+  } catch (error) {
+    console.error("Error getting subscription status:", error);
+    return res.status(500);
+  }
+});

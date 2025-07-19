@@ -49,7 +49,6 @@ const authOptions: NextAuthOptions = {
           return {
             id: user.id.toString(),
             accessToken: user.accessToken,
-            subscriptionStatus: subscriptionData?.subscriptionStatus,
           };
         } catch (err) {
           console.error("Credentials login failed:", err);
@@ -98,13 +97,6 @@ const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.accessToken = user.accessToken;
-        try {
-          const subscriptionData = await userApi.getSubscriptionStatus(user.id);
-          token.subscriptionStatus = subscriptionData?.subscriptionStatus;
-        } catch (error) {
-          console.error("Error fetching subscription status:", error);
-          token.subscriptionStatus = "unknown";
-        }
       }
 
       // For Google login, get token from account (not user)
@@ -112,15 +104,6 @@ const authOptions: NextAuthOptions = {
         token.id = account.id;
         token.accessToken = account.accessToken;
         token.profilePicture = account.profilePicture || null;
-        try {
-          const subscriptionData = await userApi.getSubscriptionStatus(
-            account.id as string,
-          );
-          token.subscriptionStatus = subscriptionData?.subscriptionStatus;
-        } catch (error) {
-          console.error("Error fetching subscription status:", error);
-          token.subscriptionStatus = "unknown";
-        }
       }
 
       return token;
@@ -130,7 +113,6 @@ const authOptions: NextAuthOptions = {
       if (session.user && token) {
         session.userId = token.id as string;
         session.accessToken = token.accessToken as string;
-        session.subscriptionStatus = token.subscriptionStatus as string;
       }
       return session;
     },

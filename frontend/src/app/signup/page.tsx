@@ -14,7 +14,6 @@ export default function SignUp() {
 
     try {
       await authApi.signup({ email, password, name });
-      window.location.href = "http://localhost:3000/account/subscribe"; // After signup, lead to monthly subscription page
       const res = await signIn("credentials", {
         email,
         password,
@@ -24,7 +23,7 @@ export default function SignUp() {
       if (res?.error) {
         setErrorMessage(res.error);
       } else if (res?.ok) {
-        window.location.href = "/home"; // Manual redirect after successful login
+        window.location.href = "/account/subscribe"; // Manual redirect after successful login
       }
     } catch (err) {
       const error = err as Error & { error?: string };

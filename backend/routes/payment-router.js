@@ -2,6 +2,7 @@ import { Router } from "express";
 import Stripe from "stripe";
 import { prisma } from "../lib/prisma.js";
 import { authenticateToken } from "../middleware/auth.js";
+import jwt from "jsonwebtoken";
 
 const stripe = new Stripe(process.env.STRIPE_SKEY);
 export const paymentRouter = Router();
@@ -34,7 +35,7 @@ paymentRouter.post(
           email: userEmail,
         },
       });
-      
+
       const session = await stripe.checkout.sessions.create({
         metadata: {
           userId,
