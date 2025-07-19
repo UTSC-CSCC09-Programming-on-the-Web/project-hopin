@@ -13,14 +13,7 @@ interface FormData {
 }
 
 function UserProfile() {
-  const { currentUser, loading, updateProfile, signOut, deleteAccount } =
-    useUserStore((s) => ({
-      currentUser: s.user,
-      loading: s.loadingUser,
-      updateProfile: s.updateProfile,
-      signOut: s.signOut,
-      deleteAccount: s.deleteAccount,
-    }));
+  const { user, updateProfile, signOut, deleteAccount } = useUserStore();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -33,20 +26,20 @@ function UserProfile() {
 
   // Initialize form data when user changes or editing starts
   const initializeFormData = useCallback(() => {
-    if (currentUser) {
+    if (user) {
       setFormData({
-        name: currentUser.name || "",
-        email: currentUser.email || "",
-        avatar: currentUser.avatar || "",
+        name: user.name || "",
+        email: user.email || "",
+        avatar: user.avatar || "",
       });
       setImagePreview(null);
       setImageLoadError(false);
     }
-  }, [currentUser]);
+  }, [user]);
 
   // Handle profile update
   const handleProfileUpdate = async (formElement: HTMLFormElement) => {
-    if (!currentUser) {
+    if (!user) {
       toast.error("User data not available");
       return;
     }
@@ -160,19 +153,19 @@ function UserProfile() {
   }, [deleteAccount]);
 
   // Loading state
-  if (loading && !currentUser) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (!user) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-[400px]">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Loading profile...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   // No user state
-  if (!currentUser) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -201,10 +194,10 @@ function UserProfile() {
                   height={96}
                   className="w-full h-full object-cover"
                 />
-              ) : currentUser.avatar && !imageLoadError ? (
+              ) : user.avatar && !imageLoadError ? (
                 <Image
-                  src={currentUser.avatar}
-                  alt={`${currentUser.name || "User"}'s avatar`}
+                  src={user.avatar}
+                  alt={`${user.name || "User"}'s avatar`}
                   width={96}
                   height={96}
                   className="w-full h-full object-cover opacity-70 group-hover:opacity-50 transition-opacity"
@@ -251,10 +244,10 @@ function UserProfile() {
                 onChange={handleFileChange}
               />
             </div>
-          ) : currentUser.avatar && !imageLoadError ? (
+          ) : user.avatar && !imageLoadError ? (
             <Image
-              src={currentUser.avatar}
-              alt={`${currentUser.name || "User"}'s avatar`}
+              src={user.avatar}
+              alt={`${user.name || "User"}'s avatar`}
               width={96}
               height={96}
               className="w-full h-full object-cover"
@@ -356,19 +349,17 @@ function UserProfile() {
           ) : (
             /* View Mode */
             <div>
-              <h2 className="text-2xl font-bold mb-4">
-                {currentUser.name || "User"}
-              </h2>
+              <h2 className="text-2xl font-bold mb-4">{user.name || "User"}</h2>
               <div className="space-y-2 mb-6">
                 <p className="text-gray-600">
                   <span className="font-medium">Email:</span>{" "}
-                  {currentUser.email || "Not available"}
+                  {user.email || "Not available"}
                 </p>
-                {currentUser.location && (
+                {user.location && (
                   <p className="text-gray-600">
                     <span className="font-medium">Location:</span>{" "}
-                    {currentUser.location.latitude.toFixed(4)},{" "}
-                    {currentUser.location.longitude.toFixed(4)}
+                    {user.location.latitude.toFixed(4)},{" "}
+                    {user.location.longitude.toFixed(4)}
                   </p>
                 )}
               </div>
