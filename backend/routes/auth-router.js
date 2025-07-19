@@ -33,37 +33,40 @@ authRouter.post("/google", async (req, res) => {
 });
 
 authRouter.post("/signup", async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) {
-    return res
-      .status(401)
-      .json({ error: "Email, password and username are required. " });
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res
+        .status(401)
+        .json({ error: "Email, password and username are required. " });
+    }
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ error: "User already exists" });
+    }
+
+    const saltRounds = 10;
+    const salt = bcrypt.genSaltSync(saltRounds);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+
+    await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+      },
+    });
+
+    // Do not generate the token here, as the user is not logged in yet.
+    // Instead, the user will log in immediately after signing up.
+
+    res.status(201).json({
+      message: "User created successfully",
+      user: { email, name },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-  if (existingUser) {
-    return res.status(409).json({ error: "User already exists" });
-  }
-
-  const saltRounds = 10;
-  const salt = bcrypt.genSaltSync(saltRounds);
-  const hashedPassword = bcrypt.hashSync(password, salt);
-
-  await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-      name,
-    },
-  });
-
-  // Do not generate the token here, as the user is not logged in yet.
-  // Instead, the user will log in immediately after signing up.
-
-  res.status(201).json({
-    message: "User created successfully",
-    user: { email, name },
-  });
 });
 
 authRouter.post("/signin", async (req, res) => {

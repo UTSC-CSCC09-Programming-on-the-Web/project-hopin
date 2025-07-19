@@ -4,9 +4,11 @@ import Link from "next/link";
 import { authApi } from "../../../lib/axios/authAPI";
 import { useState } from "react";
 import Header from "@/components/header";
+import axios from "axios";
 
 export default function SignUp() {
   const [errorMessage, setErrorMessage] = useState("");
+  
   const handleSignUp = async (formData: FormData) => {
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
@@ -18,7 +20,7 @@ export default function SignUp() {
         email,
         password,
         redirect: false,
-        callbackUrl: "/home",
+        callbackUrl: "/account/subscribe",
       });
       if (res?.error) {
         setErrorMessage(res.error);
@@ -26,8 +28,13 @@ export default function SignUp() {
         window.location.href = "/account/subscribe"; // Manual redirect after successful login
       }
     } catch (err) {
-      const error = err as Error & { error?: string };
-      throw new Error(error.error || "Failed to sign up");
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        setErrorMessage("An account with this email already exists.");
+      } else {
+        setErrorMessage("Failed to sign up. Please try again.");
+      }
+      // const error = err as Error & { error?: string };
+      // throw new Error(error.error || "Failed to sign up");
     }
   };
 

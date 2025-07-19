@@ -64,7 +64,6 @@ export const authApi = {
         password,
         name,
       });
-
       return response.data;
     } catch (error) {
       console.error("Signup error:", error);
