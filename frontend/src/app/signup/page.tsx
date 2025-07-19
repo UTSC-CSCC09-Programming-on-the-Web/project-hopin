@@ -30,7 +30,7 @@ export default function SignUp() {
       throw new Error(error.error || "Failed to sign up");
     }
   };
-
+///
   return (
     <>
       <main className="min-h-screen flex flex-col">
