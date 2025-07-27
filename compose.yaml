@@ -50,6 +50,7 @@ services:
     expose:
       - "8080"
     environment:
+      - CLIENT_URI=https://hop-in.dev
       - VIRTUAL_HOST=api.hop-in.dev
       - LETSENCRYPT_HOST=api.hop-in.dev
       - LETSENCRYPT_EMAIL=jane.low@mail.utoronto.ca
