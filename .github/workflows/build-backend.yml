@@ -59,7 +59,5 @@ jobs:
           script: |
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             echo "${{ secrets.BACKEND_ENV }}" > ./backend.env
-            docker pull ghcr.io/utsc-cscc09-programming-on-the-web/backend-hopin:latest
-            docker stop backend || true
-            docker rm backend || true
-            docker run -d --name backend --env-file ./backend.env -p 8080:8080 ghcr.io/utsc-cscc09-programming-on-the-web/backend-hopin:latest
+            docker compose pull backend
+            docker compose up -d backend

@@ -62,7 +62,5 @@ jobs:
           passphrase: ${{ secrets.VM_SSH_KEY_PASSPHRASE}}
           script: |
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ghcr.io/utsc-cscc09-programming-on-the-web/frontend-hopin:latest
-            docker stop frontend || true
-            docker rm frontend || true
-            docker run -d --name frontend ghcr.io/utsc-cscc09-programming-on-the-web/frontend-hopin:latest
+            docker compose pull frontend
+            docker compose up -d frontend
