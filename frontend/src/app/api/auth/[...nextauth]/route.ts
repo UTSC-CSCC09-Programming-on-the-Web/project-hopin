@@ -1,7 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { userApi } from "../../../../../lib/axios/userAPI";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
@@ -10,6 +9,39 @@ const BACKEND_URI = process.env.SERVER_INTERNAL_URI!;
 const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
+  },
+
+  // NOTE: Might have to delete __Secure- and __Host- prefix if not strictly over HTTPS
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      }
+    },
+    callbackUrl: {
+      name: `__Secure-next-auth.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 15, // 15 minutes
+      }
+    },
+    csrfToken: {
+      name: `__Host-next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 4, // 4 hours
+      }
+    } 
   },
 
   providers: [
@@ -21,7 +53,6 @@ const authOptions: NextAuthOptions = {
       // This function is called when a user tries to sign in with credentials
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
         try {
           const res = await fetch(`${BACKEND_URI}/api/auth/signin`, {
             method: "POST",
@@ -39,18 +70,11 @@ const authOptions: NextAuthOptions = {
 
           const user = await res.json();
 
-          let subscriptionData;
-          try {
-            subscriptionData = await userApi.getSubscriptionStatus(user.id);
-          } catch (error) {
-            console.error("Error fetching subscription status:", error);
-          }
-
           return {
             id: user.id.toString(),
             accessToken: user.accessToken,
           };
-        } catch (err) {
+        } catch (err: any) {
           console.error("Credentials login failed:", err);
           throw new Error(err.message || "Something went wrong during login.");
         }
