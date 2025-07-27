@@ -5,7 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const BACKEND_URI = process.env.SERVER_INTERNAL_URI!;
-
+//
 const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
