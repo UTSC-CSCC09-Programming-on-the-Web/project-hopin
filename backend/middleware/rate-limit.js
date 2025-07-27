@@ -4,6 +4,8 @@ import { RateLimiterRedis } from "rate-limiter-flexible";
 const MAX_FAILS_PER_IP = 100;
 const MAX_FAILS_PER_USER_IP = 10;
 
+// Failed requests from an IP is rate limited to maxAttemptsIP per durationIP seconds
+// and requests from a user at an ip is rate limited to maxAttemptsUserIP per durationUSserIP seconds
 export function createRateLimiter(
   actionKeyPrefix,
   maxAttemptsIP = MAX_FAILS_PER_IP,
@@ -11,19 +13,13 @@ export function createRateLimiter(
   maxAttemptsUserIP = MAX_FAILS_PER_USER_IP,
   durationUserIP = 5,
 ) {
-  console.log(
-    `[Rate Limit] IP limits: ${maxAttemptsIP} attempts per ${durationIP}s`,
-  );
-  console.log(
-    `[Rate Limit] UserIP limits: ${maxAttemptsUserIP} attempts per ${durationUserIP}s`,
-  );
 
   // Limit by IP
   const limiterByIP = new RateLimiterRedis({
     storeClient: redisClient,
     keyPrefix: `${actionKeyPrefix}-ip`,
-    points: maxAttemptsIP, // N requests
-    duration: durationIP, // per 60 seconds
+    points: maxAttemptsIP, 
+    duration: durationIP,
     blockDuration: 60 * 60, // Block for 1 hour, if points exceed maximum fail attempts
   });
 
@@ -40,10 +36,6 @@ export function createRateLimiter(
     try {
       const ipKey = req.ip;
       const userIPKey = `${req.user?.id || "anon"}_${ipKey}`;
-
-      console.log(
-        `[Rate Limit Debug] Checking limits for IP: ${ipKey}, UserIP: ${userIPKey}, Action: ${actionKeyPrefix}`,
-      );
 
       const [resIP, resUserIP] = await Promise.all([
         limiterByIP.get(ipKey),
@@ -65,27 +57,24 @@ export function createRateLimiter(
 
       let retrySecs = 0;
       // Check if IP or userId+IP is already blocked
-      if (resIP !== null && resIP.consumedPoints > MAX_FAILS_PER_IP) {
+      if (resIP && resIP.consumedPoints > maxAttemptsIP) {
         retrySecs = Math.round(resIP.msBeforeNext / 1000) || 1;
       } else if (
-        resUserIP !== null &&
-        resUserIP.consumedPoints > MAX_FAILS_PER_USER_IP
+        resUserIP &&
+        resUserIP.consumedPoints > maxAttemptsUserIP
       ) {
         retrySecs = Math.round(resUserIP.msBeforeNext / 1000) || 1;
       }
 
       if (retrySecs > 0) {
         console.log(
-          `[Rate Limit Debug] BLOCKED: ${actionKeyPrefix} - IP/UserIP exceeded limits, retry in ${retrySecs}s`,
+          `[Rate Limit] BLOCKED: ${actionKeyPrefix} - IP/UserIP exceeded limits, retry in ${retrySecs}s`,
         );
         const error = new Error("Rate limit exceeded");
         error.status = 429;
         error.retryAfter = retrySecs;
         throw error;
       } else {
-        console.log(
-          `[Rate Limit Debug] ALLOWED: ${actionKeyPrefix} - Within rate limits`,
-        );
         req.rlIPKey = ipKey;
         req.rlUserIPKey = userIPKey;
         req.limiterByIP = limiterByIP;
@@ -101,6 +90,10 @@ export function createRateLimiter(
 
 export async function consumeFailedAttempts(req) {
   try {
+    if (!req.limiterByIP || !req.limiterByUserIP || !req.rlIPKey || !req.rlUserIPKey) {
+      return;
+    }
+
     const limiterByIP = req.limiterByIP;
     const limiterByUserIP = req.limiterByUserIP;
     const promises = [limiterByIP.consume(req.rlIPKey)];
@@ -109,7 +102,10 @@ export async function consumeFailedAttempts(req) {
     }
     await Promise.all(promises);
   } catch (rlRejected) {
-    const retrySecs = Math.round(rlRejected.msBeforenext / 1000) || 1;
+    if (rlRejected instanceof Error) {
+      throw rlRejected;
+    }
+    const retrySecs = Math.round(rlRejected.msBeforeNext / 1000) || 1;
     return retrySecs;
   }
 }
@@ -125,6 +121,10 @@ export async function checkRateLimit(req, res) {
 }
 
 export async function resetFailAttempts(req) {
+  if (!req.limiterByIP || !req.limiterByUserIP || !req.rlIPKey || !req.rlUserIPKey) {
+    return;
+  }
+
   console.log(
     `[Rate Limit Debug] Resetting failed attempts for IP: ${req.rlIPKey}, UserIP: ${req.rlUserIPKey}`,
   );

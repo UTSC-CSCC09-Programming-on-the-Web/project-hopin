@@ -1,5 +1,8 @@
 import jwt from "jsonwebtoken";
 
+// TODO:
+// jwt enhancement?
+
 // Simple in-memory token blacklist (in production, use Redis or database)
 const blacklistedTokens = new Set();
 
@@ -23,15 +26,25 @@ export function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader?.split(" ")[1];
 
-  if (!token) return res.sendStatus(401);
+  if (!token) {
+    const error = new Error("Authentication required");
+    error.status = 401;
+    return next(error);
+  }
 
   // Check if token is blacklisted
-  if (blacklistedTokens.has(token)) {
-    return res.status(401).json({ error: "Token has been revoked" });
+  if (blacklistToken.isBlacklisted(token)) {
+    const error = new Error("Token has been revoked");
+    error.status = 401;
+    return next(error);
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
+    if (err) {
+      const error = new Error("Invalid token");
+      error.status = 403;
+      return next(error);
+    }
     req.user = user;
     next();
   });
@@ -39,7 +52,7 @@ export function authenticateToken(req, res, next) {
 
 setInterval(
   () => {
-    tokenBlacklist.cleanup();
+    blacklistToken.cleanup();
   },
   60 * 60 * 1000,
 );
