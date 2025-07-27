@@ -5,18 +5,31 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Header from "@/components/header";
 import { useState } from "react";
+import { sanitizeEmail } from "@/utils/sanitize";
 
 export default function SignIn() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleCredentialSignIn = async (formData: FormData) => {
-    const email = formData.get("email") as string;
+    const rawEmail = formData.get("email") as string;
     const password = formData.get("password") as string;
+
+    const email = sanitizeEmail(rawEmail);
+    if (!email) {
+      setErrorMessage("Please enter a valid email address");
+      return;
+    }
+
+    if (!password) {
+      setErrorMessage("Please enter your password");
+      return;
+    }
+
     try {
       const res = await signIn("credentials", {
         email: email,
         password: password,
-        redirect: false, // was false
+        redirect: false,
         callbackUrl: "/home",
       });
       if (res?.error) {

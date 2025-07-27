@@ -5,14 +5,34 @@ import { authApi } from "../../../lib/axios/authAPI";
 import { useState } from "react";
 import Header from "@/components/header";
 import axios from "axios";
+import { sanitizeName, sanitizeEmail, validatePassword } from "@/utils/sanitize";
 
 export default function SignUp() {
   const [errorMessage, setErrorMessage] = useState("");
   
   const handleSignUp = async (formData: FormData) => {
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
+    const rawName = formData.get("name") as string;
+    const rawEmail = formData.get("email") as string;
     const password = formData.get("password") as string;
+
+    const name = sanitizeName(rawName);
+    const email = sanitizeEmail(rawEmail);
+    const validPassword = validatePassword(password);
+
+    if (!name) {
+      setErrorMessage("Please enter a valid name");
+      return;
+    }
+
+    if (!email) {
+      setErrorMessage("Please enter a valid email address");
+      return;
+    }
+
+    if (!validPassword.isValid) {
+      setErrorMessage(validPassword.message);
+      return;
+    }
 
     try {
       await authApi.signup({ email, password, name });

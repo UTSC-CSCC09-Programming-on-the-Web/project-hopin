@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Image from "next/image";
 import { UserCircle2 } from "lucide-react";
 import { useUserContext } from "../../../contexts/UserContext";
 import toast from "react-hot-toast";
+import { sanitizeName } from "@/utils/sanitize";
 
 interface FormData {
   name: string;
@@ -24,6 +24,8 @@ function UserAccount() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  console.log("Avatar url:", currentUser?.avatar);
 
   // Initialize form data when user changes or editing starts
   const initializeFormData = useCallback(() => {
@@ -292,12 +294,13 @@ function UserAccount() {
                       type="text"
                       name="name"
                       value={formData.name}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const sanitized = sanitizeName(e.target.value);
                         setFormData((prev) => ({
                           ...prev,
-                          name: e.target.value,
-                        }))
-                      }
+                          name: sanitized,
+                        }));
+                      }}
                       className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
