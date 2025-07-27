@@ -42,6 +42,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  
+  cache:
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--loglevel", "warning"]
 
 volumes:
   postgres_data:
