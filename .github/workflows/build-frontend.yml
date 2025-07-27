@@ -65,4 +65,4 @@ jobs:
             docker pull ghcr.io/utsc-cscc09-programming-on-the-web/frontend-hopin:latest
             docker stop frontend || true
             docker rm frontend || true
-            docker run -d --name frontend --env-file ./frontend.env ghcr.io/utsc-cscc09-programming-on-the-web/frontend-hopin:latest
+            docker run -d --name frontend ghcr.io/utsc-cscc09-programming-on-the-web/frontend-hopin:latest
