@@ -4,10 +4,12 @@ import MemberOverview from "../MemberOverview/MemberOverview";
 import ListReorder from "@/components/ListReorder";
 import { useGroupStore } from "@/stores/GroupStore";
 import MobileParticipants from "@/components/MobileParticipants";
+import { useIsMobile } from "@/hooks/useIsMobile";
 type PageType = "members" | "route";
 const DriverControls = () => {
   const [page, setPage] = useState<PageType>("members");
   const group = useGroupStore((s) => s.group);
+  const isMobile = useIsMobile(); // get the screen  size
 
   if (!group) {
     return (
@@ -18,10 +20,8 @@ const DriverControls = () => {
   }
 
   const { members } = group;
-
-  return (
-    <MobileParticipants>
-      <div className=" flex flex-col items-start">
+  const content = (
+    <div className=" flex flex-col items-start">
         {/* Header Showing the Page Titles */}
         <div className="bg-white rounded-t-lg overflow-clip grid grid-cols-2 w-full">
           <PageButton
@@ -45,8 +45,10 @@ const DriverControls = () => {
           </div>
         )}
       </div>
-    </MobileParticipants>
-  );
+  )
+
+    return isMobile ? <MobileParticipants>{content}</MobileParticipants> : content;
+
 };
 
 export default DriverControls;
