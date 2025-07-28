@@ -1,22 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-
-// this is from mark's
-export default function HopinLogo() {
-  return (
-    <Link key="hopin-logo" href="/home" className="flex gap-8 p-8 items-center">
-      <Image src="/logo.png" alt="HopIn Logo" width={30} height={20} />
-      <h6>HopIn</h6>
-    </Link>
-  );
-}
+// import { signOut } from "next-auth/react";
+// import { userApi } from "../../../lib/axios/userAPI";
 
 // this is from jane's code
 // "use client";
-// import Link from "next/link";
-// import { signOut } from "next-auth/react";
-// import { userApi } from "../../../lib/axios/userAPI";
-// import { useRouter } from "next/navigation";
 
 // export const handleSignOut = async () => {
 //   try {
@@ -36,9 +24,23 @@ export default function HopinLogo() {
 //     window.location.href = "/";
 //   }
 // };
+export default function HopinLogo() {
+  return (
+    <div className="w-full flex justify-center md:justify-start pt-4">
+      <Link
+        key="hopin-logo"
+        href="/home"
+        className="flex flex-row items-center gap-2 md:gap-6 p-2 md:p-4"
+      >
+        <Image src="/logo.png" alt="HopIn Logo" width={30} height={20} />
+        <h6 className="font-bold text-2xl md:text-5xl">HopIn</h6>
+      </Link>
+    </div>
+  );
+}
 
 // export default function HopinLogo() {
-//   const router = useRouter();
+//   // const router = useRouter();
 //   return (
 //     <>
 //       <div className="flex flex-row justify-between p-2 px-4 items-center md:px-20 md:py-6  gap-2 md:gap-4">

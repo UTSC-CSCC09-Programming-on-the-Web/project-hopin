@@ -8,6 +8,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useUserStore } from "@/stores/UserStore";
 import PassengerControls from "./PassengerControls/PassengerControls";
 import DriverControls from "./DriverControls/DriverControls";
+import MobileParticipants from "@/components/MobileParticipants";
 
 export default function GroupPage() {
   const user = useUserStore((s) => s.user);
@@ -35,7 +36,9 @@ export default function GroupPage() {
   return (
     <div className="relative w-full h-screen">
       {/* Control Panel */}
+      {/* <MobileParticipants> */}
       {isDriver ? <DriverControls /> : <PassengerControls />}
+      {/* </MobileParticipants> */}
 
       {/* Leave group button */}
       <div className="absolute right-8 top-8 z-20">
