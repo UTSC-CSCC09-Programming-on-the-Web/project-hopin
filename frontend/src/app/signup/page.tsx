@@ -1,9 +1,9 @@
-// import { getUserSession } from "@/lib/session";
 "use client";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { authApi } from "../../../lib/axios/authAPI";
 import { useState } from "react";
+import { authApi } from "@/lib/apis/authAPI";
+
 export default function SignUp() {
   const [errorMessage, setErrorMessage] = useState("");
   const handleSignUp = async (formData: FormData) => {

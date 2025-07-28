@@ -3,8 +3,6 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import HopinLogo from "./ui/hopin-logo";
-import { useState } from "react";
 
 export default function SignIn() {
   const [errorMessage, setErrorMessage] = useState("");
@@ -19,13 +17,12 @@ export default function SignIn() {
         redirect: false,
         callbackUrl: "/home",
       });
-      if (res?.error) {
-        setErrorMessage(res.error);
-      } else if (res?.ok) {
-        window.location.href = "/home"; // Manual redirect after successful login
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Failed to sign in");
+      } else {
+        throw new Error("Failed to sign in");
       }
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to sign in");
     }
   };
 
