@@ -37,9 +37,10 @@ authRouter.post(
   "/signup",
   createRateLimiter("signupRL", {
     maxAttemptsIP: 10,
-    durationIP: 60 * 5,
+    durationIP: 60 * 10,
     maxAttemptsUserIP: 5,
-    durationUserIP: 60 * 5,
+    durationUserIP: 60 * 15,
+    enableProgressive: true,
   }),
   validateRequestSchema({
     email: { required: true, type: "string" },
@@ -54,10 +55,11 @@ authRouter.post(
 authRouter.post(
   "/signin",
   createRateLimiter("signinRL", {
-    maxAttemptsIP: 10,
-    durationIP: 60 * 5,
-    maxAttemptsUserIP: 5,
-    durationUserIP: 60 * 5,
+    maxAttemptsIP: 8,
+    durationIP: 60 * 10,
+    maxAttemptsUserIP: 3,
+    durationUserIP: 60 * 15,
+    enableProgressive: true,
   }),
   validateRequestSchema({
     email: { required: true, type: "string" },

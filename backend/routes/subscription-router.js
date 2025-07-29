@@ -20,7 +20,13 @@ export const subscriptionRouter = Router();
 subscriptionRouter.post(
   "/checkout-subscription",
   authenticateToken,
-  createRateLimiter("checkoutRL"),
+  createRateLimiter("checkoutRL", {
+    maxAttemptsIP: 10,
+    durationIP: 60 * 10,
+    maxAttemptsUserIP: 3,
+    durationUserIP: 60 * 15,
+    enableProgressive: true,
+  }),
   createLock("checkoutLock"),
   checkContentType("application/json"),
   validateRequestSchema({
@@ -37,7 +43,13 @@ subscriptionRouter.post(
   "/create-portal-session",
   authenticateToken,
   requireSubscription,
-  createRateLimiter("customerPortalRL"),
+  createRateLimiter("customerPortalRL", {
+    maxAttemptsIP: 15,
+    durationIP: 60 * 10,
+    maxAttemptsUserIP: 5,
+    durationUserIP: 60 * 10,
+    enableProgressive: true,
+  }),
   createLock("customerPortalLock", 3),
   handleMiddlewareErrors,
   createPortalSession,

@@ -49,8 +49,8 @@ export function createRateLimiter(
         storeClient: redisClient,
         keyPrefix: `${actionKeyPrefix}-progressive`,
         points: 1,
-        duration: 60 * 60 * 24, // 24 hours
-        blockDuration: 60 * 60 * 24,
+        duration: 60 * 60 * 12, // 12 hours for faster reset
+        blockDuration: 60 * 60 * 12, // 12 hours progressive block
       })
     : null;
 

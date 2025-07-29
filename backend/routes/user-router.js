@@ -66,10 +66,11 @@ userRouter.get(
   authenticateToken, // Add authentication requirement
   requireSubscription, // Require active subscription
   createRateLimiter("getAllUsersRL", {
-    maxAttemptsIP: 50, // 50 requests per 10 minutes from same IP
+    maxAttemptsIP: 30, // 30 requests per 10 minutes from same IP
     durationIP: 60 * 10,
-    maxAttemptsUserIP: 20, // 20 requests per 5 minutes per user
-    durationUserIP: 60 * 5,
+    maxAttemptsUserIP: 15, // 15 requests per 10 minutes per user
+    durationUserIP: 60 * 10,
+    enableProgressive: true,
   }),
   validateRequestSchema({
     querySchema: {
@@ -88,10 +89,11 @@ userRouter.get(
   authenticateToken,
   // requireSubscription, // Require active subscription
   createRateLimiter("getUserByEmailRL", {
-    maxAttemptsIP: 30, // 30 requests per 10 minutes from same IP
+    maxAttemptsIP: 20, // 20 requests per 10 minutes from same IP
     durationIP: 60 * 10,
-    maxAttemptsUserIP: 10, // 10 requests per 5 minutes per user
-    durationUserIP: 60 * 5,
+    maxAttemptsUserIP: 8, // 8 requests per 10 minutes per user
+    durationUserIP: 60 * 10,
+    enableProgressive: true,
   }),
   validateRequestSchema({
     querySchema: {
