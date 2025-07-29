@@ -22,33 +22,36 @@ const DriverControls = () => {
   const { members } = group;
   const content = (
     <div className=" flex flex-col items-start">
-        {/* Header Showing the Page Titles */}
-        <div className="bg-white rounded-t-lg overflow-clip grid grid-cols-2 w-full">
-          <PageButton
-            text="Members"
-            isActive={page === "members"}
-            onClick={() => setPage("members")}
-          />
-          <PageButton
-            text="Route"
-            isActive={page === "route"}
-            onClick={() => setPage("route")}
-          />
-        </div>
-        {/* Conditional render based on selected page */}
-
-        {page === "members" ? (
-          <MemberOverview showHeader={false} />
-        ) : (
-          <div className="h-full w-full flex flex-col rounded-lg overflow-clip bg-white shadow-sm">
-            <ListReorder initialUsers={members} />
-          </div>
-        )}
+      {/* Header Showing the Page Titles */}
+      <div className="bg-white rounded-t-lg overflow-clip grid grid-cols-2 w-full">
+        <PageButton
+          text="Members"
+          isActive={page === "members"}
+          onClick={() => setPage("members")}
+        />
+        <PageButton
+          text="Route"
+          isActive={page === "route"}
+          onClick={() => setPage("route")}
+        />
       </div>
-  )
+      {/* Conditional render based on selected page */}
 
-    return isMobile ? <MobileParticipants>{content}</MobileParticipants> : content;
+      {page === "members" ? (
+        <MemberOverview showHeader={false} />
+      ) : (
+        <div className="h-full w-full flex flex-col rounded-lg overflow-clip bg-white shadow-sm">
+          <ListReorder initialUsers={members} />
+        </div>
+      )}
+    </div>
+  );
 
+  return isMobile ? (
+    <MobileParticipants>{content}</MobileParticipants>
+  ) : (
+    content
+  );
 };
 
 export default DriverControls;

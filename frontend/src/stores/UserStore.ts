@@ -67,7 +67,7 @@ export const useUserStore = create<UserState>((set) => ({
     try {
       const updatedUser = await userApi.updateLocationOrDestination(
         "location",
-        location
+        location,
       );
 
       set({ user: updatedUser });

@@ -15,7 +15,7 @@ export const useMapMarkers = () => {
   // Create custom DOM element marker
   const createUserMarker = (
     user: User,
-    isCurrent: boolean
+    isCurrent: boolean,
   ): mapboxgl.Marker => {
     const el = document.createElement("div");
     el.className =

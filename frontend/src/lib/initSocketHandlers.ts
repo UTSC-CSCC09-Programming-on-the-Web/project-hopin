@@ -29,7 +29,7 @@ export const initSocketHandlers = (socket: Socket) => {
     ({ userId, username }: { userId: string; username: string }) => {
       removeGroupMember(userId);
       toast(`${username} left the group.`);
-    }
+    },
   );
 
   socket.on("group_deleted", () => {
@@ -50,6 +50,6 @@ export const initSocketHandlers = (socket: Socket) => {
           : undefined,
       }));
       toast(message);
-    }
+    },
   );
 };

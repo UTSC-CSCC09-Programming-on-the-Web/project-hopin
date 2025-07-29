@@ -13,6 +13,50 @@ const authOptions = {
     maxAge: 60 * 60, // 1 hour session
   },
 
+  cookies: {
+    sessionToken: {
+      // TODO: With HTTPS enabled, uncomment line 17, and comment out line 18
+      // name: `__Secure-next-auth.session-token`,
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        // TODO: Make sure secure flag is set to true when
+        // HTTPS is enabled
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      },
+    },
+    callbackUrl: {
+      // TODO: With HTTPS enabled, uncomment line 30, and comment out line 32
+      // name: `__Secure-next-auth.callback-url`,
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: "lax",
+        path: "/",
+        // TODO: Make sure secure flag is set to true when
+        // HTTPS is enabled
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 15, // 15 minutes
+      },
+    },
+    csrfToken: {
+      // TODO: With HTTPS enabled, uncomment line 30, and comment out line 32
+      // name: `__Host-next-auth.csrf-token`,
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        // TODO: Make sure secure flag is set to true when
+        // HTTPS is enabled
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 4, // 4 hours
+      },
+    },
+  },
+
   providers: [
     CredentialsProvider({
       credentials: {
@@ -21,7 +65,6 @@ const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
         try {
           const res = await fetch(`${BACKEND_URI}/api/auth/signin`, {
             method: "POST",
@@ -38,12 +81,13 @@ const authOptions = {
           }
 
           const user = await res.json();
+
           return {
-            id: user.id.toString(),
+            id: user.id,
             email: credentials.email,
             accessToken: user.accessToken,
           };
-        } catch (err) {
+        } catch (err: any) {
           console.error("Credentials login failed:", err);
           throw new Error(err.message || "Something went wrong during login.");
         }
@@ -99,25 +143,24 @@ const authOptions = {
       user?: User;
       account?: Account;
     }) {
-      // From GoogleProvider via signIn callback
-      if (account?.provider === "google") {
-        const result = {
-          ...token,
-          id: account.id,
-          email: token.email, // Preserve email from profile
-          accessToken: account.accessToken, // This should contain the backend token
-        } as JWT;
-        return result;
-      }
-
-      // On initial sign-in (credentials only - when no account provider)
-      if (user && !account?.provider) {
-        return {
-          ...token,
-          id: user.id,
-          email: user.email || token.email,
-          accessToken: user.accessToken,
-        } as JWT;
+      // On initial sign-in - handle both Google and credentials
+      if (user) {
+        if (account?.provider === "google") {
+          return {
+            ...token,
+            id: account.id,
+            email: token.email,
+            accessToken: account.accessToken,
+          } as JWT;
+        } else {
+          // Credentials provider
+          return {
+            ...token,
+            id: user.id,
+            email: user.email || token.email,
+            accessToken: user.accessToken,
+          } as JWT;
+        }
       }
 
       return token;
