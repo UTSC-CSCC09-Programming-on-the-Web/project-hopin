@@ -30,7 +30,7 @@ export default function SignUp() {
       throw new Error(error.error || "Failed to sign up");
     }
   };
-
+///
   return (
     <>
       <div className="flex flex-col gap-8 md:flex-row md:gap-20 justify-center items-center flex-1 m-4 md:m-18">

@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const fetchMapboxPlaces = async (query: string): Promise<any> => {
   if (!query) return Promise.resolve([]);
 

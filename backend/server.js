@@ -20,6 +20,10 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "Backend service healthy" });
+});
+
 app.use("/api/groups", groupRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);

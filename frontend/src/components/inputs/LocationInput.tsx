@@ -45,7 +45,7 @@ export default function AutocompleteInput({
 
   useEffect(() => {
     fetchSuggestions(query);
-  }, [query]);
+  }, [fetchSuggestions, query]);
 
   return (
     <div className="relative w-full">
