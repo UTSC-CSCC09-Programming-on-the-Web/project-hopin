@@ -212,26 +212,6 @@ export const authApi = {
     }
   },
 
-  // Client-side token validation (for React components)
-  validateToken: async () => {
-    try {
-      const session = await getSession();
-      if (!session?.accessToken) {
-        return { valid: false, error: "No access token found" };
-      }
-
-      const authenticatedApi = getAuthenticatedApi(session);
-      const res = await authenticatedApi.post("/auth/validate-token");
-      return { valid: res.data.valid, user: res.data.user };
-    } catch (error) {
-      console.error("Token validation error:", error);
-      return {
-        valid: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
-  },
-
   // Server-side token validation (for middleware)
   validateTokenServer: async (accessToken: string) => {
     try {

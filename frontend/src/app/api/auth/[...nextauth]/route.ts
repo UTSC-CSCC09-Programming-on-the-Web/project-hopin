@@ -11,37 +11,48 @@ const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
 
-  // NOTE: Might have to delete __Secure- and __Host- prefix if not strictly over HTTPS
   cookies: {
     sessionToken: {
-      name: `__Secure-next-auth.session-token`,
+      // TODO: With HTTPS enabled, uncomment line 17, and comment out line 18
+      // name: `__Secure-next-auth.session-token`,
+      name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
+        sameSite: "lax",
+        path: "/",
+        // TODO: Make sure secure flag is set to true when
+        // HTTPS is enabled
         secure: process.env.NODE_ENV === "production",
         maxAge: 60 * 60 * 24 * 7, // 7 days
-      }
+      },
     },
     callbackUrl: {
-      name: `__Secure-next-auth.callback-url`,
+      // TODO: With HTTPS enabled, uncomment line 30, and comment out line 32
+      // name: `__Secure-next-auth.callback-url`,
+      name: `next-auth.callback-url`,
       options: {
-        sameSite: 'lax',
-        path: '/',
+        sameSite: "lax",
+        path: "/",
+        // TODO: Make sure secure flag is set to true when
+        // HTTPS is enabled
         secure: process.env.NODE_ENV === "production",
         maxAge: 60 * 15, // 15 minutes
-      }
+      },
     },
     csrfToken: {
-      name: `__Host-next-auth.csrf-token`,
+      // TODO: With HTTPS enabled, uncomment line 30, and comment out line 32
+      // name: `__Host-next-auth.csrf-token`,
+      name: `next-auth.csrf-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
+        sameSite: "lax",
+        path: "/",
+        // TODO: Make sure secure flag is set to true when
+        // HTTPS is enabled
         secure: process.env.NODE_ENV === "production",
         maxAge: 60 * 60 * 4, // 4 hours
-      }
-    } 
+      },
+    },
   },
 
   providers: [

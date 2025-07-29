@@ -10,6 +10,12 @@ let nextCursor: string | null = null;
 export const userApi = {
   // Cursor-based pagination
   getAllUsers: async (take: number = 10, groupId?: string) => {
+    const session = await getSession();
+
+    if (!session?.accessToken || !session?.userId) {
+      throw new Error("Authentication required. Please sign in again.");
+    }
+
     try {
       interface UserQueryParams {
         take: number;
@@ -25,7 +31,8 @@ export const userApi = {
         params.groupId = groupId;
       }
 
-      const response = await getApi().get("/users", { params });
+      const authenticatedApi = getAuthenticatedApi(session);
+      const response = await authenticatedApi.get("/users", { params });
 
       nextCursor = response.data.nextCursor;
       const users = response.data.users || [];
@@ -49,8 +56,15 @@ export const userApi = {
   },
 
   getUserById: async (userId: string) => {
+    const session = await getSession();
+
+    if (!session?.accessToken || !session?.userId) {
+      throw new Error("Authentication required. Please sign in again.");
+    }
+
     try {
-      const response = await getApi().get(`/users/${userId}`);
+      const authenticatedApi = getAuthenticatedApi(session);
+      const response = await authenticatedApi.get(`/users/${userId}`);
       console.log("Get user by id response:", response.data);
       return response.data;
     } catch (error) {
@@ -80,7 +94,7 @@ export const userApi = {
             // Remove Content-Type to let browser set multipart/form-data with boundary
             "Content-Type": undefined,
           },
-        }
+        },
       );
 
       console.log("Update user response:", response.data);
@@ -93,17 +107,18 @@ export const userApi = {
 
   updateLocationOrDestination: async (
     field: "location" | "destination",
-    coordinates: Coordinates
+    coordinates: Coordinates,
   ) => {
     try {
       const session = await getSession();
-      if (!session?.userId) {
+      if (!session?.accessToken || !session?.userId) {
         throw new Error("Authentication required. Please sign in again.");
       }
 
-      const response = await getApi().patch(
+      const authenticatedApi = getAuthenticatedApi(session);
+      const response = await authenticatedApi.patch(
         `/users/${session.userId}/position?field=${field}`,
-        coordinates
+        coordinates,
       );
 
       console.log(`Updated user ${field}:`, response.data[field]);
@@ -117,14 +132,15 @@ export const userApi = {
   updateReadyStatus: async (isReady: boolean) => {
     try {
       const session = await getSession();
-      if (!session?.userId)
+      if (!session?.accessToken || !session?.userId)
         throw new Error("Authentication required. Please sign in again.");
 
-      const response = await getApi().patch(
+      const authenticatedApi = getAuthenticatedApi(session);
+      const response = await authenticatedApi.patch(
         `/users/${session.userId}/isReady`,
         {
           isReady,
-        }
+        },
       );
 
       console.log("Updated user ready status:", response.data.isReady);
@@ -146,7 +162,7 @@ export const userApi = {
     } catch (error) {
       console.warn(
         "Backend signout failed, but continuing with client cleanup:",
-        error
+        error,
       );
     }
 
@@ -178,7 +194,7 @@ export const userApi = {
     try {
       const authenticatedApi = getAuthenticatedApi(session);
       const response = await authenticatedApi.delete(
-        `/users/${session.userId}`
+        `/users/${session.userId}`,
       );
 
       // The API returns 204 No Content for successful deletion
@@ -194,17 +210,15 @@ export const userApi = {
 
   getSubscriptionStatus: async (userId?: string) => {
     try {
-      if (!userId) {
-        const session = await getSession();
-        if (!session?.userId) {
-          throw new Error("Authentication required. Please sign in again.");
-        }
-        userId = session.userId;
+      const session = await getSession();
+      if (!session?.accessToken || !session?.userId) {
+        throw new Error("Authentication required. Please sign in again.");
       }
-      const user = await userApi.getUserById(userId);
-      return {
-        subscriptionStatus: user?.subscriptionStatus ?? "unknown"
-      };
+      const response = await getAuthenticatedApi(session).get(
+        `/users/${session.userId}/subscription-status`,
+      );
+      console.log("Debug userAPI.getSubscriptionStatus::", response);
+      return response.data.subscriptionStatus ?? "unknown";
     } catch (error) {
       console.error("Subscription status check error:", error);
       handleApiError(error as AxiosError);
@@ -213,8 +227,8 @@ export const userApi = {
 
   isSubscribed: async (userId?: string) => {
     try {
-      const subscriptionData = await userApi.getSubscriptionStatus(userId);
-      return subscriptionData?.subscriptionStatus === "active";
+      const subscriptionStatus = await userApi.getSubscriptionStatus(userId);
+      return subscriptionStatus === "active";
     } catch (error) {
       console.error("isSubscribed check error:", error);
       return false;

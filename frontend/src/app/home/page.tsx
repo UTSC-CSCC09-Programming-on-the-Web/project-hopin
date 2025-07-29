@@ -44,7 +44,7 @@ import { userApi } from "../../../lib/axios/userAPI";
 import { useEffect } from "react";
 import Header from "@/components/header";
 import { useUserContext } from "../../../contexts/UserContext";
-import { paymentApi } from "../../../lib/axios/paymentAPI";
+import { subscriptionApi } from "../../../lib/axios/subscriptionAPI";
 
 export const handleSignOut = async () => {
   try {
@@ -73,15 +73,12 @@ export default function HomePage() {
   useEffect(() => {
     const checkSubscription = async () => {
       userApi.getSubscriptionStatus().then((stat) => {
-        if (stat?.subscriptionStatus === "active") return;
-        else if (stat?.subscriptionStatus === "paused") {
-          if (currentUser?.id && currentUser?.customerId) {
-            paymentApi.createPortalSession(
-              currentUser.id,
-              currentUser.customerId,
-            );
+        if (stat === "active") return;
+        else if (stat === "paused") {
+          if (currentUser?.id) {
+            subscriptionApi.createPortalSession();
           } else {
-            console.error("Missing user id or customer id for portal session.");
+            console.error("Missing user id for portal session.");
             router.push("/account/subscribe");
           }
         } else router.push("/account/subscribe");

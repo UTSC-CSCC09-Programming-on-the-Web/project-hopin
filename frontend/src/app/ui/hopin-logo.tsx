@@ -31,7 +31,7 @@ export default function HopinLogo() {
       href="/home"
       className="flex flex-row items-center gap-4 md:gap-6 md:gap-8"
     >
-      <img src="logo.png" alt="HopIn Logo" />
+      <img src="/logo.png" alt="HopIn Logo" />
       <h1 className="font-bold text-5xl">HopIn</h1>
     </Link>
   );

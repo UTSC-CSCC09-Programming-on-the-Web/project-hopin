@@ -1,4 +1,8 @@
-import { checkRateLimit, consumeFailedAttempts, resetFailAttempts } from "./rate-limit.js";
+import {
+  checkRateLimit,
+  consumeFailedAttempts,
+  resetFailAttempts,
+} from "./rate-limit.js";
 
 export async function requireSubscription(req, res, next) {
   try {
@@ -14,7 +18,7 @@ export async function requireSubscription(req, res, next) {
       where: { id: userId },
       include: {
         subscription: true,
-      }
+      },
     });
 
     if (!user) {
@@ -27,11 +31,11 @@ export async function requireSubscription(req, res, next) {
 
     if (subscriptionStatus !== "active") {
       await consumeFailedAttempts(req);
-      return res.status(402).json({ 
+      return res.status(402).json({
         error: "Active subscription required",
-        subscriptionStatus, 
-        redirectUrl: "/accout/subscribe"
-      })
+        subscriptionStatus,
+        redirectUrl: "/accout/subscribe",
+      });
     }
 
     await resetFailAttempts(req);

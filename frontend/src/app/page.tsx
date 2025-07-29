@@ -43,7 +43,6 @@ export default function SignIn() {
   };
 
   const handleGoogleSignIn = async () => {
-    console.log("handleGoogleSignIn");
     try {
       const res = await signIn("google", { callbackUrl: "/home" });
     } catch (error: any) {

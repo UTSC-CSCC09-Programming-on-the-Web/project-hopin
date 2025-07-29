@@ -13,6 +13,7 @@ import { Coordinates } from "../types/location";
 import useLocation from "../lib/hooks/useLocation";
 import { userApi } from "../lib/axios/userAPI";
 import { authApi } from "../lib/axios/authAPI";
+import { subscriptionApi } from "../lib/axios/subscriptionAPI";
 import { useSession } from "next-auth/react";
 
 type UserContextType = {
@@ -40,7 +41,21 @@ export const UserProvider: React.FC<{
     setLoading(true);
     try {
       const userData = await authApi.getCurrentUser();
-      setCurrentUser(userData);
+      let subscriptionData = null;
+      try {
+        subscriptionData = await subscriptionApi.getSubscriptionDetail();
+      } catch (error: any) {
+        if (error.response.status === 404) {
+          console.log("User has no subscription yet");
+          subscriptionData = null;
+        } else {
+          throw error;
+        }
+      }
+      setCurrentUser({
+        ...userData,
+        subscriptionStatus: subscriptionData?.status || "none",
+      });
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Failed to fetch user data:", error);

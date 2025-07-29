@@ -16,12 +16,11 @@ export const blacklistToken = {
         return;
       }
 
-
       const ttl = exp ? exp - Math.floor(Date.now() / 1000) : 24 * 60 * 60;
       if (ttl > 0) {
         await redisClient.set(`blacklist:jti:${jti}`, "1", { EX: ttl });
         console.log(`Token blacklisted with TTL ${ttl}s`);
-      } 
+      }
     } catch (error) {
       console.error("Error blacklisting token:", error);
     }

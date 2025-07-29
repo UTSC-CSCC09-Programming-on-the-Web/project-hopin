@@ -66,10 +66,10 @@ userRouter.get(
   authenticateToken, // Add authentication requirement
   requireSubscription, // Require active subscription
   createRateLimiter("getAllUsersRL", {
-    maxAttemptsIP: 50,        // 50 requests per 10 minutes from same IP
-    durationIP: 60 * 10,      
-    maxAttemptsUserIP: 20,    // 20 requests per 5 minutes per user
-    durationUserIP: 60 * 5
+    maxAttemptsIP: 50, // 50 requests per 10 minutes from same IP
+    durationIP: 60 * 10,
+    maxAttemptsUserIP: 20, // 20 requests per 5 minutes per user
+    durationUserIP: 60 * 5,
   }),
   validateRequestSchema({
     querySchema: {
@@ -86,12 +86,12 @@ userRouter.get(
 userRouter.get(
   "/by-email",
   authenticateToken,
-  requireSubscription, // Require active subscription
+  // requireSubscription, // Require active subscription
   createRateLimiter("getUserByEmailRL", {
-    maxAttemptsIP: 30,        // 30 requests per 10 minutes from same IP
-    durationIP: 60 * 10,      
-    maxAttemptsUserIP: 10,    // 10 requests per 5 minutes per user
-    durationUserIP: 60 * 5
+    maxAttemptsIP: 30, // 30 requests per 10 minutes from same IP
+    durationIP: 60 * 10,
+    maxAttemptsUserIP: 10, // 10 requests per 5 minutes per user
+    durationUserIP: 60 * 5,
   }),
   validateRequestSchema({
     querySchema: {
@@ -106,12 +106,12 @@ userRouter.get(
 userRouter.get(
   "/:id",
   authenticateToken, // Add authentication requirement
-  requireSubscription, // Require active subscription
+  // requireSubscription, // Require active subscription
   createRateLimiter("getUserByIdRL", {
-    maxAttemptsIP: 100,       // 100 requests per 10 minutes from same IP
-    durationIP: 60 * 10,      
-    maxAttemptsUserIP: 30,    // 30 requests per 5 minutes per user
-    durationUserIP: 60 * 5
+    maxAttemptsIP: 100, // 100 requests per 10 minutes from same IP
+    durationIP: 60 * 10,
+    maxAttemptsUserIP: 30, // 30 requests per 5 minutes per user
+    durationUserIP: 60 * 5,
   }),
   validateRequestSchema({
     paramsSchema: {
@@ -132,7 +132,7 @@ userRouter.patch(
   validateRequestSchema({
     bodySchema: {
       name: { required: false, type: "string" },
-      avatar: { required: false, type: "string" }, 
+      avatar: { required: false, type: "string" },
       // password: { required: false, type: "string" }, // Since we are not allowing in the frontend
     },
     paramsSchema: { id: { required: true, type: "string" } },

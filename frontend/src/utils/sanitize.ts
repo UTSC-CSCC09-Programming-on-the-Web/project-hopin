@@ -27,28 +27,46 @@ export function validatePassword(password: string) {
   }
 
   if (password.length < 8) {
-    return { isValid: false, message: "Password must be at least 8 characters long" };
+    return {
+      isValid: false,
+      message: "Password must be at least 8 characters long",
+    };
   }
 
   if (!/(?=.*[a-z])/.test(password)) {
-    return { isValid: false, message: "Password must include at least one lowercase character" };
+    return {
+      isValid: false,
+      message: "Password must include at least one lowercase character",
+    };
   }
 
   if (!/(?=.*[A-Z])/.test(password)) {
-    return { isValid: false, message: "Password must include at least one uppercase character" };
+    return {
+      isValid: false,
+      message: "Password must include at least one uppercase character",
+    };
   }
 
-  if (!/(?=.*\d)/.test(password)){
-    return { isValid: false, message: "Password must include at least one number" };
+  if (!/(?=.*\d)/.test(password)) {
+    return {
+      isValid: false,
+      message: "Password must include at least one number",
+    };
   }
 
-  if (!/(?=.*[@$!%*?&])/.test(password)){
-    return { isValid: false, message: "Password must include at least one special character (@$!%*?&)" };
+  if (!/(?=.*[@$!%*?&])/.test(password)) {
+    return {
+      isValid: false,
+      message: "Password must include at least one special character (@$!%*?&)",
+    };
   }
 
-  if (!/(?=.*[@$!%*?&])/.test(password)){
-    return { isValid: false, message: "Password must include at least one special character (@$!%*?&)" };
+  if (!/(?=.*[@$!%*?&])/.test(password)) {
+    return {
+      isValid: false,
+      message: "Password must include at least one special character (@$!%*?&)",
+    };
   }
 
-  return { isValid: true, message: "Password is valid" };  
+  return { isValid: true, message: "Password is valid" };
 }

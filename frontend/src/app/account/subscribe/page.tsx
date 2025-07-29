@@ -2,7 +2,7 @@
 
 import { loadStripe } from "@stripe/stripe-js";
 import { useState, useEffect } from "react";
-import { paymentApi } from "../../../../lib/axios/paymentAPI";
+import { subscriptionApi } from "../../../../lib/axios/subscriptionAPI";
 import { useUserContext } from "../../../../contexts/UserContext";
 import toast from "react-hot-toast";
 
@@ -11,12 +11,12 @@ function SubscriptionDetail() {
   const [isLoading, setLoading] = useState(false);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [isLoadingStripe, setLoadingStripe] = useState(false);
-
+  console.log(currentUser);
   useEffect(() => {
     if (currentUser?.subscriptionStatus === "active") {
       setLoading(true);
-      paymentApi
-        .getSubscriptionDetail(currentUser.id)
+      subscriptionApi
+        .getSubscriptionDetail()
         .then((res) => {
           setSubscriptionData(res);
         })
@@ -30,25 +30,13 @@ function SubscriptionDetail() {
   }, [currentUser]);
 
   if (currentUser?.subscriptionStatus === "active") {
-    if (isLoading) {
+    if (isLoading || !subscriptionData) {
       return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md mx-auto text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">
               Loading subscription details...
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    if (!subscriptionData) {
-      return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-md mx-auto text-center">
-            <p className="text-gray-600">
-              Unable to load subscription details.
             </p>
           </div>
         </div>
@@ -120,13 +108,12 @@ function SubscriptionDetail() {
                 className="w-full bg-gray-100 text-wrap text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors duration-200"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (currentUser && currentUser.id && currentUser.customerId) {
-                    paymentApi.createPortalSession(
-                      currentUser.id,
-                      currentUser.customerId,
-                    );
+                  if (currentUser && currentUser.id) {
+                    subscriptionApi.createPortalSession();
                   } else {
-                    console.error("No session ID available");
+                    console.error(
+                      "Not available without valid user and customer ids",
+                    );
                   }
                 }}
               >
@@ -154,13 +141,12 @@ function SubscriptionDetail() {
               className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
               onClick={(e) => {
                 e.preventDefault();
-                if (currentUser && currentUser.id && currentUser.customerId) {
-                  paymentApi.createPortalSession(
-                    currentUser.id,
-                    currentUser.customerId,
-                  );
+                if (currentUser && currentUser.id) {
+                  subscriptionApi.createPortalSession();
                 } else {
-                  console.error("No session ID available");
+                  console.error(
+                    "No available without valid user or customer ids",
+                  );
                 }
               }}
             >
@@ -259,12 +245,8 @@ function SubscriptionDetail() {
                     console.log("Please log in to start a subscription plan.");
                     return;
                   }
-                  paymentApi
-                    .createCheckoutSession(
-                      currentUser.id,
-                      currentUser.email!,
-                      "price_1RlDmGPEdGwKucITXtzxQfQ5",
-                    ) // TODO: move to env
+                  subscriptionApi
+                    .createCheckoutSession("standard")
                     .then(async (session) => {
                       const stripe = await loadStripe(
                         process.env.NEXT_PUBLIC_STRIPE_PKEY!,

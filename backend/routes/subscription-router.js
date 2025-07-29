@@ -47,7 +47,6 @@ subscriptionRouter.post(
 subscriptionRouter.get(
   "/:userId",
   authenticateToken,
-  requireSubscription,
   createRateLimiter("subscriptionDetailRL"),
   handleMiddlewareErrors,
   getSubscriptionDetail,

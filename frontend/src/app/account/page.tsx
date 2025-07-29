@@ -363,7 +363,9 @@ function UserAccount() {
                 </h2>
                 <div className="space-y-2 mb-6 text-center">
                   <p className="text-gray-600">
-                    <span className="w-full font-medium mb:text-right">Email:</span>{" "}
+                    <span className="w-full font-medium mb:text-right">
+                      Email:
+                    </span>{" "}
                     {currentUser.email || "Not available"}
                   </p>
                   {currentUser.location && (
