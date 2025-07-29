@@ -1,14 +1,14 @@
-import { consumeFailedAttempts } from "./rate-limit.js";
+import { checkRateLimit, consumeFailedAttempts } from "./rate-limit.js";
 
-export async function handleMiddlewareErrors (error, req, res, next) {
+export async function handleMiddlewareErrors(error, req, res, next) {
   if (error.status === 401) {
-    await consumeFailedAttempts(req);
+    if (await checkRateLimit(req, res)) return;
     return res
       .status(401)
       .json({ error: error.message || "Authentication required" });
   }
   if (error.status === 403) {
-    await consumeFailedAttempts(req);
+    if (await checkRateLimit(req, res)) return;
     if (error.message === "LOCKED") {
       return res.status(403).json({
         error:
@@ -22,8 +22,8 @@ export async function handleMiddlewareErrors (error, req, res, next) {
     return res.status(429).json({ error: "Too many requests" });
   }
   if (error.status === 400) {
-    await consumeFailedAttempts(req);
+    if (await checkRateLimit(req, res)) return;
     return res.status(400).json({ error: error.message || "Bad request" });
   }
   next(error);
-};
+}

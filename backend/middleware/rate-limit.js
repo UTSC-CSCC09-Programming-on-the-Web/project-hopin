@@ -2,8 +2,15 @@ import redisClient from "../lib/redisClient.js";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 
 // baseDelay, maxDelay in seconds, return delay in seconds
-export function calculateExponentialBackoff(attempts, baseDelay = 60, maxDelay = 3600) {
-  const delay = Math.min(baseDelay * Math.pow(2, Math.max(attempts - 1, 0)), maxDelay);
+export function calculateExponentialBackoff(
+  attempts,
+  baseDelay = 60,
+  maxDelay = 3600,
+) {
+  const delay = Math.min(
+    baseDelay * Math.pow(2, Math.max(attempts - 1, 0)),
+    maxDelay,
+  );
   const jitter = Math.random() * 0.1 * delay; // Add jitter
   return Math.floor(delay + jitter);
 }
@@ -17,7 +24,7 @@ export function createRateLimiter(
     maxAttemptsUserIP = 5,
     durationUserIP = 5 * 60,
     enableProgressive = false,
-  }
+  } = {},
 ) {
   // Limit by IP
   const limiterByIP = new RateLimiterRedis({
@@ -37,11 +44,11 @@ export function createRateLimiter(
     blockDuration: 60 * 60,
   });
 
-  const progressiveBlocker = enableProgressive 
+  const progressiveBlocker = enableProgressive
     ? new RateLimiterRedis({
         storeClient: redisClient,
         keyPrefix: `${actionKeyPrefix}-progressive`,
-        points: 1, 
+        points: 1,
         duration: 60 * 60 * 24, // 24 hours
         blockDuration: 60 * 60 * 24,
       })
@@ -60,20 +67,20 @@ export function createRateLimiter(
       ]);
 
       let retrySecs = 0;
-      const progressiveDelay = enableProgressive 
+      const progressiveDelay = enableProgressive
         ? calculateExponentialBackoff(resProgressive?.consumedPoints || 0)
-        : 0;   
-      
+        : 0;
+
       // Check if IP or userId+IP is already blocked
       if (resIP && resIP.consumedPoints > maxAttemptsIP) {
         retrySecs = Math.max(
           Math.round(resIP.msBeforeNext / 1000) || 1,
-          progressiveDelay
+          progressiveDelay,
         );
       } else if (resUserIP && resUserIP.consumedPoints > maxAttemptsUserIP) {
         retrySecs = Math.max(
           Math.round(resUserIP.msBeforeNext / 1000) || 1,
-          progressiveDelay
+          progressiveDelay,
         );
       }
 
@@ -103,19 +110,17 @@ export function createRateLimiter(
 
 export async function consumeFailedAttempts(req) {
   try {
-
     if (!req.limiterByIP || !req.rlIPKey) return;
     const consume = [req.limiterByIP.consume(req.rlIPKey)];
 
-    if (req.limiterByUserIP && req.rlUserIPKey) 
+    if (req.limiterByUserIP && req.rlUserIPKey)
       consume.push(req.limiterByUserIP.consume(req.rlUserIPKey));
     if (req.progressiveBlocker && req.rlProgressiveKey)
       consume.push(req.progressiveBlocker.consume(req.rlProgressiveKey));
-    
+
     await Promise.all(consume);
   } catch (error) {
-    if (error?.msBeforeNext) 
-      return Math.round(error.msBeforeNext / 1000) || 1;
+    if (error?.msBeforeNext) return Math.round(error.msBeforeNext / 1000) || 1;
     throw error;
   }
 }
@@ -132,11 +137,14 @@ export async function checkRateLimit(req, res) {
 
 export async function resetFailAttempts(req) {
   if (!req.limiterByIP || !req.rlIPKey) return;
-  const reset = [req.limiterByIP.delete(req.rlIPKey), req.limiterByUserIP.delete(req.rlUserIPKey)];
+  const reset = [
+    req.limiterByIP.delete(req.rlIPKey),
+    req.limiterByUserIP.delete(req.rlUserIPKey),
+  ];
 
-  if (req.progressiveBlocker && req.progressiveKey){
-    reset.push(req.progressiveBlocker.delete(req.progressiveKey));
+  if (req.progressiveBlocker && req.rlProgressiveKey) {
+    reset.push(req.progressiveBlocker.delete(req.rlProgressiveKey));
   }
-  
+
   await Promise.all(reset);
 }

@@ -30,6 +30,12 @@ model User {
 
   // One-to-one: User is a driver of a group
   drivenGroup Group? @relation("GroupDriver")
+
+  // Many-to-many: User participates in multiple fare payments
+  userFarePayments UserFarePayment[]
+
+  // One-to-one: User has one Connect account
+  connectAccount ConnectAccount?
 }
 
 model Plan {
@@ -79,8 +85,12 @@ model Group {
 
   // One-to-many: A group has multiple fares listed
   fares Fare[]
+
+  // One-to-many: A group has multiple payments made
+  farePayments FarePayment[]
 }
 
+// Fares listed for a ride
 model Fare {
   id String @id @default(uuid())
 
@@ -88,9 +98,72 @@ model Fare {
   group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String
 
-  category  String
-  amount    Decimal
-  notes     String?
+  category String
+  amount   Decimal
+  descriptions  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// History of fare payments 
+model FarePayment {
+  id String @id @default(uuid())
+
+  // One-to-many: A group has multiple payments made
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  groupId String
+
+  amount Decimal?
+  status          String?
+
+  paymentIntentId String?
+
+  transferId     String?
+  
+  transferStatus String?
+
+  // Many-to-many: Multiple users can participate in one fare payment
+  userFarePayments UserFarePayment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Junction table many-to-many relationship
+// between User and FarePayment
+model UserFarePayment {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  farePayment   FarePayment @relation(fields: [farePaymentId], references: [id], onDelete: Cascade)
+  farePaymentId String
+
+  // User-specific payment details
+  amountOwed    Decimal?
+  amountPaid    Decimal?
+  paymentStatus String? // pending, paid, failed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, farePaymentId])
+}
+
+model ConnectAccount {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  // Account ID on Stripe Connect
+  accountId        String?  @unique
+  payoutEnabled    Boolean? @default(false)
+  detailsSubmitted Boolean? @default(false)
+  chargesEnabled   Boolean? @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
