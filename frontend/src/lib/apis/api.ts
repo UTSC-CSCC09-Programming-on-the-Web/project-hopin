@@ -30,9 +30,8 @@ export const getAuthenticatedApi = async () => {
   });
 
   if (session?.accessToken) {
-    authenticatedApi.defaults.headers.common[
-      "Authorization"
-    ] = `Bearer ${session.accessToken}`;
+    authenticatedApi.defaults.headers.common["Authorization"] =
+      `Bearer ${session.accessToken}`;
   } else {
     throw new Error("No authentication token available. Please sign in again.");
   }

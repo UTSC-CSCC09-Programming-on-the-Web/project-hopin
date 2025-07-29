@@ -84,7 +84,7 @@ const ListReorder = ({ initialItems }: { initialItems: ListItem[] }) => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {

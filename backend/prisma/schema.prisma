@@ -9,12 +9,11 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
+  id           String        @id @default(uuid())
+  email        String        @unique
   password     String?
   name         String
   avatar       String?
-
   location     Json?
   destinationId String? @unique
   destination  Place? @relation(fields: [destinationId], references: [id])
@@ -23,19 +22,25 @@ model User {
   // Unique color for each user
   // This is used to differentiate users visually in the UI when in a group
   color      String
+  subscription Subscription?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   // Many-to-one: User belongs to a group
-  groupId      String?
-  group        Group?   @relation("GroupMembers", fields: [groupId], references: [id])
+  groupId String?
+  group   Group?  @relation("GroupMembers", fields: [groupId], references: [id])
 
   // One-to-one: User is an owner of a group
-  ownedGroup   Group?   @relation("GroupOwner")
+  ownedGroup Group? @relation("GroupOwner")
 
   // One-to-one: User is a driver of a group
-  drivenGroup  Group?   @relation("GroupDriver")
+  drivenGroup Group? @relation("GroupDriver")
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Many-to-many: User participates in multiple fare payments
+  userFarePayments UserFarePayment[]
+
+  // One-to-one: User has one Connect account
+  connectAccount ConnectAccount?
 }
 
 model Place {
@@ -46,21 +51,134 @@ model Place {
   destinationOf User?
 }
 
+model Plan {
+  id     String @id @default(uuid())
+  name   String @unique
+  planId String @unique
+
+  // One-to-many
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  // One-to-one: Only one subscription per user
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String? @unique
+
+  customerId     String? @unique
+  subscriptionId String? @unique
+
+  plan   Plan?   @relation(fields: [planId], references: [id])
+  planId String?
+
+  status    String?
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model Group {
-  id           String   @id // We generate ids for groups on creation
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id // We generate ids for groups on creation
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // One-to-one: Group has one owner
-  ownerId      String?  @unique
-  owner        User?    @relation("GroupOwner", fields: [ownerId], references: [id])
+  ownerId String? @unique
+  owner   User?   @relation("GroupOwner", fields: [ownerId], references: [id])
 
   // One-to-one: Group has one driver
-  driverId     String?  @unique
-  driver       User?    @relation("GroupDriver", fields: [driverId], references: [id])
+  driverId String? @unique
+  driver   User?   @relation("GroupDriver", fields: [driverId], references: [id])
 
   route      Json?
 
   // One-to-many: Group has many members
-  members      User[]   @relation("GroupMembers")
+  members User[] @relation("GroupMembers")
+
+  // One-to-many: A group has multiple fares listed
+  fares Fare[]
+
+  // One-to-many: A group has multiple payments made
+  farePayments FarePayment[]
+}
+
+// Fares listed for a ride
+model Fare {
+  id String @id @default(uuid())
+
+  // One-to-many: A group has multiple fares listed
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+
+  category String
+  amount   Decimal
+  descriptions  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// History of fare payments 
+model FarePayment {
+  id String @id @default(uuid())
+
+  // One-to-many: A group has multiple payments made
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  groupId String
+
+  amount Decimal?
+  status          String?
+
+  paymentIntentId String?
+
+  transferId     String?
+  
+  transferStatus String?
+
+  // Many-to-many: Multiple users can participate in one fare payment
+  userFarePayments UserFarePayment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Junction table many-to-many relationship
+// between User and FarePayment
+model UserFarePayment {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  farePayment   FarePayment @relation(fields: [farePaymentId], references: [id], onDelete: Cascade)
+  farePaymentId String
+
+  // User-specific payment details
+  amountOwed    Decimal?
+  amountPaid    Decimal?
+  paymentStatus String? // pending, paid, failed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, farePaymentId])
+}
+
+model ConnectAccount {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  // Account ID on Stripe Connect
+  accountId        String?  @unique
+  payoutEnabled    Boolean? @default(false)
+  detailsSubmitted Boolean? @default(false)
+  chargesEnabled   Boolean? @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

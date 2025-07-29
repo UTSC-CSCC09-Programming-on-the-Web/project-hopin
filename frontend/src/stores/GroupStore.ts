@@ -209,7 +209,7 @@ export const updateGroupMember = (user: User) => {
 
     // Update member's data in the group
     const updatedMembers = state.group.members.map((m) =>
-      m.id === user.id ? { ...m, ...user } : m
+      m.id === user.id ? { ...m, ...user } : m,
     );
 
     return {

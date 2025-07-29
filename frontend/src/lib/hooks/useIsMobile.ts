@@ -8,7 +8,7 @@ export function useIsMobile(breakpoint = 425) {
     const checkMobile = () => setIsMobile(window.innerWidth <= breakpoint);
     checkMobile();
     // when window is resized, check it again
-    window.addEventListener("resize", checkMobile); 
+    window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, [breakpoint]);
 

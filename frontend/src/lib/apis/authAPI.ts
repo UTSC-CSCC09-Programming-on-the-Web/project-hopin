@@ -85,7 +85,7 @@ export const authApi = {
 
     if (!session?.accessToken) {
       throw new Error(
-        "Authentication token not available. Please sign in again."
+        "Authentication token not available. Please sign in again.",
       );
     }
 
@@ -113,7 +113,7 @@ export const authApi = {
     } catch (error) {
       console.warn(
         "Backend signout failed, but continuing with client cleanup:",
-        error
+        error,
       );
     }
 
@@ -144,7 +144,7 @@ export const authApi = {
    */
   handleGoogleAuth: async (
     email: string,
-    name: string
+    name: string,
   ): Promise<AuthResponse> => {
     try {
       const api = getApi();
@@ -181,6 +181,37 @@ export const authApi = {
     } catch (error) {
       console.error("Error refreshing session:", error);
       throw error;
+    }
+  },
+
+  // Server-side token validation (for middleware)
+  validateTokenServer: async (accessToken: string) => {
+    try {
+      const baseURL =
+        typeof window === "undefined"
+          ? process.env.SERVER_INTERNAL_URI || "http://backend:8080"
+          : process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080";
+
+      const response = await fetch(`${baseURL}/api/auth/validate-token`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        return { valid: false, error: `HTTP ${response.status}` };
+      }
+
+      const result = await response.json();
+      return { valid: result.valid, user: result.user };
+    } catch (error) {
+      console.error("Server token validation error:", error);
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
     }
   },
 };

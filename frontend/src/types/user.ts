@@ -1,25 +1,15 @@
-import { Locatable, Place } from "./location";
+import { Coordinates, Locatable, Place } from "./location";
 import { Route } from "./route";
 
 // Sample User Type (update when API is available)
 export type User = Locatable & {
   email: string;
   avatar?: string;
-  destination?: Place; // Where the user is going (if known)
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isUser = (item: any): item is User => {
-  return (
-    item &&
-    typeof item.id === "string" &&
-    typeof item.name === "string" &&
-    typeof item.email === "string" &&
-    (item.destination === undefined ||
-      (item.destination &&
-        typeof item.destination.id === "string" &&
-        typeof item.destination.name === "string"))
-  );
+  location?: Coordinates;
+  destination?: Coordinates; // Where the user is going (if known)
+  subscriptionStatus?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type Group = {
