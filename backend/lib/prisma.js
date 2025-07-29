@@ -16,7 +16,15 @@ export const userSafeSelect = {
   email: true,
   avatar: true,
   location: true,
-  destination: true,
+  color: true,
+  destination: {
+    select: {
+      id: true,
+      name: true,
+      address: true,
+      location: true,
+    },
+  },
   isReady: true,
   createdAt: true,
   updatedAt: true,

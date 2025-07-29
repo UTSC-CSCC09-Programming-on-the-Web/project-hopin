@@ -6,7 +6,8 @@ import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useUserStore } from "@/stores/UserStore";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { useSyncUser } from "@/hooks/useSyncUser";
+import { useSyncUser } from "@/lib/hooks/useSyncUser";
+import useSocket from "@/lib/hooks/useSocket";
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   const user = useUserStore((state) => state.user);
@@ -14,6 +15,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useSyncUser();
+  useSocket();
 
   // Checks if the user is logged in (this layout wraps protected pages)
   useEffect(() => {

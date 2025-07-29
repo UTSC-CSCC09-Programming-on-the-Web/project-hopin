@@ -84,6 +84,18 @@ export const setupSocketServer = (server) => {
       console.log(`User ${userId} joined group ${groupId}`);
     });
 
+    socket.on("update_heading", async ({ heading }) => {
+      // Broadcast the updated heading to the group if the user is a driver
+      const user = socket.user;
+
+      if (user.groupId) {
+        io.to(user.groupId).emit("driver_heading_updated", {
+          userId,
+          heading,
+        });
+      }
+    });
+
     // Handle disconnection
     socket.on("disconnect", async () => {
       await redisClient.HDEL("userSockets", userId);

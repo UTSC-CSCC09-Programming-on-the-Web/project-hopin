@@ -1,13 +1,14 @@
 import LocationInputsSection from "./LocationInputsSection";
 import MemberOverview from "../MemberOverview/MemberOverview";
 import MobileParticipants from "@/components/MobileParticipants";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
+import ControlsLayout from "./ControlsLayout";
 
 const PassengerControls = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="absolute top-8 bottom-8 left-12 z-20 flex flex-col gap-8 items-start">
+    <ControlsLayout>
       <LocationInputsSection />
 
       {isMobile ? (
@@ -17,7 +18,7 @@ const PassengerControls = () => {
       ) : (
         <MemberOverview />
       )}
-    </div>
+    </ControlsLayout>
   );
 };
 

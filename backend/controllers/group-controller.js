@@ -422,3 +422,44 @@ export const unbecomeDriver = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const updateGroupRoute = async (req, res) => {
+  try {
+    const { id: groupId } = req.params;
+    const { route } = req.body;
+
+    // Validate input
+    if (!groupId) {
+      return res.status(400).json({ error: "Group ID is required." });
+    }
+
+    // Verify that the group exists
+    const verification = await verifyGroupExists(groupId);
+    if (!verification.exists) {
+      throw new Error(verification.error);
+    }
+    // Check that the member is part of the group
+    const group = verification.group;
+    const isMember = group.members.some((member) => member.id === req.user.id);
+    if (!isMember) {
+      throw new Error("You are not a member of this group");
+    }
+
+    // Update the group route in the database
+    const updatedGroup = await prisma.group.update({
+      where: { id: groupId },
+      data: { route },
+      include: {
+        members: { select: userSafeSelect },
+        owner: { select: userSafeSelect },
+        driver: { select: userSafeSelect },
+      },
+    });
+    // Emit a socket event to notify all members of the route update
+    io.to(groupId).emit("route_updated", { route: updatedGroup.route });
+    return updatedGroup;
+  } catch (error) {
+    console.error("Error updating group route:", error);
+    throw new Error("Failed to update group route");
+  }
+};

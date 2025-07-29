@@ -1,19 +1,31 @@
 import { Router } from "express";
-import { prisma } from "../lib/prisma.js"; // import this for singleton prisma
+import { prisma, userSafeSelect } from "../lib/prisma.js"; // import this for singleton prisma
 import { authenticateToken, blacklistToken } from "../middleware/auth.js";
 import bcrypt from "bcrypt";
 import { signJWT } from "../utils/jwt.js";
+import { v4 as uuidv4 } from "uuid";
 
 export const authRouter = Router();
+
+const generateUserColor = (seed) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash = hash & hash;
+  }
+  const hue = Math.abs(hash % 360);
+  return `hsl(${hue}, 80%, 50%)`;
+};
 
 // add new acc from google
 authRouter.post("/google", async (req, res) => {
   const { email, name } = req.body;
 
   try {
+    const id = uuidv4(); // Generate a unique ID for the user
     const user = await prisma.user.upsert({
       where: { email },
-      create: { email, name },
+      create: { id, email, name, color: generateUserColor(id) },
       update: { name },
     });
 
@@ -49,11 +61,14 @@ authRouter.post("/signup", async (req, res) => {
   const salt = bcrypt.genSaltSync(saltRounds);
   const hashedPassword = bcrypt.hashSync(password, salt);
 
+  const id = uuidv4(); // Generate a unique ID for the user
   await prisma.user.create({
     data: {
+      id,
       email,
       password: hashedPassword,
       name,
+      color: generateUserColor(id),
     },
   });
 
@@ -99,18 +114,13 @@ authRouter.post("/signin", async (req, res) => {
   }
 });
 
-// Check if the user is authenticated + return user info
+// Check if the user is authenticated + return basic user info
 authRouter.get("/me", authenticateToken, async (req, res) => {
   const userId = req.user.id;
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatar: true,
-      },
+      select: userSafeSelect,
     });
 
     if (!user) {

@@ -4,6 +4,7 @@ import {
   updateGroupMember,
   removeGroupMember,
   addGroupMember,
+  updateDriverHeading,
 } from "@/stores/GroupStore";
 import toast from "react-hot-toast";
 import { User } from "@/types/user";
@@ -52,4 +53,17 @@ export const initSocketHandlers = (socket: Socket) => {
       toast(message);
     }
   );
+
+  socket.on("route_updated", ({ route }) => {
+    useGroupStore.getState().setGroupRoute(route);
+    toast("Route has been updated");
+  });
+
+  socket.on("member_updated", ({ user }) => {
+    updateGroupMember(user);
+  });
+
+  socket.on("driver_heading_updated", ({ heading }) => {
+    updateDriverHeading(heading);
+  });
 };

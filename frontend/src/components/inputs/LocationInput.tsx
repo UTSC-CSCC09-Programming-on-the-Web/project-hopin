@@ -1,78 +1,158 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import debounce from "../../utils/debounce";
 import { fetchMapboxPlaces } from "@/lib/apis/placesAPI";
 import Input from "./Input";
+import { Place } from "@/types/location";
+import { clearRoute } from "@/stores/MapStore";
 
 type Feature = {
   id: string;
   place_name: string;
   center: [number, number];
+  text: string;
 };
+
 type AutocompleteInputProps = {
-  defaultValue?: string;
   placeholder: string;
-  onSelect: (coords: [number, number]) => void;
+  onSelect: (result: Place) => void;
 };
 
-export default function AutocompleteInput({
-  defaultValue,
-  placeholder,
-  onSelect,
-}: AutocompleteInputProps) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Feature[]>([]);
+export type LocationInputRef = {
+  reset: () => void;
+};
 
-  useEffect(() => {
-    if (defaultValue) {
-      setQuery(defaultValue);
-    }
-  }, [defaultValue]);
+const LocationInput = forwardRef<LocationInputRef, AutocompleteInputProps>(
+  ({ placeholder, onSelect }, ref) => {
+    const [query, setQuery] = useState("");
+    const [results, setResults] = useState<Feature[]>([]);
+    const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+    const isSelectionInProgress = useRef(false);
+    const resultsRef = useRef<HTMLUListElement>(null);
 
-  const fetchSuggestions = debounce(async (query: string) => {
-    if (!query) {
-      setResults([]);
-      return;
-    }
+    // Expose reset function to parent component
+    useImperativeHandle(ref, () => ({
+      reset: () => {
+        setQuery("");
+        setResults([]);
+        setHighlightedIndex(-1);
+        isSelectionInProgress.current = false;
+        clearRoute("user"); // Clear user route when resetting
+      },
+    }));
 
-    fetchMapboxPlaces(query).then((data) => {
-      if (data && data.features) {
-        setResults(data.features);
+    const debouncedFetchSuggestions = useMemo(
+      () =>
+        debounce(async (searchQuery: string) => {
+          if (!searchQuery) {
+            setResults([]);
+            return;
+          }
+
+          try {
+            const data = await fetchMapboxPlaces(searchQuery);
+            if (data?.features) {
+              setResults(data.features);
+            }
+          } catch (error) {
+            console.error("Error fetching places:", error);
+            setResults([]);
+          }
+        }, 300),
+      []
+    );
+
+    useEffect(() => {
+      if (isSelectionInProgress.current) {
+        isSelectionInProgress.current = false;
+        return;
       }
-    });
-  }, 300);
+      debouncedFetchSuggestions(query);
+    }, [query, debouncedFetchSuggestions]);
 
-  useEffect(() => {
-    fetchSuggestions(query);
-  }, [fetchSuggestions, query]);
+    const handleSelect = (place: Feature) => {
+      isSelectionInProgress.current = true;
 
-  return (
-    <div className="relative w-full">
-      <Input
-        name="location"
-        placeholder={placeholder}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="text-xs py-1 placeholder:text-sm"
-      />
-      {results.length > 0 && (
-        <ul className="absolute z-20 bg-white border rounded w-full mt-1 max-h-40 overflow-y-auto">
-          {results.map((place) => (
-            <li
-              key={place.id}
-              className="p-2 hover:bg-gray-200 cursor-pointer text-base"
-              onClick={() => {
-                onSelect(place.center);
-                setQuery(place.place_name);
-                setResults([]);
-              }}
-            >
-              {place.place_name}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
+      const selectedResult: Place = {
+        id: place.id,
+        color: "#f28cb1", // Default color
+        location: {
+          longitude: place.center[0],
+          latitude: place.center[1],
+        },
+        address: place.place_name,
+        name: place.text,
+      };
+
+      console.log("handleSelect called with:", selectedResult);
+      onSelect(selectedResult);
+      setQuery(place.place_name);
+      setResults([]);
+      setHighlightedIndex(-1);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setHighlightedIndex((prev) => Math.min(prev + 1, results.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter" && highlightedIndex >= 0) {
+        handleSelect(results[highlightedIndex]);
+      } else if (e.key === "Escape") {
+        setResults([]);
+        setHighlightedIndex(-1);
+      }
+    };
+
+    return (
+      <div className="relative w-full">
+        <Input
+          name="location"
+          placeholder={placeholder}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={() => {
+            // Close results after a short delay to allow onClick to fire
+            setTimeout(() => setResults([]), 100);
+          }}
+        />
+
+        {results.length > 0 && (
+          <ul
+            ref={resultsRef}
+            className="absolute z-20 bg-white border border-gray-300 rounded-md shadow-lg w-full mt-1 max-h-48 overflow-y-auto"
+          >
+            {results.map((place, index) => (
+              <li
+                key={place.id}
+                onClick={() => handleSelect(place)}
+                className={`px-4 py-2 cursor-pointer text-sm ${
+                  highlightedIndex === index
+                    ? "bg-gray-200"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {place.place_name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+);
+
+LocationInput.displayName = "LocationInput";
+
+export default LocationInput;

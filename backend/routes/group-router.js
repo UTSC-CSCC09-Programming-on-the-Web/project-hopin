@@ -7,6 +7,7 @@ import {
   getGroup,
   becomeDriver,
   unbecomeDriver,
+  updateGroupRoute,
 } from "../controllers/group-controller.js";
 
 const groupRouter = Router();
@@ -20,5 +21,7 @@ groupRouter.post("/:id/unbecome-driver", authenticateToken, unbecomeDriver);
 
 groupRouter.post("/", authenticateToken, createGroup);
 groupRouter.get("/:id", authenticateToken, getGroup);
+
+groupRouter.put("/:id/route", authenticateToken, updateGroupRoute);
 
 export default groupRouter;
