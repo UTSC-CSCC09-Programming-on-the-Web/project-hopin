@@ -3,7 +3,6 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     // Allow requests from frontend URI
-    console.log(process.env.CLIENT_URI, origin);
     if (origin === process.env.CLIENT_URI) return callback(null, true);
 
     return callback(new Error("Not allowed by CORS"));

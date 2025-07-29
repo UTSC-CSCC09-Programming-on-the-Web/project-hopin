@@ -1,9 +1,9 @@
-// import { getUserSession } from "@/lib/session";
 "use client";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { authApi } from "../../../lib/axios/authAPI";
 import { useState } from "react";
+import { authApi } from "@/lib/apis/authAPI";
+
 export default function SignUp() {
   const [errorMessage, setErrorMessage] = useState("");
   const handleSignUp = async (formData: FormData) => {
@@ -33,90 +33,78 @@ export default function SignUp() {
 
   return (
     <>
-      <main className="min-h-screen flex flex-col">
-        <div className="flex items-center p-4 gap-8">
-          <img
-            src="/logo.png"
-            alt="HopIn Logo"
-            className="w-10 h-10 object-contain"
-          />
-          <h1 className="font-bold text-4xl">HopIn</h1>
-        </div>
-        <div className="flex flex-col gap-8 md:flex-row md:gap-20 justify-center items-center flex-1 m-4 md:m-18">
-          <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md md:max-w-lg">
-            <p className="text-center text-xl font-bold pb-8">Sign Up</p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                handleSignUp(formData);
-              }}
-              className="flex flex-col gap-4"
-            >
-              <input
-                type="text"
-                id="name"
-                name="name"
-                className="border-b-1 border-gray-400 p-2"
-                placeholder="Username"
-                required
-              />
-              <input
-                type="text"
-                id="email"
-                name="email"
-                className="border-b-1 border-gray-400 p-2"
-                placeholder="Email"
-                required
-              />
-              <input
-                type="password"
-                id="password"
-                name="password"
-                placeholder="Password"
-                className="border-b-1 border-gray-400 p-2"
-                required
-              />
-
-              {errorMessage && (
-                <p className="text-red-500 text-sm text-center">
-                  {errorMessage}
-                </p>
-              )}
-
-              <button
-                className="border-1 border-gray-600 rounded-sm p-2 mt-8"
-                type="submit"
-              >
-                Sign Up
-              </button>
-            </form>
-            <button
-              className="border border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
-              onClick={() => signIn("google")}
-            >
-              <img className="w-1/9" src="google.png" alt="Google Logo" />
-              <span>Sign up with Google</span>
-            </button>
-            <div className="flex justify-center items-center gap-4 mt-4">
-              <p>Already a member?</p>
-              <Link href="/" className="font-bold hover:underline">
-                Sign In
-              </Link>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center flex-col gap-12 w-full max-w-md">
-            <p className="text-3xl font-bold">Hello!</p>
-            <img
-              className="w-2/3"
-              src="destination.png"
-              alt="Destination Image"
+      <div className="flex flex-col gap-8 md:flex-row md:gap-20 justify-center items-center flex-1 m-4 md:m-18">
+        <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md md:max-w-lg">
+          <p className="text-center text-xl font-bold pb-8">Sign Up</p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              handleSignUp(formData);
+            }}
+            className="flex flex-col gap-4"
+          >
+            <input
+              type="text"
+              id="name"
+              name="name"
+              className="border-b-1 border-gray-400 p-2"
+              placeholder="Username"
+              required
             />
-            <p>Sign up to access features.</p>
+            <input
+              type="text"
+              id="email"
+              name="email"
+              className="border-b-1 border-gray-400 p-2"
+              placeholder="Email"
+              required
+            />
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Password"
+              className="border-b-1 border-gray-400 p-2"
+              required
+            />
+
+            {errorMessage && (
+              <p className="text-red-500 text-sm text-center">{errorMessage}</p>
+            )}
+
+            <button
+              className="border-1 border-gray-600 rounded-sm p-2 mt-8"
+              type="submit"
+            >
+              Sign Up
+            </button>
+          </form>
+          <button
+            className="border border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
+            onClick={() => signIn("google")}
+          >
+            <img className="w-1/9" src="google.png" alt="Google Logo" />
+            <span>Sign up with Google</span>
+          </button>
+          <div className="flex justify-center items-center gap-4 mt-4">
+            <p>Already a member?</p>
+            <Link href="/" className="font-bold hover:underline">
+              Sign In
+            </Link>
           </div>
         </div>
-      </main>
+
+        <div className="flex items-center justify-center flex-col gap-12 w-full max-w-md">
+          <p className="text-3xl font-bold">Hello!</p>
+          <img
+            className="w-2/3"
+            src="destination.png"
+            alt="Destination Image"
+          />
+          <p>Sign up to access features.</p>
+        </div>
+      </div>
     </>
   );
 }

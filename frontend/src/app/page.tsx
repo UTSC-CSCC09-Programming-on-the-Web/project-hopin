@@ -1,11 +1,10 @@
 // import { getUserSession } from "@/lib/session";
 "use client";
 
+import HopinLogo from "@/components/hopin-logo";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import HopinLogo from "./ui/hopin-logo";
 import { useState } from "react";
-
 export default function SignIn() {
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -24,22 +23,18 @@ export default function SignIn() {
       } else if (res?.ok) {
         window.location.href = "/home"; // Manual redirect after successful login
       }
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to sign in");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message || "Failed to sign in");
+      } else {
+        throw new Error("Failed to sign in");
+      }
     }
   };
 
   return (
     <main className="min-h-screen flex flex-col">
-      <div className="flex items-center p-4 gap-8">
-        <img
-          src="/logo.png"
-          alt="HopIn Logo"
-          className="w-10 h-10 object-contain"
-        />
-        <h1 className="font-bold text-4xl">HopIn</h1>
-      </div>
-
+      <HopinLogo />
       <div className="flex flex-col gap-8 md:flex-row md:gap-20 justify-center items-center flex-1 m-4 md:m-18">
         <div className="border-2 rounded-2xl px-10 py-12 flex flex-col content-center w-full max-w-md md:max-w-lg">
           <p className="text-center text-xl font-bold pb-8">Sign In</p>
