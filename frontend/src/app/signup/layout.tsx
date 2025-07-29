@@ -7,7 +7,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <HopinLogo />
       </div>
       {/* <div className="flex flex-row gap-8 p-20 pt-0"> */}
-      <div className="flex-grow">{children}</div>
+        <div className="flex-grow">{children}</div>
       {/* </div> */}
     </main>
   );

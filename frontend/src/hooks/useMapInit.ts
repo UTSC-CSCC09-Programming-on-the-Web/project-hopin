@@ -31,7 +31,7 @@ export const useMapInit = () => {
 
       setMap(mapInstance);
     },
-    [map, setMap],
+    [map, setMap]
   );
 
   return {

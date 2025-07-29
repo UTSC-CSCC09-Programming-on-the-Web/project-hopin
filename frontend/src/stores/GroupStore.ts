@@ -124,7 +124,7 @@ export const updateGroupMember = (user: User) => {
     if (!state.group) return state;
 
     const updatedMembers = state.group.members.map((m) =>
-      m.id === user.id ? { ...m, ...user } : m,
+      m.id === user.id ? { ...m, ...user } : m
     );
 
     return {

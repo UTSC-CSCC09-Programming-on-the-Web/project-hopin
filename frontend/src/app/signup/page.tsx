@@ -3,61 +3,31 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 import { authApi } from "@/lib/apis/authAPI";
-import axios from "axios";
-import {
-  sanitizeName,
-  sanitizeEmail,
-  validatePassword,
-} from "@/utils/sanitize";
 
 export default function SignUp() {
   const [errorMessage, setErrorMessage] = useState("");
-
   const handleSignUp = async (formData: FormData) => {
-    const rawName = formData.get("name") as string;
-    const rawEmail = formData.get("email") as string;
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-
-    const name = sanitizeName(rawName);
-    const email = sanitizeEmail(rawEmail);
-    const validPassword = validatePassword(password);
-
-    if (!name) {
-      setErrorMessage("Please enter a valid name");
-      return;
-    }
-
-    if (!email) {
-      setErrorMessage("Please enter a valid email address");
-      return;
-    }
-
-    if (!validPassword.isValid) {
-      setErrorMessage(validPassword.message);
-      return;
-    }
 
     try {
       await authApi.signup({ email, password, name });
+
       const res = await signIn("credentials", {
         email,
         password,
         redirect: false,
-        callbackUrl: "/account/subscribe",
+        callbackUrl: "/home",
       });
       if (res?.error) {
         setErrorMessage(res.error);
       } else if (res?.ok) {
-        window.location.href = "/account/subscribe"; // Manual redirect after successful login
+        window.location.href = "/home"; // Manual redirect after successful login
       }
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setErrorMessage("An account with this email already exists.");
-      } else {
-        setErrorMessage("Failed to sign up. Please try again.");
-      }
-      // const error = err as Error & { error?: string };
-      // throw new Error(error.error || "Failed to sign up");
+      const error = err as Error & { error?: string };
+      throw new Error(error.error || "Failed to sign up");
     }
   };
 
@@ -112,12 +82,7 @@ export default function SignUp() {
           </form>
           <button
             className="border border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
-            onClick={() => {
-              signIn("google", {
-                redirect: true,
-                callbackUrl: "/account/subscribe",
-              });
-            }}
+            onClick={() => signIn("google")}
           >
             <img className="w-1/9" src="google.png" alt="Google Logo" />
             <span>Sign up with Google</span>

@@ -97,7 +97,7 @@ export const createGroup = async (req, res) => {
       } catch (redisError) {
         console.error(
           "Failed to remove group from Redis during cleanup:",
-          redisError,
+          redisError
         );
       }
     }
@@ -125,7 +125,7 @@ export const joinGroup = async (req, res) => {
 
     // Check if user is already a member
     const isAlreadyMember = existingGroup.members.some(
-      (member) => member.id === userId,
+      (member) => member.id === userId
     );
     if (isAlreadyMember) {
       return res
