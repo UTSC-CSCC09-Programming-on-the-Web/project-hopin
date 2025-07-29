@@ -1,14 +1,16 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { Account, Profile, Session, User } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { JWT } from "next-auth/jwt";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const BACKEND_URI = process.env.SERVER_INTERNAL_URI!;
-//
-const authOptions: NextAuthOptions = {
+
+const authOptions = {
   session: {
     strategy: "jwt",
+    maxAge: 60 * 60, // 1 hour session
   },
 
   providers: [
@@ -17,7 +19,6 @@ const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      // This function is called when a user tries to sign in with credentials
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
@@ -39,6 +40,7 @@ const authOptions: NextAuthOptions = {
           const user = await res.json();
           return {
             id: user.id.toString(),
+            email: credentials.email,
             accessToken: user.accessToken,
           };
         } catch (err) {
@@ -57,10 +59,15 @@ const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ account, profile }) {
+    async signIn({
+      account,
+      profile,
+    }: {
+      account?: Account;
+      profile?: Profile;
+    }) {
       if (account?.provider === "google" && profile?.email) {
         try {
-          // Call backend to upsert the user and get the generated JWT
           const res = await fetch(`${BACKEND_URI}/api/auth/google`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -74,7 +81,7 @@ const authOptions: NextAuthOptions = {
 
           const user = await res.json();
 
-          // Stash backend token and ID in account for jwt()
+          // Store tokens in account object for jwt callback
           account.id = user.id.toString();
           account.accessToken = user.accessToken;
         } catch (err) {
@@ -85,32 +92,47 @@ const authOptions: NextAuthOptions = {
       return true;
     },
 
-    async jwt({ token, user, account }) {
-      // If the user object is available, the user used credentials login
-      if (user) {
-        token.id = user.id;
-        token.accessToken = user.accessToken;
+    async jwt({
+      token,
+      user,
+      account,
+    }: {
+      token: JWT;
+      user?: User;
+      account?: Account;
+    }) {
+      // From GoogleProvider via signIn callback
+      if (account?.provider === "google") {
+        const result = {
+          ...token,
+          id: account.id,
+          email: token.email, // Preserve email from profile
+          accessToken: account.accessToken, // This should contain the backend token
+        } as JWT;
+        return result;
       }
 
-      // For Google login, get token from account (not user)
-      if (account?.provider === "google") {
-        token.id = account.id;
-        token.accessToken = account.accessToken;
-        token.profilePicture = account.profilePicture || null;
+      // On initial sign-in (credentials only - when no account provider)
+      if (user && !account?.provider) {
+        return {
+          ...token,
+          id: user.id,
+          email: user.email || token.email,
+          accessToken: user.accessToken,
+        } as JWT;
       }
 
       return token;
     },
 
-    async session({ session, token }) {
-      if (session.user && token) {
-        session.userId = token.id as string;
-        session.accessToken = token.accessToken as string;
-      }
+    async session({ session, token }: { session: Session; token: JWT }) {
+      session.userId = token.id as string;
+      session.accessToken = token.accessToken as string;
       return session;
     },
   },
 };
 
+// @ts-expect-error - NextAuth types are inconsistent across versions
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
