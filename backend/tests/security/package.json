@@ -1,0 +1,33 @@
+{
+  "name": "hopin-security-tests",
+  "version": "1.0.0",
+  "description": "Comprehensive security test suite for HopIn backend",
+  "type": "module",
+  "scripts": {
+    "test:security": "node run-security-tests.js",
+    "test:auth": "node security-tests.js",
+    "test:subscription": "node subscription-security-tests.js",
+    "test:ratelimit": "node rate-limit-tests.js",
+    "test:all": "npm run test:security",
+    "test:dev": "TEST_BASE_URL=http://localhost:8080 node run-security-tests.js",
+    "test:prod": "TEST_BASE_URL=https://your-production-url.com node run-security-tests.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "keywords": [
+    "security",
+    "testing",
+    "authentication",
+    "authorization",
+    "subscription",
+    "payment",
+    "rate-limiting",
+    "stripe"
+  ],
+  "author": "HopIn Development Team",
+  "license": "MIT"
+}

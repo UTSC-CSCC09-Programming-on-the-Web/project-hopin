@@ -56,5 +56,3 @@ Thumbs.db
 !/uploads/avatars/.gitkeep
 
 /generated/prisma
-
-tests/

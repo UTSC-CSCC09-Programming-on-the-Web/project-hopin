@@ -1,0 +1,57 @@
+{
+  "overall": {
+    "totalTests": 22,
+    "passed": 10,
+    "failed": 12,
+    "critical": 3,
+    "successRate": 45.45454545454545
+  },
+  "suites": {
+    "general": {
+      "passed": 0,
+      "failed": 0,
+      "critical": 0,
+      "successRate": 0
+    },
+    "subscription": {
+      "passed": 1,
+      "failed": 5,
+      "critical": 0,
+      "successRate": 16.7
+    },
+    "rateLimit": {
+      "passed": 9,
+      "failed": 7,
+      "critical": 3,
+      "successRate": 56.3
+    }
+  },
+  "startTime": "2025-07-28T23:54:45.654Z",
+  "endTime": null,
+  "recommendations": [
+    "Strengthen input validation and security headers",
+    "Review and enhance JWT token security",
+    "Strengthen subscription status validation",
+    "Ensure proper handling of cancelled/expired subscriptions",
+    "Test payment flow with real Stripe sandbox webhooks",
+    "Implement or strengthen rate limiting on all endpoints",
+    "Review rate limiting configuration",
+    "Implement progressive penalties for repeat offenders",
+    "Add DDoS protection measures",
+    "Address all critical issues before production deployment",
+    "Consider additional security auditing",
+    "Implement security monitoring and alerting",
+    "Test complete payment flow with Stripe sandbox",
+    "Verify subscription enforcement in frontend middleware",
+    "Test subscription cancellation scenarios",
+    "Ensure payment failure handling works correctly"
+  ],
+  "criticalIssues": [
+    "Critical rate limiting vulnerabilities - system vulnerable to abuse"
+  ],
+  "metadata": {
+    "generatedAt": "2025-07-28T23:55:01.418Z",
+    "testTarget": "http://localhost:8080",
+    "testDuration": null
+  }
+}
