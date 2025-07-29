@@ -1,9 +1,13 @@
 import { Router } from "express";
 import { authenticateToken } from "../middleware/auth.js";
+import { requireSubscription } from "../middleware/subscription-check.js";
 import { createLock } from "../middleware/lock.js";
 import { handleMiddlewareErrors } from "../middleware/error-handler.js";
 import { createRateLimiter } from "../middleware/rate-limit.js";
-import { checkContentType, validateRequestPayload } from "../middleware/validate-request-payload.js";
+import {
+  checkContentType,
+  validateRequestSchema,
+} from "../middleware/validate-request-schema.js";
 import {
   checkoutSubscription,
   createPortalSession,
@@ -12,8 +16,6 @@ import {
 
 export const subscriptionRouter = Router();
 
-subscriptionRouter.use(helmet());
-
 // Create checkout session for subscription
 subscriptionRouter.post(
   "/checkout-subscription",
@@ -21,7 +23,7 @@ subscriptionRouter.post(
   createRateLimiter("checkoutRL"),
   createLock("checkoutLock"),
   checkContentType("application/json"),
-  validateRequestPayload({
+  validateRequestSchema({
     bodySchema: {
       plan: { required: true, type: "string" },
     },
@@ -34,6 +36,7 @@ subscriptionRouter.post(
 subscriptionRouter.post(
   "/create-portal-session",
   authenticateToken,
+  requireSubscription,
   createRateLimiter("customerPortalRL"),
   createLock("customerPortalLock", 3),
   handleMiddlewareErrors,
@@ -44,6 +47,7 @@ subscriptionRouter.post(
 subscriptionRouter.get(
   "/:userId",
   authenticateToken,
+  requireSubscription,
   createRateLimiter("subscriptionDetailRL"),
   handleMiddlewareErrors,
   getSubscriptionDetail,

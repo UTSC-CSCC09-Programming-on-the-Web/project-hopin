@@ -1,12 +1,16 @@
 import { Router } from "express";
 import { authenticateToken } from "../middleware/auth.js";
+import { requireSubscription } from "../middleware/subscription-check.js";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
 import express from "express";
 import { createRateLimiter } from "../middleware/rate-limit.js";
 import { createLock } from "../middleware/lock.js";
-import { checkContentType, validateRequestPayload } from "../middleware/validate-request-payload.js";
+import {
+  checkContentType,
+  validateRequestSchema,
+} from "../middleware/validate-request-schema.js";
 import { handleMiddlewareErrors } from "../middleware/error-handler.js";
 import {
   deleteUser,
@@ -22,7 +26,7 @@ import {
 export const userRouter = Router();
 
 // Make sure the uploads directory exists
-const avatarDir = "api/users/avatars";
+const avatarDir = path.join(process.cwd(), "uploads/avatars");
 if (!fs.existsSync(avatarDir)) {
   fs.mkdirSync(avatarDir, { recursive: true });
 }
@@ -54,13 +58,20 @@ const upload = multer({
 });
 
 // Serve avatar files from the uploads directory
-userRouter.use("/avatars", express.static(avatarDir));
+userRouter.use("/uploads/avatars", express.static(avatarDir));
 
 // Get all users
 userRouter.get(
   "/",
-  createRateLimiter("getAllUsersRL"),
-  validateRequestPayload({
+  authenticateToken, // Add authentication requirement
+  requireSubscription, // Require active subscription
+  createRateLimiter("getAllUsersRL", {
+    maxAttemptsIP: 50,        // 50 requests per 10 minutes from same IP
+    durationIP: 60 * 10,      
+    maxAttemptsUserIP: 20,    // 20 requests per 5 minutes per user
+    durationUserIP: 60 * 5
+  }),
+  validateRequestSchema({
     querySchema: {
       take: { required: false, type: "number", coerce: true },
       cursor: { required: false, type: "string" },
@@ -75,8 +86,14 @@ userRouter.get(
 userRouter.get(
   "/by-email",
   authenticateToken,
-  createRateLimiter("getUserByEmailRL"),
-  validateRequestPayload({
+  requireSubscription, // Require active subscription
+  createRateLimiter("getUserByEmailRL", {
+    maxAttemptsIP: 30,        // 30 requests per 10 minutes from same IP
+    durationIP: 60 * 10,      
+    maxAttemptsUserIP: 10,    // 10 requests per 5 minutes per user
+    durationUserIP: 60 * 5
+  }),
+  validateRequestSchema({
     querySchema: {
       email: { required: true, type: "string" },
     },
@@ -88,10 +105,17 @@ userRouter.get(
 // Get user by ID
 userRouter.get(
   "/:id",
-  createRateLimiter("getUserByIdRL"),
-  validateRequestPayload({
+  authenticateToken, // Add authentication requirement
+  requireSubscription, // Require active subscription
+  createRateLimiter("getUserByIdRL", {
+    maxAttemptsIP: 100,       // 100 requests per 10 minutes from same IP
+    durationIP: 60 * 10,      
+    maxAttemptsUserIP: 30,    // 30 requests per 5 minutes per user
+    durationUserIP: 60 * 5
+  }),
+  validateRequestSchema({
     paramsSchema: {
-      id: { required: true, type: "string" }, 
+      id: { required: true, type: "string" },
     },
   }),
   handleMiddlewareErrors,
@@ -105,10 +129,11 @@ userRouter.patch(
   upload.single("avatar"),
   createLock("updateProfileLock"),
   checkContentType("multipart/form-data"),
-  validateRequestPayload({
+  validateRequestSchema({
     bodySchema: {
       name: { required: false, type: "string" },
-      password: { required: false, type: "string" },
+      avatar: { required: false, type: "string" }, 
+      // password: { required: false, type: "string" }, // Since we are not allowing in the frontend
     },
     paramsSchema: { id: { required: true, type: "string" } },
   }),
@@ -119,8 +144,12 @@ userRouter.patch(
 userRouter.get(
   "/:id/subscription-status",
   authenticateToken,
-  createRateLimiter("getSubscriptionStatusRL", 100, 60, 50),
-  validateRequestPayload({
+  createRateLimiter("getSubscriptionStatusRL", {
+    maxAttemptsIP: 100,
+    durationIP: 60,
+    maxAttemptsUserIP: 50,
+  }),
+  validateRequestSchema({
     paramsSchema: { id: { required: true, type: "string" } },
   }),
   handleMiddlewareErrors,
@@ -130,9 +159,10 @@ userRouter.get(
 userRouter.patch(
   "/:id/position",
   authenticateToken,
+  requireSubscription,
   createLock("updatePositionLock"),
   checkContentType("application/json"),
-  validateRequestPayload({
+  validateRequestSchema({
     bodySchema: {
       longitude: { required: true, type: "number", coerce: true },
       latitude: { required: true, type: "number", coerce: true },
@@ -147,9 +177,10 @@ userRouter.patch(
 userRouter.patch(
   "/:id/isReady",
   authenticateToken,
+  requireSubscription,
   createLock("updateReadyStatusRL"),
   checkContentType("application/json"),
-  validateRequestPayload({
+  validateRequestSchema({
     bodySchema: { isReady: { required: true, type: "boolean", coerce: true } },
     paramsSchema: { id: { required: true, type: "string" } },
   }),
@@ -162,7 +193,7 @@ userRouter.delete(
   authenticateToken,
   createRateLimiter("deleteUserRL"),
   createLock("deleteUserLock"),
-  validateRequestPayload({
+  validateRequestSchema({
     paramsSchema: { id: { required: true, type: "string" } },
   }),
   handleMiddlewareErrors,

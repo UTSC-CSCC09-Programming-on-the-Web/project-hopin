@@ -1,6 +1,10 @@
 import { prisma } from "../lib/prisma.js";
 import { stripe } from "../lib/stripe.js";
-import { checkRateLimit, consumeFailedAttempts, resetFailAttempts } from "../middleware/rate-limit.js";
+import {
+  checkRateLimit,
+  consumeFailedAttempts,
+  resetFailAttempts,
+} from "../middleware/rate-limit.js";
 import { releaseLock } from "../middleware/lock.js";
 
 // Constants for subscription status and intervals
@@ -28,7 +32,7 @@ export async function checkoutSubscription(req, res, next) {
       where: { id: userId },
       include: { subscription: true },
     });
-    
+
     if (!user || !user.email) {
       if (await checkRateLimit(req, res)) return;
       return res.status(404).json({ error: "User not found or no email" });
@@ -47,7 +51,7 @@ export async function checkoutSubscription(req, res, next) {
     const existingPlan = await prisma.plan.findUnique({
       where: { name: plan },
     });
-    
+
     if (!existingPlan) {
       if (await checkRateLimit(req, res)) return;
       return res.status(400).json({ error: "Invalid plan" });
@@ -61,7 +65,10 @@ export async function checkoutSubscription(req, res, next) {
 
     const session = await stripe.checkout.sessions.create(
       {
-        metadata: { userId },
+        metadata: {
+          action: "subscription",
+          userId,
+        },
         customer_email: user.email,
         mode: "subscription",
         line_items: [
@@ -75,7 +82,7 @@ export async function checkoutSubscription(req, res, next) {
         cancel_url: `${process.env.CLIENT_URI}/account/subscribe`,
       },
       {
-        idempotencyKey: `checkout_${userId}_${Date.now()}`, // TODO: change Date.now to process.env.STRIPE_IDEMPOTENCY_KEY
+        idempotencyKey: `checkout_${userId}_${Date.now()}`,
       },
     );
 
@@ -190,7 +197,7 @@ export async function getSubscriptionDetail(req, res, next) {
       subscription.subscriptionId,
     );
 
-    if (subscriptionData.customer !== user.subscription.customerId) {
+    if (subscriptionData.metadata?.userId !== user.id) {
       if (await checkRateLimit(req, res)) return;
       return res
         .status(403)

@@ -26,12 +26,11 @@ export async function getAllUsers(req, res, next) {
     };
 
     if (cursor) {
-      
       // validate cursor exists
       const cursorExists = await prisma.user.findUnique({
         where: { id: cursor },
         select: { id: true },
-      })
+      });
 
       if (!cursorExists) {
         if (await checkRateLimit(req, res)) return;
@@ -53,7 +52,7 @@ export async function getAllUsers(req, res, next) {
     }
 
     const users = await prisma.user.findMany(query);
-    
+
     // Calculate next cursor
     let nextCursor = null;
     if (users.length === parsedTake) {
@@ -171,16 +170,18 @@ export async function updateProfile(req, res, next) {
           .json({ error: "You can only update your own profile" });
       }
 
-      const { name, password } = req.body;
+      const { name } = req.body;
       const updateData = {};
       if (name) updateData.name = name;
-      if (password) {
-        const salt = bcrypt.genSaltSync(10);
-        updateData.password = bcrypt.hashSync(password, salt);
-      }
+      // Commented out since we don't have password changing feature in the frontend
+      // if (password) {
+      //   const salt = bcrypt.genSaltSync(10);
+      //   updateData.password = bcrypt.hashSync(password, salt);
+      // }
       let avatar = null;
       if (req.file) {
-        avatar = `http://localhost:8080/${req.file.path}`;
+        // Construct the avatar URL using the filename, not the full path
+        avatar = `http://localhost:8080/uploads/avatars/${req.file.filename}`;
         updateData.avatar = avatar;
       }
 
