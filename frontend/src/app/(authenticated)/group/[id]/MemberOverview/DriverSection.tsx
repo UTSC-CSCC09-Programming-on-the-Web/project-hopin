@@ -67,7 +67,7 @@ const DriverInfo = ({
 };
 
 const NoDriver = () => {
-  const becomeDriver = useGroupStore((s) => s.becomeDriver);
+  const { becomeDriver } = useGroupStore();
 
   return (
     <>

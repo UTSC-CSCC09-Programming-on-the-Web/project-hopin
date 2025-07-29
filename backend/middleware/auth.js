@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-// Simple in-memory token blacklist (in production, use Redis or database)
+// Simple in-memory token blacklist
 const blacklistedTokens = new Set();
 
 // Export function to add tokens to blacklist (used by auth-router)

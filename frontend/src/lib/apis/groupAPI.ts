@@ -2,6 +2,7 @@ import { handleApiError } from "@/utils/apiUtils";
 import { Group } from "@/types/user";
 import { getAuthenticatedApi } from "./api";
 import { AxiosError } from "axios";
+import { MapBoxRoute } from "@/types/route";
 
 export const groupApi = {
   getUserGroup: async () => {
@@ -83,6 +84,17 @@ export const groupApi = {
       return response.data;
     } catch (error) {
       console.error("Error unbecoming driver:", error);
+      handleApiError(error as AxiosError);
+    }
+  },
+  updateGroupRoute: async (groupId: string, route: MapBoxRoute | null) => {
+    try {
+      const response = await getAuthenticatedApi().then((api) =>
+        api.put<Group>(`/groups/${groupId}/route`, { route })
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating group route:", error);
       handleApiError(error as AxiosError);
     }
   },

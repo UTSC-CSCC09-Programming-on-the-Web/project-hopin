@@ -16,11 +16,13 @@ model User {
   avatar       String?
 
   location     Json?
-  destination  Json?
+  destinationId String? @unique
+  destination  Place? @relation(fields: [destinationId], references: [id])
 
-  isReady      Boolean?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isReady      Boolean? @default(false)
+  // Unique color for each user
+  // This is used to differentiate users visually in the UI when in a group
+  color      String
 
   // Many-to-one: User belongs to a group
   groupId      String?
@@ -31,6 +33,17 @@ model User {
 
   // One-to-one: User is a driver of a group
   drivenGroup  Group?   @relation("GroupDriver")
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Place {
+  id           String   @id @default(uuid())
+  name         String
+  address      String
+  location     Json
+  destinationOf User?
 }
 
 model Group {
@@ -45,6 +58,8 @@ model Group {
   // One-to-one: Group has one driver
   driverId     String?  @unique
   driver       User?    @relation("GroupDriver", fields: [driverId], references: [id])
+
+  route      Json?
 
   // One-to-many: Group has many members
   members      User[]   @relation("GroupMembers")

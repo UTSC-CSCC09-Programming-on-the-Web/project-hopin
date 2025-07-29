@@ -7,11 +7,12 @@ import fs from "fs";
 import path from "path";
 import express from "express";
 import { io } from "../lib/socket.js";
+import { validateCoordinates } from "../utils/validateCoords.js";
 
 export const userRouter = Router();
 
 // Helper function to broadcast user updates to group members
-const broadcastUserUpdate = async (userId, updateType = "update") => {
+const broadcastUserUpdate = async (userId, updateType) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -20,7 +21,7 @@ const broadcastUserUpdate = async (userId, updateType = "update") => {
 
     if (user && user.groupId) {
       const { groupId, ...safeUser } = user;
-      io.to(groupId).emit("user_status_update", {
+      io.to(groupId).emit("member_updated", {
         user: safeUser,
         updateType,
         timestamp: new Date().toISOString(),
@@ -54,12 +55,6 @@ const findAndAuthorizeUser = async (
   }
 
   return user;
-};
-
-// Helper function to return safe user data
-const getSafeUserData = (user) => {
-  const { password, ...safeUser } = user;
-  return safeUser;
 };
 
 // Make sure the uploads directory exists
@@ -237,16 +232,16 @@ userRouter.patch(
         updatedUser = await prisma.user.update({
           where: { id: user.id },
           data: updateData,
+          select: userSafeSelect,
         });
 
         // Broadcast update to group members
-        await broadcastUserUpdate(user.id, "profileUpdate");
+        await broadcastUserUpdate(user.id, "profile");
       } else {
         updatedUser = user;
       }
 
-      const safeUser = getSafeUserData(updatedUser);
-      return res.json(safeUser);
+      return res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);
 
@@ -265,64 +260,36 @@ userRouter.patch(
   }
 );
 
-// Update user location or destination
-userRouter.patch("/:id/position", authenticateToken, async (req, res) => {
+// Update user location
+userRouter.patch("/:id/location", authenticateToken, async (req, res) => {
   try {
     const userId = req.params.id;
-    const field = req.query.field;
-
-    // Validate field parameter
-    if (field !== "location" && field !== "destination") {
-      return res.status(400).json({
-        error: "Invalid field parameter. Must be 'location' or 'destination'",
-      });
-    }
 
     // Find and authorize user (allow self-updates only for security)
-    const user = await findAndAuthorizeUser(userId, req.user.id, true);
+    await findAndAuthorizeUser(userId, req.user.id, true);
 
-    const { latitude, longitude } = req.body;
-
-    // Validate coordinates
-    if (latitude === undefined || longitude === undefined) {
+    const coordsValid = validateCoordinates(req.body);
+    if (!coordsValid.valid) {
       return res.status(400).json({
-        error: "Both latitude and longitude are required",
-      });
-    }
-
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-
-    if (
-      isNaN(lat) ||
-      isNaN(lng) ||
-      lat < -90 ||
-      lat > 90 ||
-      lng < -180 ||
-      lng > 180
-    ) {
-      return res.status(400).json({
-        error:
-          "Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180",
+        error: coordsValid.error,
       });
     }
 
     // Update user position
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { id: userId },
       data: {
-        [field]: {
-          latitude: lat,
-          longitude: lng,
+        location: {
+          latitude: req.body.latitude,
+          longitude: req.body.longitude,
         },
       },
     });
 
     // Broadcast position update to group members
-    await broadcastUserUpdate(userId, `${field}Update`);
+    await broadcastUserUpdate(userId, "location");
 
-    const safeUser = getSafeUserData(updatedUser);
-    return res.status(200).json(safeUser);
+    return res.status(204).end();
   } catch (error) {
     console.error(`Error updating ${req.query.field}:`, error);
 
@@ -342,35 +309,53 @@ userRouter.patch("/:id/position", authenticateToken, async (req, res) => {
   }
 });
 
-// Update user ready status
-userRouter.patch("/:id/ready", authenticateToken, async (req, res) => {
+// Update user destination
+userRouter.patch("/:id/destination", authenticateToken, async (req, res) => {
   try {
     const userId = req.params.id;
-    const { isReady } = req.body;
-
     // Find and authorize user (allow self-updates only for security)
-    const user = await findAndAuthorizeUser(userId, req.user.id, true);
+    await findAndAuthorizeUser(userId, req.user.id, true);
+    const { name, address, location } = req.body;
 
-    // Validate isReady parameter
-    if (typeof isReady !== "boolean") {
+    // Validate destination data
+    if (!name || !address || !location) {
       return res.status(400).json({
-        error: "isReady must be a boolean value (true or false)",
+        error: "Name, address, and location are required",
+      });
+    }
+    const coordsValid = validateCoordinates(location);
+    if (!coordsValid.valid) {
+      return res.status(400).json({
+        error: coordsValid.error,
       });
     }
 
-    // Update user ready status
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { isReady },
+    // Update user destination
+    await prisma.$transaction(async (tx) => {
+      const place = await tx.place.create({
+        data: {
+          name,
+          address,
+          location,
+        },
+      });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          destination: {
+            connect: { id: place.id },
+          },
+        },
+      });
     });
 
-    // Broadcast ready status update to group members
-    await broadcastUserUpdate(userId, "readyStatusUpdate");
+    // Broadcast destination update to group members
+    await broadcastUserUpdate(userId, "destination");
 
-    const safeUser = getSafeUserData(updatedUser);
-    return res.status(200).json(safeUser);
+    return res.status(204).end();
   } catch (error) {
-    console.error("Error updating ready status:", error);
+    console.error("Error updating user destination:", error);
 
     if (error.message === "Invalid user ID format") {
       return res.status(400).json({ error: error.message });
@@ -382,139 +367,7 @@ userRouter.patch("/:id/ready", authenticateToken, async (req, res) => {
       return res.status(403).json({ error: error.message });
     }
 
-    res.status(500).json({ error: "Failed to update ready status" });
-  }
-});
-
-// Comprehensive user update endpoint - handles multiple fields in one request
-userRouter.patch("/:id/status", authenticateToken, async (req, res) => {
-  try {
-    const userId = req.params.id;
-
-    // Find and authorize user
-    const user = await findAndAuthorizeUser(userId, req.user.id, true);
-
-    const { location, destination, isReady } = req.body;
-    const updateData = {};
-    let updateTypes = [];
-
-    // Validate and prepare location update
-    if (location !== undefined) {
-      if (typeof location !== "object" || location === null) {
-        return res.status(400).json({ error: "Location must be an object" });
-      }
-
-      const { latitude, longitude } = location;
-      if (latitude === undefined || longitude === undefined) {
-        return res.status(400).json({
-          error: "Location must include both latitude and longitude",
-        });
-      }
-
-      const lat = parseFloat(latitude);
-      const lng = parseFloat(longitude);
-
-      if (
-        isNaN(lat) ||
-        isNaN(lng) ||
-        lat < -90 ||
-        lat > 90 ||
-        lng < -180 ||
-        lng > 180
-      ) {
-        return res.status(400).json({
-          error: "Invalid location coordinates",
-        });
-      }
-
-      updateData.location = { latitude: lat, longitude: lng };
-      updateTypes.push("locationUpdate");
-    }
-
-    // Validate and prepare destination update
-    if (destination !== undefined) {
-      if (destination === null) {
-        updateData.destination = null;
-        updateTypes.push("destinationUpdate");
-      } else if (typeof destination === "object") {
-        const { latitude, longitude } = destination;
-        if (latitude === undefined || longitude === undefined) {
-          return res.status(400).json({
-            error: "Destination must include both latitude and longitude",
-          });
-        }
-
-        const lat = parseFloat(latitude);
-        const lng = parseFloat(longitude);
-
-        if (
-          isNaN(lat) ||
-          isNaN(lng) ||
-          lat < -90 ||
-          lat > 90 ||
-          lng < -180 ||
-          lng > 180
-        ) {
-          return res.status(400).json({
-            error: "Invalid destination coordinates",
-          });
-        }
-
-        updateData.destination = { latitude: lat, longitude: lng };
-        updateTypes.push("destinationUpdate");
-      } else {
-        return res
-          .status(400)
-          .json({ error: "Destination must be an object or null" });
-      }
-    }
-
-    // Validate and prepare ready status update
-    if (isReady !== undefined) {
-      if (typeof isReady !== "boolean") {
-        return res.status(400).json({
-          error: "isReady must be a boolean value",
-        });
-      }
-      updateData.isReady = isReady;
-      updateTypes.push("readyStatusUpdate");
-    }
-
-    // Check if there are any updates to make
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({
-        error: "No valid update fields provided",
-      });
-    }
-
-    // Update user
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-    });
-
-    // Broadcast comprehensive status update to group members
-    await broadcastUserUpdate(userId, "statusUpdate");
-
-    const safeUser = getSafeUserData(updatedUser);
-    return res.status(200).json({
-      ...safeUser,
-      updatedFields: updateTypes,
-    });
-  } catch (error) {
-    console.error("Error updating user status:", error);
-
-    if (error.message === "Invalid user ID format") {
-      return res.status(400).json({ error: error.message });
-    }
-    if (error.message === "User not found") {
-      return res.status(404).json({ error: error.message });
-    }
-    if (error.message === "You can only update your own profile") {
-      return res.status(403).json({ error: error.message });
-    }
-
-    res.status(500).json({ error: "Failed to update user status" });
+    return res.status(500).json({ error: "Failed to update user destination" });
   }
 });
 

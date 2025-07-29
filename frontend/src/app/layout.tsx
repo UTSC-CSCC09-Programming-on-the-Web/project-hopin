@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-import { AppWrapper } from "@/contexts/AppWrapper";
+import { AppWrapper } from "@/app/(authenticated)/AppWrapper";
 
 export const metadata: Metadata = {
   title: "HopIn",

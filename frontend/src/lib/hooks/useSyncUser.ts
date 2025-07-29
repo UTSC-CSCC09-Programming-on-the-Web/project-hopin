@@ -11,6 +11,11 @@ export const useSyncUser = () => {
   const { user, setLoading, refreshUser, updateLocation } = useUserStore();
   const location = useLocation();
 
+  // Fetch group data if user is authenticated
+  useEffect(() => {
+    if (user?.id) getUserGroup();
+  }, [user?.id]);
+
   // When session changes, revalidate user data by fetching from the server
   useEffect(() => {
     if (status === "loading") return; // Wait for session to load
@@ -35,10 +40,4 @@ export const useSyncUser = () => {
 
     syncLocation();
   }, [user?.id, location, updateLocation]);
-
-  // Fetch group data if user is authenticated
-  useEffect(() => {
-    if (!user?.id) return;
-    getUserGroup();
-  }, [user?.id]);
 };
