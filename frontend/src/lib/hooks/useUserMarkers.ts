@@ -164,7 +164,10 @@ const createUserMarker = (user: User, isCurrent: boolean): mapboxgl.Marker => {
     </div>
     <span class="label-sm bg-white text-gray-900 px-1 shadow-xs rounded">${labelText}</span>`;
 
-  return new mapboxgl.Marker(el);
+  return new mapboxgl.Marker(el, {
+    anchor: "center",
+    offset: [0, 12], // Offset downward to center the avatar circle on the location
+  });
 };
 
 // Create custom DOM element marker for driver
@@ -179,7 +182,7 @@ const createDriverMarker = (
 
   const carImg = document.createElement("img");
   carImg.src = "/car.png";
-  carImg.style.width = "40px";
+  carImg.style.width = "50px";
   carImg.style.transform = `rotate(${heading || 0}deg)`;
   carImg.style.transformOrigin = "center";
   carImg.alt = `${driver.name || "Driver"}'s car marker`;
@@ -196,6 +199,6 @@ const createDriverMarker = (
 
   return new mapboxgl.Marker(el, {
     anchor: "center",
-    offset: [0, -20],
+    offset: [0, 10], // Offset downward to center the car image on the location
   });
 };
