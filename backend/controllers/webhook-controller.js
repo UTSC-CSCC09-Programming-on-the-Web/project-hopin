@@ -11,7 +11,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
 // Test handlers
 
 // Verify the signature sent by stripe
-function verifyWebhookSignature(req) {
+function verifyWebhookSignature(req, res) {
   const signature = req.headers["stripe-signature"];
   const rawBody = req.body;
   try {
