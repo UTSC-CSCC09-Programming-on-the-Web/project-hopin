@@ -7,6 +7,7 @@ on:
       - main
       - feat/deploy
       - dev
+      - integration/group-security-backup
     # Only run this workflow if the commit has modified files from frontend
     paths:
       - frontend/**
@@ -48,7 +49,7 @@ jobs:
           # Strip "v" prefix from tag name
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
           # Use Docker `latest` tag convention
-          [[ "$VERSION" == "main" || "$VERSION" == "deploy" || "$VERSION" == "dev" ]] && VERSION=latest
+          [[ "$VERSION" == "main" || "$VERSION" == "deploy" || "$VERSION" == "dev" || "$VERSION" == "group-security-backup"  ]] && VERSION=latest
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
