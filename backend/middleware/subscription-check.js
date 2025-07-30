@@ -3,6 +3,7 @@ import {
   consumeFailedAttempts,
   resetFailAttempts,
 } from "./rate-limit.js";
+import { prisma } from "../lib/prisma.js";
 
 export async function requireSubscription(req, res, next) {
   try {
