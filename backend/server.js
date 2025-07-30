@@ -36,7 +36,7 @@ app.use(
         frameSrc: ["'self'", "https://js.stripe.com"],
         objectSrc: ["'none'"],
         ...(process.env.NODE_ENV === "production" && {
-          upgradeInsecureRequests: true,
+          upgradeInsecureRequests: [],
         }),
       },
     },
