@@ -7,6 +7,10 @@ By. Jane Low (jane.low@mail.utoronto.ca; lowjane), Mark Onopchenko (mark.onopche
 Commuting across Toronto and the Greater Toronto Area (GTA) can be time-consuming, costly, and inefficient, for both individuals relying on personal vehicles and TTC. While carpooling is a mutually-beneficial and practical solution, it often comes with logistical challenges such as coordinating pickup times, notifying ETAs, and fairly dividing transportation costs.
 **HopIn** is a web-based application designed to streamline and enhance the carpooling experience. It enables real-time tracking of both vehicles and passengers, ensuring seamless coordination and transparency. In addition, it automates the calculation and division of carpooling costs (e.g., fuel, tolls), offering a fair and convenient way to manage shared transportation.
 
+## Deployed URL
+
+https://hop-in.dev
+
 ## Tech Stack
 
 - Frontend Framework: Next.js
