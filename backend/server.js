@@ -28,7 +28,7 @@ app.use("/api/groups", groupRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
 
-// Websocket setup
+// websocket setup
 const server = http.createServer(app);
 setupSocketServer(server);
 

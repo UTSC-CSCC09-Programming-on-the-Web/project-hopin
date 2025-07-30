@@ -5,7 +5,7 @@ import { useMapInit } from "@/lib/hooks/useMapInit";
 import { useUserMarkers } from "@/lib/hooks/useUserMarkers";
 import { clearRoute, drawRoute, useMapStore } from "@/stores/MapStore";
 import { useGroupStore } from "@/stores/GroupStore";
-
+//
 type MapProps = {
   className?: string;
 };
