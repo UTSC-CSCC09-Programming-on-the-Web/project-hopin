@@ -21,7 +21,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!loading && !user) {
       toast.error("You must be logged in to view this page.");
-      router.push("/");
+      // router.push("/");
     }
   }, [loading, user, router]);
 

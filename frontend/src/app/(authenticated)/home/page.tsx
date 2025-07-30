@@ -6,11 +6,36 @@ import { useGroupStore } from "@/stores/GroupStore";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Header from "@/components/Header";
+import { useUserStore } from "@/stores/UserStore";
+import { useEffect } from "react";
+import { userApi } from "@/lib/apis/userAPI";
+import { subscriptionApi } from "@/lib/apis/subscriptionAPI";
 
 export default function HomePage() {
   const { group, createGroup } = useGroupStore();
   const router = useRouter();
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const { user } = useUserStore();
+
+  // Redirect users without subscriptions
+  useEffect(() => {
+    const checkSubscription = async () => {
+      userApi.getSubscriptionStatus().then((stat) => {
+        if (stat === "active") return;
+        // TODO: Rethink this routing
+        else if (stat === "paused") {
+          if (user?.id) {
+            subscriptionApi.createPortalSession();
+          } else {
+            console.error("Missing user id for portal session.");
+            router.push("/account/subscribe");
+          }
+        } else router.push("/account/subscribe");
+      });
+    };
+    checkSubscription();
+  }, [router, user?.id]);
 
   const handleCreateGroup = async () => {
     const id = await createGroup();

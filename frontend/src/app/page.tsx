@@ -5,12 +5,26 @@ import HopinLogo from "@/components/hopin-logo";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
+import { sanitizeEmail } from "@/utils/sanitize";
+
 export default function SignIn() {
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSignIn = async (formData: FormData) => {
-    const email = formData.get("email") as string;
+  const handleCredentialSignIn = async (formData: FormData) => {
+    const rawEmail = formData.get("email") as string;
     const password = formData.get("password") as string;
+
+    const email = sanitizeEmail(rawEmail);
+    if (!email) {
+      setErrorMessage("Please enter a valid email address");
+      return;
+    }
+
+    if (!password) {
+      setErrorMessage("Please enter your password");
+      return;
+    }
+
     try {
       const res = await signIn("credentials", {
         email: email,
@@ -34,6 +48,14 @@ export default function SignIn() {
       }
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const res = await signIn("google", { callbackUrl: "/home" });
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to sign in with Google");
+    }
+  };
   //
   return (
     <main className="min-h-screen flex flex-col">
@@ -45,7 +67,7 @@ export default function SignIn() {
             onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
-              handleSignIn(formData);
+              handleCredentialSignIn(formData);
             }}
             className="flex flex-col gap-4"
           >
@@ -69,38 +91,37 @@ export default function SignIn() {
               <p className="text-red-500 text-sm text-center">{errorMessage}</p>
             )}
 
+              <button
+                className="border-1 border-gray-600 rounded-sm p-2 mt-8"
+                type="submit"
+              >
+                Sign In
+              </button>
+            </form>
             <button
-              className="border-1 border-gray-600 rounded-sm p-2 mt-8"
-              type="submit"
+              className="border-1 border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
+              onClick={handleGoogleSignIn}
             >
-              Sign In
+              <img className="w-1/9" src="google.png" alt="Google Logo" />
+              <span>Sign in with Google</span>
             </button>
-          </form>
-          <button
-            className="border-1 border-gray-600 rounded-sm p-2 mt-4 flex justify-center items-center gap-2"
-            onClick={() => signIn("google", { callbackUrl: "/home" })}
-          >
-            <img className="w-1/9" src="google.png" alt="Google Logo" />
-            <span>Sign in with Google</span>
-          </button>
-          <div className="flex justify-center items-center gap-4 mt-4">
-            <p>New member?</p>
-            <Link href="/signup" className="font-bold hover:underline">
-              Sign Up
-            </Link>
+            <div className="flex justify-center items-center gap-4 mt-4">
+              <p>New member?</p>
+              <Link href="/signup" className="font-bold hover:underline">
+                Sign Up
+              </Link>
+            </div>
+          </div>
+          <div className="flex items-center justify-center flex-col gap-12 w-full max-w-md">
+            <p className="text-2xl md:text-3xl font-bold">Welcome Back!</p>
+            <img
+              className="w-2/3"
+              src="destination.png"
+              alt="Destination Image"
+            />
+            <p>Sign in to access features.</p>
           </div>
         </div>
-
-        <div className="flex items-center justify-center flex-col gap-12 w-full max-w-md">
-          <p className="text-2xl md:text-3xl font-bold">Welcome Back!</p>
-          <img
-            className="w-2/3"
-            src="destination.png"
-            alt="Destination Image"
-          />
-          <p>Sign in to access features.</p>
-        </div>
-      </div>
-    </main>
+      </main>
   );
 }

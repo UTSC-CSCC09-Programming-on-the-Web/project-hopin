@@ -11,6 +11,12 @@ let nextCursor: string | null = null;
 export const userApi = {
   // Cursor-based pagination
   getAllUsers: async (take: number = 10, groupId?: string) => {
+    const session = await getSession();
+
+    if (!session?.accessToken || !session?.userId) {
+      throw new Error("Authentication required. Please sign in again.");
+    }
+
     try {
       interface UserQueryParams {
         take: number;
@@ -26,7 +32,10 @@ export const userApi = {
         params.groupId = groupId;
       }
 
-      const response = await getApi().get("/users", { params });
+      const authenticatedApi = getAuthenticatedApi();
+      const response = await authenticatedApi.then((api) =>
+        api.get("/users", { params }),
+      );
 
       nextCursor = response.data.nextCursor;
       const users = response.data.users || [];
@@ -50,8 +59,18 @@ export const userApi = {
   },
 
   getUserById: async (userId: string) => {
+    const session = await getSession();
+
+    if (!session?.accessToken || !session?.userId) {
+      throw new Error("Authentication required. Please sign in again.");
+    }
+
     try {
-      const response = await getApi().get(`/users/${userId}`);
+      const authenticatedApi = getAuthenticatedApi();
+      const response = await authenticatedApi.then((api) =>
+        api.get(`/users/${userId}`),
+      );
+      console.log("Get user by id response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Get user by id error:", error);
@@ -77,6 +96,7 @@ export const userApi = {
         },
       });
 
+      console.log("Update user response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Update user error:", error);
@@ -84,34 +104,70 @@ export const userApi = {
     }
   },
 
-  updateLocation: async (coordinates: Coordinates) => {
+  updateLocationOrDestination: async (
+    field: "location" | "destination",
+    coordinates: Coordinates,
+  ) => {
     try {
       const session = await getSession();
-      if (!session?.userId) {
+      if (!session?.accessToken || !session?.userId) {
         throw new Error("Authentication required. Please sign in again.");
       }
 
-      const response = await (
-        await getAuthenticatedApi()
-      ).patch(`/users/${session.userId}/location`, coordinates);
+      const authenticatedApi = getAuthenticatedApi();
+      const response = await authenticatedApi.then((api) =>
+        api.patch(
+          `/users/${session.userId}/position?field=${field}`,
+          coordinates,
+        ),
+      );
 
-      if (response.status === 204) return;
+      console.log(`Updated user ${field}:`, response.data[field]);
+      return response.data;
     } catch (error) {
       console.error(`Failed to update user location:`, error);
       handleApiError(error as AxiosError);
     }
   },
 
-  updateDestination: async (destination: Place) => {
+  updateReadyStatus: async (isReady: boolean) => {
+    try {
+      const session = await getSession();
+      if (!session?.accessToken || !session?.userId)
+        throw new Error("Authentication required. Please sign in again.");
+
+      const authenticatedApi = getAuthenticatedApi();
+      const response = await authenticatedApi.then((api) =>
+        api.patch(`/users/${session.userId}/ready`, {
+          isReady,
+        }),
+      );
+
+      console.log("Updated user ready status:", response.data.isReady);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update user ready status:", error);
+      handleApiError(error as AxiosError);
+    }
+  },
+
+  // Comprehensive status update - can update location, destination, and ready status in one request
+  updateUserStatus: async (statusData: {
+    location?: Coordinates;
+    destination?: Coordinates | null;
+    isReady?: boolean;
+  }) => {
     try {
       const session = await getSession();
       if (!session?.userId) {
         throw new Error("Authentication required. Please sign in again.");
       }
-      const response = await (
-        await getAuthenticatedApi()
-      ).patch(`/users/${session.userId}/destination`, destination);
-      if (response.status === 204) return;
+
+      const response = await getAuthenticatedApi().then((api) =>
+        api.patch(`/users/${session.userId}/status`, statusData),
+      );
+
+      return response.data;
     } catch (error) {
       console.error("Failed to update user destination:", error);
       handleApiError(error as AxiosError);
@@ -123,17 +179,31 @@ export const userApi = {
       const session = await getSession();
 
       if (session?.accessToken) {
-        await (await getAuthenticatedApi()).post("/auth/signout");
+        const authenticatedApi = getAuthenticatedApi();
+        await authenticatedApi.then((api) => api.post("/auth/signout"));
       }
     } catch (error) {
       console.warn(
         "Backend signout failed, but continuing with client cleanup:",
-        error
+        error,
       );
     }
 
-    // Use NextAuth signOut for proper session cleanup
-    await nextAuthSignOut({ callbackUrl: "/" });
+    // Client-side cleanup - Clear NextAuth related items only
+    // Note: NextAuth handles most of the session cleanup automatically
+    if (typeof document !== "undefined") {
+      // Clear NextAuth cookies by setting them to expire
+      document.cookie =
+        "next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie =
+        "next-auth.csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie =
+        "next-auth.callback-url=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    }
+
+    // NextAuth's signout method
+    await nextAuthSignOut({ callbackUrl: "/", redirect: false });
+
     return { message: "Signed out successfully" };
   },
 
@@ -145,9 +215,10 @@ export const userApi = {
     }
 
     try {
-      const response = await (
-        await getAuthenticatedApi()
-      ).delete(`/users/${session.userId}`);
+      const authenticatedApi = getAuthenticatedApi();
+      const response = await authenticatedApi.then((api) =>
+        api.delete(`/users/${session.userId}`),
+      );
 
       // The API returns 204 No Content for successful deletion
       if (response.status === 204) {
@@ -157,6 +228,32 @@ export const userApi = {
     } catch (error) {
       console.error("Delete user error:", error);
       handleApiError(error as AxiosError);
+    }
+  },
+
+  getSubscriptionStatus: async (userId?: string) => {
+    try {
+      const session = await getSession();
+      if (!session?.accessToken || !session?.userId) {
+        throw new Error("Authentication required. Please sign in again.");
+      }
+      const response = await getAuthenticatedApi().then((api) =>
+        api.get(`/users/${session.userId}/subscription-status`),
+      );
+      return response.data.subscriptionStatus ?? "unknown";
+    } catch (error) {
+      console.error("Subscription status check error:", error);
+      handleApiError(error as AxiosError);
+    }
+  },
+
+  isSubscribed: async (userId?: string) => {
+    try {
+      const subscriptionStatus = await userApi.getSubscriptionStatus(userId);
+      return subscriptionStatus === "active";
+    } catch (error) {
+      console.error("isSubscribed check error:", error);
+      return false;
     }
   },
 };

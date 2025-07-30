@@ -8,7 +8,7 @@ export const groupApi = {
   getUserGroup: async () => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
-        api.get<Group>(`/users/me/group`)
+        api.get<Group>(`/users/me/group`),
       );
       return response.data;
     } catch (error) {
@@ -23,7 +23,7 @@ export const groupApi = {
   createGroup: async () => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
-        api.post<Group>("/groups/")
+        api.post<Group>("/groups/"),
       );
       return response.data;
     } catch (error) {
@@ -35,7 +35,7 @@ export const groupApi = {
   joinGroup: async (groupId: string) => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
-        api.post<Group>(`/groups/${groupId}/join`)
+        api.post<Group>(`/groups/${groupId}/join`),
       );
       return response.data;
     } catch (error) {
@@ -46,7 +46,7 @@ export const groupApi = {
   leaveGroup: async (groupId: string) => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
-        api.post<Group>(`/groups/${groupId}/leave`)
+        api.post<Group>(`/groups/${groupId}/leave`),
       );
       return response.data;
     } catch (error) {
@@ -57,7 +57,7 @@ export const groupApi = {
   getGroup: async (groupId: string) => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
-        api.get<Group>(`/groups/${groupId}`)
+        api.get<Group>(`/groups/${groupId}`),
       );
       return response.data;
     } catch (error) {
@@ -68,7 +68,7 @@ export const groupApi = {
   becomeDriver: async (groupId: string) => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
-        api.post<Group>(`/groups/${groupId}/become-driver`)
+        api.post<Group>(`/groups/${groupId}/become-driver`),
       );
       return response.data;
     } catch (error) {
@@ -79,7 +79,7 @@ export const groupApi = {
   unbecomeDriver: async (groupId: string) => {
     try {
       const response = await getAuthenticatedApi().then((api) =>
-        api.post<Group>(`/groups/${groupId}/unbecome-driver`)
+        api.post<Group>(`/groups/${groupId}/unbecome-driver`),
       );
       return response.data;
     } catch (error) {

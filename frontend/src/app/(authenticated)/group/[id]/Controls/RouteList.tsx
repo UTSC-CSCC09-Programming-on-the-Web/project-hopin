@@ -27,6 +27,7 @@ import UserInfo, { LocationButton } from "../MemberOverview/UserInfo";
 import { RouteCheckpoint } from "@/types/route";
 import { Place } from "@/types/location";
 import Button from "@/components/buttons/Button";
+import { randomUUID } from "crypto";
 
 // Main component for the reorderable route list
 const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
@@ -50,6 +51,9 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
       if (user.destination) {
         const destinationItem: Place = {
           ...user.destination,
+          location: user.destination,
+          id: user.id,
+          name: user.name,
           color: user.color, // Use user's color for destination
         };
         routeItems.push(destinationItem);

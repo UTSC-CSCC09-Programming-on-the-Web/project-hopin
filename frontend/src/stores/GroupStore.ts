@@ -120,7 +120,7 @@ export const useGroupStore = create<GroupState>()((set, get) => ({
         ...group?.members,
         ...(group?.members
           .map((m) =>
-            m.destination ? { ...m.destination, color: m.color } : undefined
+            m.destination ? { ...m.destination, color: m.color, id: m.id, name: m.name } : undefined
           )
           .filter(Boolean) as Locatable[]),
       ];
@@ -185,7 +185,7 @@ export const updateGroupMember = (user: User) => {
 
     // Update member's data in the group
     const updatedMembers = state.group.members.map((m) =>
-      m.id === user.id ? { ...m, ...user } : m
+      m.id === user.id ? { ...m, ...user } : m,
     );
 
     return {

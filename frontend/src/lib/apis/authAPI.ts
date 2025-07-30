@@ -85,7 +85,7 @@ export const authApi = {
 
     if (!session?.accessToken) {
       throw new Error(
-        "Authentication token not available. Please sign in again."
+        "Authentication token not available. Please sign in again.",
       );
     }
 
@@ -113,7 +113,7 @@ export const authApi = {
     } catch (error) {
       console.warn(
         "Backend signout failed, but continuing with client cleanup:",
-        error
+        error,
       );
     }
 
@@ -144,7 +144,7 @@ export const authApi = {
    */
   handleGoogleAuth: async (
     email: string,
-    name: string
+    name: string,
   ): Promise<AuthResponse> => {
     try {
       const api = getApi();
@@ -183,4 +183,5 @@ export const authApi = {
       throw error;
     }
   },
+
 };

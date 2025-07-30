@@ -65,7 +65,10 @@ export const useUserStore = create<UserState>((set) => ({
 
   updateLocation: async (location) => {
     try {
-      await userApi.updateLocation(location);
+      const updatedUser = await userApi.updateLocationOrDestination(
+        "location",
+        location,
+      );
 
       const currentUser = useUserStore.getState().user;
       if (!currentUser) return;
