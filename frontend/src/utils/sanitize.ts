@@ -1,11 +1,11 @@
-import DOMPurify from "dompurify";
+import sanitizeHtml from "sanitize-html";
 
 export function sanitizeText(input: string) {
   if (!input || typeof input !== "string") return "";
-  return DOMPurify.sanitize(input, {
-    ALLOWED_ATTR: [],
-    ALLOWED_TAGS: [],
-    KEEP_CONTENT: true,
+  return sanitizeHtml(input, {
+    allowedTags: [],
+    allowedAttributes: {},
+    textFilter: (text) => text.trim(),
   });
 }
 
