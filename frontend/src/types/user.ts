@@ -6,7 +6,7 @@ export type User = Locatable & {
   email: string;
   avatar?: string;
   location?: Coordinates;
-  destination?: Coordinates; // Where the user is going (if known)
+  destination?: Place; // Where the user is going (if known)
   subscriptionStatus?: string;
   createdAt?: Date;
   updatedAt?: Date;

@@ -51,7 +51,10 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
       if (user.destination) {
         const destinationItem: Place = {
           ...user.destination,
-          location: user.destination,
+          location: user.destination.location || {
+            latitude: 0,
+            longitude: 0,
+          },
           id: user.id,
           name: user.name,
           color: user.color, // Use user's color for destination
