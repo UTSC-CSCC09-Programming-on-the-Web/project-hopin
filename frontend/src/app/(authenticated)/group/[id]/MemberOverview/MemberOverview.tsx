@@ -46,7 +46,7 @@ const MemberOverview = ({ showHeader = true }: MemberOverviewProps) => {
       {/* Footer (Room Code) */}
       <div className="w-full flex flex-col items-center p-4 bg-orange-400">
         <h5 className="font-semibold text-white">{id}</h5>
-        <div className="label text-orange-100">
+        <div className="label text-orange-100 text-center">
           Share this code with your group!
         </div>
       </div>

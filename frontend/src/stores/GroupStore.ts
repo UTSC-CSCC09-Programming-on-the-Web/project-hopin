@@ -25,40 +25,18 @@ interface GroupState {
   unbecomeDriver: () => Promise<void>;
 }
 
-const dummyMembers: User[] = [
-  {
-    id: "dummy",
-    name: "Dummy User",
-    avatar: "",
-    location: { latitude: 43.79038421339482, longitude: -79.19435176875646 },
-    color: "#f28cb1",
-    email: "dummy@dummymail.com",
-  },
-  {
-    id: "dummy2",
-    name: "Dummy User 2",
-    avatar: "",
-    location: { latitude: 43.79894108700009, longitude: -79.20164299123292 },
-    color: "#3887be",
-    email: "dummy2@dummymail.com",
-  },
-];
-
 export const useGroupStore = create<GroupState>()((set, get) => ({
   group: undefined,
   isRouteUpToDate: true,
   loadingGroup: true,
   driverHeading: null,
-  // FIXME: remove dummy member when done testing
-  setGroup: (group) =>
+  setGroup: (group) => {
     set({
-      group: group
-        ? {
-            ...group,
-            members: [...(group.members || []), ...dummyMembers],
-          }
-        : undefined,
-    }),
+      group,
+      isRouteUpToDate: true, // Reset route status when group is set
+      loadingGroup: false,
+    });
+  },
   setGroupRoute: (route: Route) => {
     set((state) => {
       if (!state.group) return state;
@@ -138,11 +116,9 @@ export const useGroupStore = create<GroupState>()((set, get) => ({
       clearRoute("user");
       setGroup(updated);
       toast.success("You are now the driver of the group!");
-      // FIXME: remove dummy members when done testing
-      const members = [...(group.members || []), ...dummyMembers];
       const allLocations = [
-        ...members,
-        ...(members
+        ...group?.members,
+        ...(group?.members
           .map((m) =>
             m.destination ? { ...m.destination, color: m.color, id: m.id, name: m.name } : undefined
           )
@@ -269,6 +245,14 @@ export const createGroupRoute = async (checkpoints: Locatable[]) => {
 
   if (!group) {
     toast.error("Group not found.");
+    return;
+  }
+
+  if (checkpoints.length < 2) {
+    toast.error("At least two checkpoints are required to create a route.");
+    clearRoute("group");
+    await groupApi.updateGroupRoute(group.id, null);
+    useGroupStore.setState({ isRouteUpToDate: true });
     return;
   }
 

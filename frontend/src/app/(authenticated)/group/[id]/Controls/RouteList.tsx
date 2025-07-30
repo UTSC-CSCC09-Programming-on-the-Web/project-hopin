@@ -34,9 +34,11 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
   const driver = useGroupStore((s) => s.group?.driver);
   const [items, setItems] = useState<RouteCheckpoint[]>([]);
   const [hasChanged, setHasChanged] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const isRouteUpToDate = useGroupStore((s) => s.isRouteUpToDate);
 
-  const canRegenerate = hasChanged || !isRouteUpToDate;
+  // Only show regenerate button after initialization and when there are actual changes
+  const canRegenerate = isInitialized && (hasChanged || !isRouteUpToDate);
 
   // Create route items from users and their destinations
   const createRouteItems = useCallback((users: User[]): RouteCheckpoint[] => {
@@ -64,34 +66,31 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
   // Synchronize items with initialUsers while preserving order
   const synchronizeItems = useCallback(
     (newUsers: User[], currentItems: RouteCheckpoint[]): RouteCheckpoint[] => {
-      const newItemsMap = new Map<string, RouteCheckpoint>();
       const newRouteItems = createRouteItems(newUsers);
 
-      // Create a map of new items by ID for quick lookup
+      // Create maps for quick lookup
+      const newItemsMap = new Map<string, RouteCheckpoint>();
       newRouteItems.forEach((item) => {
         newItemsMap.set(item.id, item);
       });
 
-      // Filter existing items to keep only those that still exist in newUsers
-      const preservedItems = currentItems.filter((item) => {
-        if (isUser(item)) {
-          // Keep user if they still exist in newUsers
-          return newUsers.some((user) => user.id === item.id);
-        } else {
-          // Keep destination if its associated user still exists and has a destination
-          return newUsers.some(
-            (user) => user.destination && user.destination === item.location
-          );
-        }
-      });
+      // Update existing items with new data and preserve order
+      const updatedItems = currentItems
+        .map((currentItem) => {
+          const newItem = newItemsMap.get(currentItem.id);
+          if (newItem) {
+            // Item exists in new data - update it with fresh data
+            newItemsMap.delete(currentItem.id); // Mark as processed
+            return newItem;
+          }
+          return null; // Item no longer exists
+        })
+        .filter(Boolean) as RouteCheckpoint[];
 
-      // Add new items that weren't in the preserved list
-      const preservedIds = new Set(preservedItems.map((item) => item.id));
-      const itemsToAdd = newRouteItems.filter(
-        (item) => !preservedIds.has(item.id)
-      );
+      // Add any remaining new items that weren't in the current list
+      const remainingNewItems = Array.from(newItemsMap.values());
 
-      return [...preservedItems, ...itemsToAdd];
+      return [...updatedItems, ...remainingNewItems];
     },
     [createRouteItems]
   );
@@ -101,18 +100,38 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
     setItems((currentItems) => {
       const synchronizedItems = synchronizeItems(initialUsers, currentItems);
 
-      // Only reset hasChanged if the items are completely different (not just reordered)
-      const currentIds = currentItems.map((item) => item.id).sort();
-      const newIds = synchronizedItems.map((item) => item.id).sort();
-      const idsChanged = JSON.stringify(currentIds) !== JSON.stringify(newIds);
+      // Compare the actual content of items to detect changes
+      const currentItemsString = JSON.stringify(
+        currentItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          type: isUser(item) ? "user" : "destination",
+          destination: isUser(item) ? item.destination?.id : undefined,
+        }))
+      );
 
-      if (idsChanged) {
-        setHasChanged(false);
+      const synchronizedItemsString = JSON.stringify(
+        synchronizedItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          type: isUser(item) ? "user" : "destination",
+          destination: isUser(item) ? item.destination?.id : undefined,
+        }))
+      );
+
+      // Only set hasChanged if component is already initialized
+      if (isInitialized && currentItemsString !== synchronizedItemsString) {
+        setHasChanged(true);
+      }
+
+      // Mark as initialized after first render
+      if (!isInitialized) {
+        setIsInitialized(true);
       }
 
       return synchronizedItems;
     });
-  }, [initialUsers, synchronizeItems]);
+  }, [initialUsers, synchronizeItems, isInitialized]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -218,10 +237,13 @@ const SortableRouteItem = ({ item }: { item: RouteCheckpoint }) => {
 
 // Component to render the content of a route item (user or destination)
 const RouteItemContent = ({ item }: { item: RouteCheckpoint }) => {
-  return isUser(item) ? (
+  // Use more explicit type checking - Users have email, Places have address
+  const itemIsUser = isUser(item);
+
+  return itemIsUser ? (
     <UserInfo user={item} />
   ) : (
-    <DestinationInfo item={item} />
+    <DestinationInfo item={item as Place} />
   );
 };
 

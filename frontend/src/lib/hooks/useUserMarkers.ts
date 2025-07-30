@@ -80,7 +80,10 @@ export const useUserMarkers = () => {
     if (
       visibleUsers.length === 1 &&
       visibleUsers[0].id === user?.id &&
-      user.location
+      user.location &&
+      !map
+        .getBounds()
+        ?.contains([user.location.longitude, user.location.latitude])
     ) {
       centerOnLocation(user.location);
     }
