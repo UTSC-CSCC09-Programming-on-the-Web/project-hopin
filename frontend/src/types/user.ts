@@ -12,6 +12,19 @@ export type User = Locatable & {
   updatedAt?: Date;
 };
 
+export const isUser = (item: any): item is User => {
+  return (
+    item &&
+    typeof item.id === "string" &&
+    typeof item.name === "string" &&
+    typeof item.email === "string" &&
+    (item.destination === undefined ||
+      (item.destination &&
+        typeof item.destination.id === "string" &&
+        typeof item.destination.name === "string"))
+  );
+};
+
 export type Group = {
   id: string;
   owner: User | null;

@@ -144,7 +144,7 @@ export const useGroupStore = create<GroupState>()((set, get) => ({
         ...members,
         ...(members
           .map((m) =>
-            m.destination ? { ...m.destination, color: m.color } : undefined
+            m.destination ? { ...m.destination, color: m.color, id: m.id, name: m.name } : undefined
           )
           .filter(Boolean) as Locatable[]),
       ];

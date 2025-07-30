@@ -184,34 +184,4 @@ export const authApi = {
     }
   },
 
-  // Server-side token validation (for middleware)
-  validateTokenServer: async (accessToken: string) => {
-    try {
-      const baseURL =
-        typeof window === "undefined"
-          ? process.env.SERVER_INTERNAL_URI || "http://backend:8080"
-          : process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080";
-
-      const response = await fetch(`${baseURL}/api/auth/validate-token`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        return { valid: false, error: `HTTP ${response.status}` };
-      }
-
-      const result = await response.json();
-      return { valid: result.valid, user: result.user };
-    } catch (error) {
-      console.error("Server token validation error:", error);
-      return {
-        valid: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      };
-    }
-  },
 };

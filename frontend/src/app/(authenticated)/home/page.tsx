@@ -6,7 +6,7 @@ import { useGroupStore } from "@/stores/GroupStore";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Header from "@/components/header";
+import Header from "@/components/Header";
 import { useUserStore } from "@/stores/UserStore";
 import { useEffect } from "react";
 import { userApi } from "@/lib/apis/userAPI";
@@ -35,7 +35,7 @@ export default function HomePage() {
       });
     };
     checkSubscription();
-  }, []);
+  }, [router, user?.id]);
 
   const handleCreateGroup = async () => {
     const id = await createGroup();

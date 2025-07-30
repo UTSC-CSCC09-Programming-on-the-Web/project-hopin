@@ -1,6 +1,36 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { authApi } from "./lib/apis/authAPI";
+
+const validateTokenServer = async (accessToken: string) => {
+    try {
+      const baseURL =
+        typeof window === "undefined"
+          ? process.env.SERVER_INTERNAL_URI || "http://backend:8080"
+          : process.env.NEXT_PUBLIC_SERVER_URI || "http://localhost:8080";
+
+      const response = await fetch(`${baseURL}/api/auth/validate-token`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        return { valid: false, error: `HTTP ${response.status}` };
+      }
+
+      const result = await response.json();
+      return { valid: result.valid, user: result.user };
+    } catch (error) {
+      console.error("Server token validation error:", error);
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
 
 // Checking subscription status directly from the backend
 const checkSubscriptionStatus = async (
@@ -54,7 +84,7 @@ export async function middleware(req: NextRequest) {
     // Check token's validity on the backend
     if (token?.accessToken) {
       try {
-        const validationResult = await authApi.validateTokenServer(
+        const validationResult = await validateTokenServer(
           token.accessToken as string,
         );
 

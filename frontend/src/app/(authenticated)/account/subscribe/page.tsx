@@ -29,7 +29,7 @@ function SubscriptionDetail() {
             setLoading(false);
           });
       }
-      user.subscriptionStatus = stat;
+      if (user) user.subscriptionStatus = stat;
     });
   }, [user]);
 
@@ -166,10 +166,10 @@ function SubscriptionDetail() {
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Let's get you started.
+              Let&apos;s get you started.
             </h1>
             <p className="text-gray-600">
-              You don't have an active subscription yet. Subscribe to unlock
+              You don&apos;t have an active subscription yet. Subscribe to unlock
               HopIn.
             </p>
           </div>

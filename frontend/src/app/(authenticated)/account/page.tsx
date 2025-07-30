@@ -152,7 +152,7 @@ function UserAccount() {
       // Error handling is done in UserContext
       console.error("Account deletion failed:", error);
     }
-  }, [deleteAccount]);
+  }, [deleteAccount, handleSignOut]);
 
   // Loading state
   // if (loading && !currentUser) {

@@ -4,7 +4,6 @@
 import HopinLogo from "@/components/hopin-logo";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import Header from "@/components/header";
 import { useState } from "react";
 import { sanitizeEmail } from "@/utils/sanitize";
 

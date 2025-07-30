@@ -1,9 +1,4 @@
 import { Router } from "express";
-import { prisma, userSafeSelect } from "../lib/prisma.js"; // import this for singleton prisma
-import { authenticateToken, blacklistToken } from "../middleware/auth.js";
-import bcrypt from "bcrypt";
-import { signJWT } from "../utils/jwt.js";
-import { v4 as uuidv4 } from "uuid";
 import { authenticateToken } from "../middleware/auth.js";
 import {
     googleAuth,

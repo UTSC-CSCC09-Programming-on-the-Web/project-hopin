@@ -39,7 +39,7 @@ const LocationInputsSection = () => {
     }
 
     // Notify the driver that the member's destination has changed
-    await userApi.updateDestination(destination);
+    await userApi.updateLocationOrDestination("destination", destination.location);
     setDestinationChanged(false);
     locationInputRef.current?.reset(); // Reset LocationInput state
     toast.success("Your destination is set!");
