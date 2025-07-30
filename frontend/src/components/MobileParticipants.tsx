@@ -27,7 +27,7 @@ export default function MobileParticipants({
 
   const handleDragEnd = () => {
     const currentY = y.get();
-    const halfway = 200;
+    const halfway = expandedHeight/2;
 
     // if dragged more than halfway down, then fully collapse, else stay open
     const finalY = currentY > halfway ? minY : 0;

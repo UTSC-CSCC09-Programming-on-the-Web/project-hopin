@@ -21,6 +21,7 @@ export default function SignUp() {
         callbackUrl: "/home",
       });
       if (res?.error) {
+        
         setErrorMessage(res.error);
       } else if (res?.ok) {
         window.location.href = "/home"; // Manual redirect after successful login
