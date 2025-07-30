@@ -7,6 +7,7 @@ import { userRouter } from "./routes/user-router.js";
 import corsOptions from "./utils/corsOptions.js";
 import groupRouter from "./routes/group-router.js";
 import { setupSocketServer } from "./lib/socket.js";
+import path from 'path';
 
 const PORT = process.env.PORT || 8080;
 export const app = express();
