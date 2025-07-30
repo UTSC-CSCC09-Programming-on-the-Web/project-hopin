@@ -144,7 +144,7 @@ export async function signin(req, res, next) {
         }
 
         // Invalidate old token (rotate jti on login)
-        const oldToken = req.headers["authorization"] ? .split(" ")[1];
+        const oldToken = req.headers["authorization"]?.split(" ")[1];
         if (oldToken) await invalidateJWT(oldToken);
 
         // Generate a JWT token for the user
@@ -199,7 +199,7 @@ export async function getCurrentUser(req, res, next) {
 export async function signout(req, res, next) {
     try {
         // Get the JWT token from the request
-        const token = req.headers.authorization ? .split(" ")[1];
+        const token = req.headers.authorization?.split(" ")[1];
 
         if (token) {
             await invalidateJWT(token);
