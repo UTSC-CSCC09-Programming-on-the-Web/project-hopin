@@ -33,9 +33,11 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
   const driver = useGroupStore((s) => s.group?.driver);
   const [items, setItems] = useState<RouteCheckpoint[]>([]);
   const [hasChanged, setHasChanged] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const isRouteUpToDate = useGroupStore((s) => s.isRouteUpToDate);
 
-  const canRegenerate = hasChanged || !isRouteUpToDate;
+  // Only show regenerate button after initialization and when there are actual changes
+  const canRegenerate = isInitialized && (hasChanged || !isRouteUpToDate);
 
   // Create route items from users and their destinations
   const createRouteItems = useCallback((users: User[]): RouteCheckpoint[] => {
@@ -60,34 +62,31 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
   // Synchronize items with initialUsers while preserving order
   const synchronizeItems = useCallback(
     (newUsers: User[], currentItems: RouteCheckpoint[]): RouteCheckpoint[] => {
-      const newItemsMap = new Map<string, RouteCheckpoint>();
       const newRouteItems = createRouteItems(newUsers);
 
-      // Create a map of new items by ID for quick lookup
+      // Create maps for quick lookup
+      const newItemsMap = new Map<string, RouteCheckpoint>();
       newRouteItems.forEach((item) => {
         newItemsMap.set(item.id, item);
       });
 
-      // Filter existing items to keep only those that still exist in newUsers
-      const preservedItems = currentItems.filter((item) => {
-        if (isUser(item)) {
-          // Keep user if they still exist in newUsers
-          return newUsers.some((user) => user.id === item.id);
-        } else {
-          // Keep destination if its associated user still exists and has a destination
-          return newUsers.some(
-            (user) => user.destination && user.destination.id === item.id
-          );
-        }
-      });
+      // Update existing items with new data and preserve order
+      const updatedItems = currentItems
+        .map((currentItem) => {
+          const newItem = newItemsMap.get(currentItem.id);
+          if (newItem) {
+            // Item exists in new data - update it with fresh data
+            newItemsMap.delete(currentItem.id); // Mark as processed
+            return newItem;
+          }
+          return null; // Item no longer exists
+        })
+        .filter(Boolean) as RouteCheckpoint[];
 
-      // Add new items that weren't in the preserved list
-      const preservedIds = new Set(preservedItems.map((item) => item.id));
-      const itemsToAdd = newRouteItems.filter(
-        (item) => !preservedIds.has(item.id)
-      );
+      // Add any remaining new items that weren't in the current list
+      const remainingNewItems = Array.from(newItemsMap.values());
 
-      return [...preservedItems, ...itemsToAdd];
+      return [...updatedItems, ...remainingNewItems];
     },
     [createRouteItems]
   );
@@ -116,14 +115,19 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
         }))
       );
 
-      // If the content changed (including destinations), show regenerate button
-      if (currentItemsString !== synchronizedItemsString) {
+      // Only set hasChanged if component is already initialized
+      if (isInitialized && currentItemsString !== synchronizedItemsString) {
         setHasChanged(true);
+      }
+
+      // Mark as initialized after first render
+      if (!isInitialized) {
+        setIsInitialized(true);
       }
 
       return synchronizedItems;
     });
-  }, [initialUsers, synchronizeItems]);
+  }, [initialUsers, synchronizeItems, isInitialized]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
