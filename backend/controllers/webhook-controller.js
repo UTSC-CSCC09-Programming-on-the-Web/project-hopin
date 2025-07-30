@@ -23,12 +23,14 @@ function verifyWebhookSignature(req, res) {
     return event;
   } catch (error) {
     console.log("Webhook signature verification failed");
-    return res.status(400);
+    res.status(400).send("Invalid signature");
+    return null;
   }
 }
 
 export async function handleWebhook(req, res) {
   const event = verifyWebhookSignature(req, res);
+  if (!event) return; // Abort early if invalid
 
   // Store received stripe events
   const redisKey = `stripe:event:${event.id}:${event.type}:${event.data.object.id}`;
