@@ -2,7 +2,7 @@ import { handleApiError } from "@/utils/apiUtils";
 import { Group } from "@/types/user";
 import { getAuthenticatedApi } from "./api";
 import { AxiosError } from "axios";
-import { MapBoxRoute } from "@/types/route";
+import { MapBoxRoute, Route } from "@/types/route";
 
 export const groupApi = {
   getUserGroup: async () => {
@@ -87,10 +87,24 @@ export const groupApi = {
       handleApiError(error as AxiosError);
     }
   },
-  updateGroupRoute: async (groupId: string, route: MapBoxRoute | null) => {
+  updateGroupRoute: async (groupId: string, route: Route | null) => {
     try {
+      if (route === null) {
+        const response = await getAuthenticatedApi().then(
+          (api) => api.put<Group>(`/groups/${groupId}/route`) // no body
+        );
+        return response.data;
+      }
+
+      const slimmedRoute = {
+        geometry: route.geometry,
+        distance: route.distance,
+        duration: route.duration,
+        checkpoints: route.checkpoints,
+      };
+
       const response = await getAuthenticatedApi().then((api) =>
-        api.put<Group>(`/groups/${groupId}/route`, { route })
+        api.put<Group>(`/groups/${groupId}/route`, slimmedRoute)
       );
       return response.data;
     } catch (error) {
