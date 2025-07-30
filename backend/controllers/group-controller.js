@@ -2,6 +2,12 @@ import generateGroupId from "../utils/generateGroupId.js";
 import { io } from "../lib/socket.js";
 import { prisma, userSafeSelect } from "../lib/prisma.js";
 import redisClient from "../lib/redis.js";
+import { releaseLock } from "../middleware/lock.js";
+import {
+  checkRateLimit,
+  consumeFailedAttempts,
+  resetFailAttempts,
+} from "../middleware/rate-limit.js";
 
 /**
  * Helper function to verify group exists in both Redis and Database
@@ -14,6 +20,8 @@ const verifyGroupExists = async (groupId) => {
     return { exists: false, error: "Group not found" };
   }
 
+  console.log("exists in redis", redisExists);
+
   const dbGroup = await prisma.group.findUnique({
     where: { id: groupId },
     include: {
@@ -22,6 +30,8 @@ const verifyGroupExists = async (groupId) => {
       driver: { select: userSafeSelect },
     },
   });
+
+  console.log("exists in db", dbGroup);
 
   if (!dbGroup) {
     // Group exists in Redis but not in DB - clean up Redis
@@ -84,11 +94,11 @@ export const createGroup = async (req, res) => {
         groupId: newGroupId,
       });
     }
-
+    await resetFailAttempts(req);
     res.status(201).json(groupWithDetails);
   } catch (error) {
     console.error("Error creating group:", error);
-
+    await consumeFailedAttempts(req);
     // Rollback redis update if it was successful
     if (redisUpdated) {
       try {
@@ -103,6 +113,8 @@ export const createGroup = async (req, res) => {
     }
 
     res.status(500).json({ error: "Internal server error" });
+  } finally {
+    await releaseLock(req.lockKey);
   }
 };
 
@@ -111,6 +123,7 @@ export const joinGroup = async (req, res) => {
   const userId = req.user.id;
 
   if (!groupId) {
+    if (await checkRateLimit(req, res)) return;
     return res.status(400).json({ error: "Group ID is required." });
   }
 
@@ -118,6 +131,8 @@ export const joinGroup = async (req, res) => {
     // Verify group exists and get its current state
     const verification = await verifyGroupExists(groupId);
     if (!verification.exists) {
+      if (await checkRateLimit(req, res)) return;
+
       return res.status(404).json({ error: verification.error });
     }
 
@@ -167,11 +182,14 @@ export const joinGroup = async (req, res) => {
     if (socketId) {
       io.to(socketId).emit("join_group", { groupId });
     }
-
+    await resetFailAttempts(req);
     res.status(200).json(group);
   } catch (error) {
     console.error("Error joining group:", error);
+    await consumeFailedAttempts(req);
     res.status(500).json({ error: "Internal server error" });
+  } finally {
+    await releaseLock(req.lockKey);
   }
 };
 
@@ -180,6 +198,8 @@ export const leaveGroup = async (req, res) => {
   const userId = req.user.id;
 
   if (!groupId) {
+    if (await checkRateLimit(req, res)) return;
+
     return res.status(400).json({ error: "Group ID is required." });
   }
 
@@ -187,6 +207,8 @@ export const leaveGroup = async (req, res) => {
     // Verify group exists and get its current state
     const verification = await verifyGroupExists(groupId);
     if (!verification.exists) {
+      if (await checkRateLimit(req, res)) return;
+
       return res.status(404).json({ error: verification.error });
     }
 
@@ -254,14 +276,17 @@ export const leaveGroup = async (req, res) => {
           group.members.find((m) => m.id === userId)?.name || "Unknown user",
       });
     }
-
+    await resetFailAttempts(req);
     res.status(200).json({
       message: "Successfully left the group",
       groupDeleted: isOwner || isLastMember,
     });
   } catch (error) {
+    await consumeFailedAttempts(req);
     console.error("Error leaving group:", error);
     res.status(500).json({ error: "Internal server error" });
+  } finally {
+    await releaseLock(req.lockKey);
   }
 };
 
@@ -270,6 +295,8 @@ export const getGroup = async (req, res) => {
   const userId = req.user.id;
 
   if (!groupId) {
+    if (await checkRateLimit(req, res)) return;
+
     return res.status(400).json({ error: "Group ID is required." });
   }
 
@@ -277,6 +304,8 @@ export const getGroup = async (req, res) => {
     // Verify group exists and get its current state
     const verification = await verifyGroupExists(groupId);
     if (!verification.exists) {
+      if (await checkRateLimit(req, res)) return;
+
       return res.status(404).json({ error: verification.error });
     }
 
@@ -293,14 +322,17 @@ export const getGroup = async (req, res) => {
     // Check if the user is a member of the group
     const isMember = group.members.some((member) => member.id === userId);
     if (!isMember) {
+      if (await checkRateLimit(req, res)) return;
+
       return res
         .status(403)
         .json({ error: "You are not a member of this group" });
     }
-
+    await resetFailAttempts(req);
     res.status(200).json(group);
   } catch (error) {
     console.error("Error fetching group:", error);
+    await consumeFailedAttempts(req);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -310,6 +342,8 @@ export const becomeDriver = async (req, res) => {
   const userId = req.user.id;
 
   if (!groupId) {
+    if (await checkRateLimit(req, res)) return;
+
     return res.status(400).json({ error: "Group ID is required." });
   }
 
@@ -317,6 +351,8 @@ export const becomeDriver = async (req, res) => {
     // Verify group exists and get its current state
     const verification = await verifyGroupExists(groupId);
     if (!verification.exists) {
+      if (await checkRateLimit(req, res)) return;
+
       return res.status(404).json({ error: verification.error });
     }
 
@@ -340,6 +376,8 @@ export const becomeDriver = async (req, res) => {
 
     // Check if the group already has a driver
     if (groupWithDriver.driver) {
+      if (await checkRateLimit(req, res)) return;
+
       return res.status(400).json({
         error: "Group already has a driver",
         currentDriver: groupWithDriver.driver,
@@ -364,11 +402,14 @@ export const becomeDriver = async (req, res) => {
       driver: updatedGroup.driver,
       message: `${updatedGroup.driver.name} is now the driver`,
     });
-
+    await resetFailAttempts(req);
     res.status(200).json(updatedGroup);
   } catch (error) {
     console.error("Error becoming driver:", error);
+    await consumeFailedAttempts(req);
     res.status(500).json({ error: "Internal server error" });
+  } finally {
+    await releaseLock(req.lockKey);
   }
 };
 
@@ -378,6 +419,8 @@ export const unbecomeDriver = async (req, res) => {
 
   if (!groupId) {
     console.log("Made it here in unbecomeDriver");
+    if (await checkRateLimit(req, res)) return;
+
     return res.status(400).json({ error: "Group ID is required." });
   }
 
@@ -385,6 +428,8 @@ export const unbecomeDriver = async (req, res) => {
     // Verify group exists and get its current state
     const verification = await verifyGroupExists(groupId);
     if (!verification.exists) {
+      if (await checkRateLimit(req, res)) return;
+
       return res.status(404).json({ error: verification.error });
     }
 
@@ -415,10 +460,13 @@ export const unbecomeDriver = async (req, res) => {
       driver: null,
       message: `${group.driver.name} is no longer the driver`,
     });
-
+    await resetFailAttempts(req);
     res.status(200).json(updatedGroup);
   } catch (error) {
     console.error("Error unbecoming driver:", error);
+    await consumeFailedAttempts(req);
     res.status(500).json({ error: "Internal server error" });
+  } finally {
+    await releaseLock(req.lockKey);
   }
 };

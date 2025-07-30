@@ -98,9 +98,8 @@ model Fare {
   group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String
 
-  category String
   amount   Decimal
-  descriptions  String?
+  description  String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -16,6 +16,9 @@ import { setupSocketServer } from "./lib/socket.js";
 const PORT = process.env.PORT || 8080;
 export const app = express();
 
+const avatarDir = path.join(process.cwd(), "uploads/avatars");
+app.use("/uploads/avatars", cors(corsOptions), express.static(avatarDir));
+
 // Security headers with Helmet
 app.use(
   helmet({
@@ -69,10 +72,6 @@ app.use((req, res, next) => {
   console.log(`[Express] ${req.method} ${req.url}`);
   next();
 });
-
-const avatarDir = path.join(process.cwd(), "uploads/avatars");
-console.log(avatarDir);
-app.use("/uploads/avatars", cors(corsOptions), express.static(avatarDir));
 
 app.use("/api/groups", groupRouter);
 app.use("/api/auth", authRouter);

@@ -70,3 +70,19 @@ export function validatePassword(password: string) {
 
   return { isValid: true, message: "Password is valid" };
 }
+
+export function sanitizeNumber(value: unknown): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (/^\d*\.?\d*$/.test(trimmed)) {
+      return parseFloat(trimmed)
+    }
+  }
+  
+  return null;
+}
+

@@ -286,11 +286,9 @@ export async function updatePostion(req, res, next) {
     const field = req.query.field;
     if (field !== "location" && field !== "destination") {
       if (await checkRateLimit(req, res)) return;
-      return res
-        .status(400)
-        .json({
-          error: "Invalid field parameter. Must be 'location' or 'destination'",
-        });
+      return res.status(400).json({
+        error: "Invalid field parameter. Must be 'location' or 'destination'",
+      });
     }
 
     // Find and authorize user (allow self-updates only for security)
