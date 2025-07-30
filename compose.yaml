@@ -68,6 +68,23 @@ services:
     image: redis:latest
     restart: always
 
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: stripe-cli
+    restart: unless-stopped
+    depends_on:
+      - backend
+    env_file:
+      - backend.env
+    environment:
+      - STRIPE_DEVICE_NAME=hopin-docker
+    command: >
+      sh -c "
+        stripe login --api-key $STRIPE_SKEY &&
+        stripe listen --forward-to backend:8080/api/webhooks"
+    networks:
+      - hopin-net
+
 networks:
   default:
     name: hopin-net
