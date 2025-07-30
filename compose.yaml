@@ -82,8 +82,6 @@ services:
       sh -c "
         stripe login --api-key $STRIPE_SKEY &&
         stripe listen --forward-to backend:8080/api/webhooks"
-    networks:
-      - hopin-net
 
 networks:
   default:
