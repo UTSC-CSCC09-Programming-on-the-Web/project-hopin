@@ -153,7 +153,7 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
-          <div className="w-full flex flex-col gap-2 p-2">
+          <div className="w-full flex flex-col gap-4 p-2">
             {items.map((item) => (
               <SortableRouteItem key={item.id} item={item} />
             ))}
@@ -189,6 +189,7 @@ const SortableRouteItem = ({ item }: { item: RouteCheckpoint }) => {
     transform: CSS.Transform.toString(transform),
     transition,
     outlineColor: item.color, // Use item's color for outline
+    backgroundColor: `${item.color}1A`, // Same hex color with 10% opacity (1A in hex = ~10% alpha)
   };
 
   return (
