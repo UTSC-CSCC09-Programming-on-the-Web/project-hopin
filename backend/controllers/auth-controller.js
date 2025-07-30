@@ -12,6 +12,7 @@ import {
     validateName,
     validatePassword,
 } from "../utils/validateInput.js";
+import { v4 as uuidv4 } from "uuid";
 
 const generateUserColor = (seed) => {
     let hash = 0;
@@ -37,6 +38,8 @@ export async function googleAuth(req, res, next) {
             await consumeFailedAttempts(req);
             return res.status(400).json({ error: validationError.message });
         }
+
+        const id = uuidv4(); // Generate a unique ID for the user
 
         const user = await prisma.user.upsert({
             where: { email },
@@ -85,6 +88,7 @@ export async function signup(req, res, next) {
         const salt = bcrypt.genSaltSync(saltRounds);
         const hashedPassword = bcrypt.hashSync(password, salt);
 
+        const id = uuidv4(); // Generate a unique ID for the user
         await prisma.user.create({
             data: {
                 id,
@@ -140,7 +144,7 @@ export async function signin(req, res, next) {
         }
 
         // Invalidate old token (rotate jti on login)
-        const oldToken = req.headers["authorization"]?.split(" ")[1];
+        const oldToken = req.headers["authorization"] ? .split(" ")[1];
         if (oldToken) await invalidateJWT(oldToken);
 
         // Generate a JWT token for the user
@@ -195,7 +199,7 @@ export async function getCurrentUser(req, res, next) {
 export async function signout(req, res, next) {
     try {
         // Get the JWT token from the request
-        const token = req.headers.authorization?.split(" ")[1];
+        const token = req.headers.authorization ? .split(" ")[1];
 
         if (token) {
             await invalidateJWT(token);
