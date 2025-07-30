@@ -8,7 +8,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
 // TODO:
 // Validate paymentIntent.status === "succeeded" when fulfilling order
 // prevent replay attacks
-// Test handlers
+// Test handlers //
 
 // Verify the signature sent by stripe
 function verifyWebhookSignature(req, res) {
