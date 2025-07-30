@@ -97,13 +97,28 @@ const RouteList = ({ initialUsers }: { initialUsers: User[] }) => {
     setItems((currentItems) => {
       const synchronizedItems = synchronizeItems(initialUsers, currentItems);
 
-      // Only reset hasChanged if the items are completely different (not just reordered)
-      const currentIds = currentItems.map((item) => item.id).sort();
-      const newIds = synchronizedItems.map((item) => item.id).sort();
-      const idsChanged = JSON.stringify(currentIds) !== JSON.stringify(newIds);
+      // Compare the actual content of items to detect changes
+      const currentItemsString = JSON.stringify(
+        currentItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          type: isUser(item) ? "user" : "destination",
+          destination: isUser(item) ? item.destination?.id : undefined,
+        }))
+      );
 
-      if (idsChanged) {
-        setHasChanged(false);
+      const synchronizedItemsString = JSON.stringify(
+        synchronizedItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          type: isUser(item) ? "user" : "destination",
+          destination: isUser(item) ? item.destination?.id : undefined,
+        }))
+      );
+
+      // If the content changed (including destinations), show regenerate button
+      if (currentItemsString !== synchronizedItemsString) {
+        setHasChanged(true);
       }
 
       return synchronizedItems;
@@ -214,10 +229,13 @@ const SortableRouteItem = ({ item }: { item: RouteCheckpoint }) => {
 
 // Component to render the content of a route item (user or destination)
 const RouteItemContent = ({ item }: { item: RouteCheckpoint }) => {
-  return isUser(item) ? (
+  // Use more explicit type checking - Users have email, Places have address
+  const itemIsUser = isUser(item);
+
+  return itemIsUser ? (
     <UserInfo user={item} />
   ) : (
-    <DestinationInfo item={item} />
+    <DestinationInfo item={item as Place} />
   );
 };
 

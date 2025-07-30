@@ -205,6 +205,12 @@ export const leaveGroup = async (req, res) => {
 
     // Use transaction for atomicity
     await prisma.$transaction(async (tx) => {
+      // Get user's current destination before removing from group
+      const userWithDestination = await tx.user.findUnique({
+        where: { id: userId },
+        select: { destinationId: true },
+      });
+
       // Remove user from group members
       await tx.group.update({
         where: { id: groupId },
@@ -215,11 +221,21 @@ export const leaveGroup = async (req, res) => {
         },
       });
 
-      // Update user's groupId to null
+      // Update user's groupId to null and remove destination
       await tx.user.update({
         where: { id: userId },
-        data: { groupId: null },
+        data: {
+          groupId: null,
+          destinationId: null, // Remove destination when leaving group
+        },
       });
+
+      // Delete the destination place if it exists
+      if (userWithDestination?.destinationId) {
+        await tx.place.delete({
+          where: { id: userWithDestination.destinationId },
+        });
+      }
 
       // If owner leaves or last member, delete the group
       if (isOwner || isLastMember) {

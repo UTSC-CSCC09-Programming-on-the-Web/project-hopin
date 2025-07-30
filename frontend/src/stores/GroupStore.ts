@@ -250,6 +250,9 @@ export const createGroupRoute = async (checkpoints: Locatable[]) => {
 
   if (checkpoints.length < 2) {
     toast.error("At least two checkpoints are required to create a route.");
+    clearRoute("group");
+    await groupApi.updateGroupRoute(group.id, null);
+    useGroupStore.setState({ isRouteUpToDate: true });
     return;
   }
 
