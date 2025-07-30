@@ -43,7 +43,7 @@ const BaseSection = ({ type, children }: BaseSectionProps) => {
       className={twMerge(
         "flex flex-col p-2 gap-2 w-full rounded-lg",
         bgColor,
-        height,
+        height
       )}
     >
       {/* Header */}

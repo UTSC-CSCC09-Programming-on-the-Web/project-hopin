@@ -26,7 +26,7 @@ import Link from "next/link";
 // };
 export default function HopinLogo() {
   return (
-    <div className="w-full flex justify-start md:justify-start pt-4">
+    <div className="w-full flex justify-center md:justify-start pt-4">
       <Link
         key="hopin-logo"
         href="/home"

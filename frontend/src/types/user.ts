@@ -1,17 +1,25 @@
-import { Coordinates } from "./location";
+import { Locatable, Place } from "./location";
+import { Route } from "./route";
 
 // Sample User Type (update when API is available)
-export type User = {
-  id: string;
-  email?: string;
-  // Exclude password for security reasons
-  name?: string;
+export type User = Locatable & {
+  email: string;
   avatar?: string;
-  location?: Coordinates;
-  destination?: Coordinates; // Where the user is going (if known)
-  subscriptionStatus?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  destination?: Place; // Where the user is going (if known)
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const isUser = (item: any): item is User => {
+  return (
+    item &&
+    typeof item.id === "string" &&
+    typeof item.name === "string" &&
+    typeof item.email === "string" &&
+    (item.destination === undefined ||
+      (item.destination &&
+        typeof item.destination.id === "string" &&
+        typeof item.destination.name === "string"))
+  );
 };
 
 export type Group = {
@@ -21,4 +29,5 @@ export type Group = {
   members: User[];
   createdAt?: Date;
   updatedAt?: Date;
+  route: Route | null;
 };

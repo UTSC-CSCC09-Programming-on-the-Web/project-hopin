@@ -1,18 +1,30 @@
-import { Coordinates, Route } from "@/types/location";
+import { Locatable, Place } from "@/types/location";
+import { MapBoxRoute, Route } from "@/types/route";
 
-export const fetchMapboxDirections = async (
-  start: Coordinates,
-  end: Coordinates,
-): Promise<Route> => {
+export const fetchRoute = async (checkpoints: Locatable[]): Promise<Route> => {
+  const checkpointsWithLocation = checkpoints.filter(
+    (point) =>
+      point.location && point.location.latitude && point.location.longitude
+  );
+
+  // Map the coordinates to a string format for the API
+  const routeStr = checkpointsWithLocation
+    .map((point) => `${point.location!.longitude},${point.location!.latitude}`)
+    .join(";");
+
   const res = await fetch(
-    `https://api.mapbox.com/directions/v5/mapbox/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?steps=true&geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`,
+    `https://api.mapbox.com/directions/v5/mapbox/driving/${routeStr}?steps=true&geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
   );
 
   if (!res.ok) throw new Error("Failed to fetch directions");
+  let routeData = await res.json();
+  if (!routeData?.routes?.length) throw new Error("No route found");
+  routeData = routeData.routes[0] as MapBoxRoute;
 
-  const data = await res.json();
+  const createdRoute: Route = {
+    ...routeData,
+    checkpoints: checkpointsWithLocation.slice(1) as Place[],
+  };
 
-  if (!data?.routes?.length) throw new Error("No route found");
-
-  return data.routes[0];
+  return createdRoute;
 };

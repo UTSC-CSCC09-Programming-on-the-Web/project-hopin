@@ -16,11 +16,20 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { User } from "@/types/user";
 import { EllipsisVerticalIcon } from "lucide-react";
+import { Coordinates } from "@/types/location";
+import { MapPin as LocationIcon, UserCircle2 as UserIcon } from "lucide-react";
+
+type ListItem = {
+  id: string;
+  name: string;
+  location: Coordinates;
+  isUser: boolean;
+  profilePicture?: string;
+};
 
 // Component for a single sortable item
-const SortableUserItem = ({ user }: { user: User }) => {
+const SortableUserItem = ({ item }: { item: ListItem }) => {
   const {
     attributes,
     listeners,
@@ -28,7 +37,7 @@ const SortableUserItem = ({ user }: { user: User }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: user.id });
+  } = useSortable({ id: item.id });
 
   // Need this for the drag style to work correctly
   const style = {
@@ -44,31 +53,45 @@ const SortableUserItem = ({ user }: { user: User }) => {
       className={`bg-white w-full flex items-center gap-3 p-2 rounded-lg ${
         isDragging ? "opacity-50" : ""
       }`}
+      // TODO: onclick handler to center on location
     >
       <div {...listeners} className="cursor-grab rounded-lg p-1 bg-gray-100">
         <EllipsisVerticalIcon className="w-4 h-4 text-gray-600" />
       </div>
-      <span>{user.name}</span>
+      {item.isUser ? (
+        item.profilePicture ? (
+          <img
+            src={item.profilePicture}
+            alt={`${item.name || "User"}'s avatar`}
+            className="rounded-full shadow-xs w-8 h-8 object-cover"
+          />
+        ) : (
+          <UserIcon className="w-8 h-8 text-gray-500" />
+        )
+      ) : (
+        <LocationIcon className="w-8 h-8 text-gray-500" />
+      )}
+      <span>{item.name}</span>
     </div>
   );
 };
 
 // Main component for the reorderable list
-const ListReorder = ({ initialUsers }: { initialUsers: User[] }) => {
-  const [users, setUsers] = useState(initialUsers);
+const ListReorder = ({ initialItems }: { initialItems: ListItem[] }) => {
+  const [items, setItems] = useState(initialItems);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    })
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setUsers((items) => {
+      setItems((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
@@ -82,10 +105,10 @@ const ListReorder = ({ initialUsers }: { initialUsers: User[] }) => {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={users} strategy={verticalListSortingStrategy}>
+      <SortableContext items={items} strategy={verticalListSortingStrategy}>
         <div className="w-full flex flex-col gap-2 rounded-md">
-          {users.map((user) => (
-            <SortableUserItem key={user.id} user={user} />
+          {items.map((item) => (
+            <SortableUserItem key={item.id} item={item} />
           ))}
         </div>
       </SortableContext>

@@ -2,13 +2,8 @@ import "dotenv/config";
 import express from "express";
 import http from "http";
 import cors from "cors";
-import helmet from "helmet";
-import path from "path";
 import { authRouter } from "./routes/auth-router.js";
 import { userRouter } from "./routes/user-router.js";
-import { subscriptionRouter } from "./routes/subscription-router.js";
-// import { fareRouter } from "./routes/fare-router.js";
-import { webhookRouter } from "./routes/webhook-router.js";
 import corsOptions from "./utils/corsOptions.js";
 import groupRouter from "./routes/group-router.js";
 import { setupSocketServer } from "./lib/socket.js";
@@ -53,14 +48,14 @@ app.use(
     //   includeSubDomains: true,
     //   preload: true
     // }
-  }),
+  })
 );
 
 // Use raw body parser for webhook endpoint
 app.use(
   "/api/webhooks",
   express.raw({ type: "application/json" }),
-  webhookRouter,
+  webhookRouter
 );
 
 // Use JSON parser for other routes
@@ -76,9 +71,6 @@ app.use((req, res, next) => {
 app.use("/api/groups", groupRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
-app.use("/api/subscriptions", subscriptionRouter);
-// TODO: uncomment line 71
-// app.use("/api/groups/:groupId/fares", fareRouter);
 
 // Websocket setup
 const server = http.createServer(app);

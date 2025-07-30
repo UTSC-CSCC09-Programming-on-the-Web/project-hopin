@@ -7,6 +7,7 @@ import {
   getGroup,
   becomeDriver,
   unbecomeDriver,
+  updateGroupRoute,
 } from "../controllers/group-controller.js";
 import { createRateLimiter } from "../middleware/rate-limit.js";
 import { createLock } from "../middleware/lock.js";
@@ -128,5 +129,7 @@ groupRouter.get(
   handleMiddlewareErrors,
   getGroup,
 );
+
+groupRouter.put("/:id/route", authenticateToken, updateGroupRoute);
 
 export default groupRouter;

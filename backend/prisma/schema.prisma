@@ -9,17 +9,20 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  password     String?
-  name         String
-  avatar       String?
-  location     Json?
-  destination  Json?
-  isReady      Boolean?
-  subscription Subscription?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String?
+  name     String
+  avatar   String?
+
+  location      Json?
+  destinationId String? @unique
+  destination   Place?  @relation(fields: [destinationId], references: [id])
+
+  isReady Boolean? @default(false)
+  // Unique color for each user
+  // This is used to differentiate users visually in the UI when in a group
+  color   String
 
   // Many-to-one: User belongs to a group
   groupId String?
@@ -31,40 +34,18 @@ model User {
   // One-to-one: User is a driver of a group
   drivenGroup Group? @relation("GroupDriver")
 
-  // Many-to-many: User participates in multiple fare payments
-  userFarePayments UserFarePayment[]
-
-  // One-to-one: User has one Connect account
-  connectAccount ConnectAccount?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  UserFarePayment UserFarePayment[]
+  ConnectAccount  ConnectAccount?
 }
 
-model Plan {
-  id     String @id @default(uuid())
-  name   String @unique
-  planId String @unique
-
-  // One-to-many
-  subscriptions Subscription[]
-}
-
-model Subscription {
-  id String @id @default(uuid())
-
-  // One-to-one: Only one subscription per user
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String? @unique
-
-  customerId     String? @unique
-  subscriptionId String? @unique
-
-  plan   Plan?   @relation(fields: [planId], references: [id])
-  planId String?
-
-  status    String?
-  startDate DateTime?
-  endDate   DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+model Place {
+  id            String @id @default(uuid())
+  name          String
+  address       String
+  location      Json
+  destinationOf User?
 }
 
 model Group {
@@ -79,6 +60,8 @@ model Group {
   // One-to-one: Group has one driver
   driverId String? @unique
   driver   User?   @relation("GroupDriver", fields: [driverId], references: [id])
+
+  route Json?
 
   // One-to-many: Group has many members
   members User[] @relation("GroupMembers")
@@ -98,8 +81,8 @@ model Fare {
   group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String
 
-  amount   Decimal
-  description  String
+  amount      Decimal
+  description String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -114,12 +97,12 @@ model FarePayment {
   groupId String
 
   amount Decimal?
-  status          String?
+  status String?
 
   paymentIntentId String?
 
-  transferId     String?
-  
+  transferId String?
+
   transferStatus String?
 
   // Many-to-many: Multiple users can participate in one fare payment

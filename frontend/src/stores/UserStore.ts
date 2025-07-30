@@ -65,12 +65,20 @@ export const useUserStore = create<UserState>((set) => ({
 
   updateLocation: async (location) => {
     try {
-      const updatedUser = await userApi.updateLocationOrDestination(
-        "location",
-        location,
-      );
+      await userApi.updateLocation(location);
 
-      set({ user: updatedUser });
+      const currentUser = useUserStore.getState().user;
+      if (!currentUser) return;
+      // Update user location in the store
+      set({
+        user: {
+          ...currentUser,
+          location: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+          },
+        },
+      });
     } catch (error) {
       console.error("Failed to update user location:", error);
       toast.error("Failed to update your location. Please try again.");

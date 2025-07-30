@@ -7,7 +7,7 @@ const generateGroupId = async () => {
   // Keep generating a new group ID until we find one that doesn't already exist
   while (true) {
     newGroupId = `${Math.random().toString(36).substring(2, 5)}-${Math.floor(
-      Math.random() * 1000,
+      Math.random() * 1000
     )
       .toString()
       .padStart(3, "0")}`;
