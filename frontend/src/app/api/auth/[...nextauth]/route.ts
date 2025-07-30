@@ -9,7 +9,7 @@ const BACKEND_URI = process.env.SERVER_INTERNAL_URI!;
 
 const authOptions = {
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
     maxAge: 60 * 60, // 1 hour session
   },
 
@@ -101,19 +101,8 @@ const authOptions = {
       user?: User;
       account?: Account;
     }) {
-      // From GoogleProvider via signIn callback
-      if (account?.provider === "google") {
-        const result = {
-          ...token,
-          id: account.id,
-          email: token.email, // Preserve email from profile
-          accessToken: account.accessToken, // This should contain the backend token
-        } as JWT;
-        return result;
-      }
-
-      // On initial sign-in (credentials only - when no account provider)
-      if (user && !account?.provider) {
+      // On initial sign-in from credentials provider
+      if (user && account?.provider === "credentials") {
         return {
           ...token,
           id: user.id,
@@ -122,12 +111,31 @@ const authOptions = {
         } as JWT;
       }
 
+      // From GoogleProvider via signIn callback
+      if (account?.provider === "google" && account.accessToken) {
+        return {
+          ...token,
+          id: account.id,
+          email: token.email, // Preserve email from profile
+          accessToken: account.accessToken, // This should contain the backend token
+        } as JWT;
+      }
+
+      // Return existing token for subsequent requests
       return token;
     },
 
     async session({ session, token }: { session: Session; token: JWT }) {
-      session.userId = token.id as string;
-      session.accessToken = token.accessToken as string;
+      // Ensure we have the required token data
+      if (token.id && token.accessToken) {
+        session.userId = token.id as string;
+        session.accessToken = token.accessToken as string;
+      } else {
+        console.error("Missing token data:", {
+          id: token.id,
+          accessToken: !!token.accessToken,
+        });
+      }
       return session;
     },
   },

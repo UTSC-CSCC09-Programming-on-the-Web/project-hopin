@@ -34,6 +34,7 @@ services:
     command: sh -c "npx prisma migrate deploy && npm run dev"
 
   postgres:
+    image: postgres:latest
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -44,6 +45,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   cache:
+    image: redis:latest
+    restart: always
     ports:
       - "6379:6379"
     command: ["redis-server", "--loglevel", "warning"]

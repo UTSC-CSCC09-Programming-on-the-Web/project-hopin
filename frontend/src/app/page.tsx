@@ -16,18 +16,21 @@ export default function SignIn() {
         email: email,
         password: password,
         redirect: false,
-        callbackUrl: "/home",
       });
+
+      console.log("SignIn response:", res);
+
       if (res?.error) {
         setErrorMessage(res.error);
       } else if (res?.ok) {
-        window.location.href = "/home"; // Manual redirect after successful login
+        window.location.href = "/home";
       }
     } catch (error: unknown) {
+      console.error("SignIn error:", error);
       if (error instanceof Error) {
-        throw new Error(error.message || "Failed to sign in");
+        setErrorMessage(error.message || "Failed to sign in");
       } else {
-        throw new Error("Failed to sign in");
+        setErrorMessage("Failed to sign in");
       }
     }
   };
