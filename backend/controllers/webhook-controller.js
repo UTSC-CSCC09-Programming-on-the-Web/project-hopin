@@ -11,7 +11,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
 // Test handlers
 
 // Verify the signature sent by stripe
-function verifyWebhookSignature(req) {
+function verifyWebhookSignature(req, res) {
   const signature = req.headers["stripe-signature"];
   const rawBody = req.body;
   try {
@@ -23,12 +23,12 @@ function verifyWebhookSignature(req) {
     return event;
   } catch (error) {
     console.log("Webhook signature verification failed");
-    return null;
+    return res.status(400);
   }
 }
 
 export async function handleWebhook(req, res) {
-  const event = verifyWebhookSignature(req);
+  const event = verifyWebhookSignature(req, res);
 
   // Store received stripe events
   const redisKey = `stripe:event:${event.id}:${event.type}:${event.data.object.id}`;
