@@ -188,4 +188,3 @@ const authOptions = {
 // @ts-expect-error - NextAuth types are inconsistent across versions
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
-// 
