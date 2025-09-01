@@ -1,89 +1,44 @@
-
 services:
-  nginx-proxy:
-    image: jwilder/nginx-proxy
-    container_name: nginx-proxy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./certs:/etc/nginx/certs:ro
-      - ./vhost:/etc/nginx/vhost.d
-      - ./html:/usr/share/nginx/html
-      - ./dhparam:/etc/nginx/dhparam
-    labels:
-      - com.github.nginx-proxy.nginx=true
-
-  nginx-proxy-acme:
-    image: nginxproxy/acme-companion
-    container_name: nginx-proxy-acme
-    depends_on:
-      - nginx-proxy
-    restart: always
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/etc/nginx/certs
-      - ./vhost:/etc/nginx/vhost.d
-      - ./html:/usr/share/nginx/html
-      - ./acme:/etc/acme.sh
-    environment:
-      - DEFAULT_EMAIL=jane.low@mail.utoronto.ca
-
   frontend:
-    image: ghcr.io/utsc-cscc09-programming-on-the-web/frontend-hopin:latest
-    container_name: frontend
-    restart: always
-    expose:
-      - "3000"
-    environment:
-      - VIRTUAL_HOST=hop-in.dev
-      - LETSENCRYPT_HOST=hop-in.dev
-      - LETSENCRYPT_EMAIL=jane.low@mail.utoronto.ca
+    build:
+      context: ./frontend
+    networks:
+      - appnet
 
   backend:
-    image: ghcr.io/utsc-cscc09-programming-on-the-web/backend-hopin:latest
-    container_name: backend
-    restart: always
-    env_file:
-      - backend.env
-    expose:
-      - "8080"
-    environment:
-      - VIRTUAL_HOST=api.hop-in.dev
-      - LETSENCRYPT_HOST=api.hop-in.dev
-      - LETSENCRYPT_EMAIL=jane.low@mail.utoronto.ca
+    build:
+      context: ./backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+    networks:
+      - appnet
+      - dbnet
+
+  migrate:
+    build: .
+    command: npx prisma migrate deploy
+    # environment:
+    #   - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/myapp_prod
+    depends_on:
+      postgres:
 
   postgres:
-    image: postgres:latest
-    container_name: postgres
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: hopinc09
-    expose:
-      - "5432"
+    image: postgres:16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dbnet
 
   cache:
     image: redis:latest
-    restart: always
+    networks:
+      - dbnet
 
-  # stripe-cli:
-  #   image: stripe/stripe-cli
-  #   container_name: stripe-cli
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - backend
-  #   env_file:
-  #     - backend.env
-  #   environment:
-  #     - STRIPE_DEVICE_NAME=hopin-docker
-  #   command: >
-  #     sh -c "
-  #       stripe login --api-key $STRIPE_SKEY &&
-  #       stripe listen --forward-to backend:8080/api/webhooks"
+volumes:
+  postgres_data:
 
 networks:
-  default:
-    name: hopin-net
+  appnet:
+  dbnet:

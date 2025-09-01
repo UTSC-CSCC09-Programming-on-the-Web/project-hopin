@@ -7,8 +7,6 @@
         "seed": "node prisma/seed.js"
     },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "prisma generate && next build",
         "start": "node server",
         "dev": "nodemon server"
     },

@@ -1,19 +1,24 @@
-# Stage 1: Build
-FROM node:24-alpine3.21 AS builder
+FROM node:24-alpine as base
 WORKDIR /app
+
+# Dev Stage
+FROM base as dev
+# Copy instead of mount due to watch during local dev
 COPY package*.json ./
-RUN npm ci --omit=dev
+COPY prisma ./prisma/
+RUN npm ci --include=dev && npx prisma generate
+
 COPY . .
-RUN npx prisma generate
+USER node
+CMD ["npm", "run", "dev"]
 
-# Stage 2: Runtime
-FROM node:24-alpine3.21
+# Production Stage
+FROM base as prod
+RUN --mount=type=bind,source=package.json,target=package.json \
+  --mount=type=bind,source=package-lock.json,target=package-lock.json \
+  --mount=type=bind,source=prisma,target=prisma \
+  npm ci --omit=dev && npx prisma generate
 
-WORKDIR /app
-
-COPY --from=builder /app /app
-
-ENV HOST=0.0.0.0
-EXPOSE 8080
-
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm start"]
+COPY . .
+USER node
+CMD ["node", "dist/index.js"]
